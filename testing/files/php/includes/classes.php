@@ -44,7 +44,6 @@ class getOGDataFromRealworks {
                 {
                     echo ("Got JSON ".$key.":<br/>");
                     $projects = getProjects($urlExtension, $authToken);
-                    sleep(1);
                     saveToJSON($projects, $key);
                     break;
                 }
