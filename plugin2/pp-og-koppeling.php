@@ -15,4 +15,3 @@ include_once 'files/php/includes/functions.php';
 $settingsPage = new OGSettingsPage();
 
 // ============ Start of Program ============
-echo('dcfvgbhjnkml,.;/');

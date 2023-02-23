@@ -12,7 +12,7 @@ class OGSettingsPage
     }
 
     // ==== Create Settings Page ====
-    function createPages(){
+    function createPages(): void {
         // Create Menu Item with OG Dashboard HTML
         add_menu_page(
             'Pixelplus OG - Dashboard',
@@ -34,7 +34,7 @@ class OGSettingsPage
     }
 
     // ==== Register Settings ====
-    function registerSettings(){
+    function registerSettings(): void {
         // Register Settings Section
         add_settings_section(
             'ppOG_section1',
@@ -56,14 +56,14 @@ class OGSettingsPage
 
 // ==== HTML ====
     // HTML for OG Dashboard
-    function htmlOGDashboard() { ?>
+    function htmlOGDashboard(): void { ?>
         <div class='wrap text'>
             <h1 style='text-align: center; font-size: 2rem;'><b>OG Dashboard</b></h1>
         </div>
     <?php }
 
     // HTML for Settings Page
-	    function htmlSettingPage() { ?>
+    function htmlSettingPage(): void { ?>
         <div class='wrap text'>
             <h1 style='text-align: center; font-size: 2rem;'><b>Settings</b></h1>
             <form method='post' action='options.php'>
@@ -77,13 +77,13 @@ class OGSettingsPage
     <?php }
 
     // HTML for Settings Section
-    function HTMLppOGSection1() { ?>
+    function HTMLppOGSection1(): void { ?>
         <p>Enter your license key to enable updates and support.</p>
     <?php }
 
     // HTML for License Key Field
-    function HTMLppOGLicenseKey() { ?>
+    function HTMLppOGLicenseKey(): void { ?>
         <input type='text' name='ppOG_license_key' value='<?php echo get_option('ppOG_license_key'); ?>'>
     <?php }
-    
+
 }
