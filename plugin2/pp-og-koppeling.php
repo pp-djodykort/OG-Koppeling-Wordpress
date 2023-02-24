@@ -13,5 +13,6 @@ include_once 'files/php/includes/functions.php';
 
 // ============ Declaring Variables ============
 $settingsPage = new OGSettingsPage();
+$customDB = new OGCustomDB();
 
 // ============ Start of Program ============
