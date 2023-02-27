@@ -35,6 +35,5 @@ function connectToDB($dbHostname, $dbUsername, $dbPassword, $dbDatabase="") {
 	catch ( PDOException $e ) {
 		die( "Connection failed: " . $e->getMessage() );
 	}
-	echo("Connection successful<br/>");
 	return ($conn);
 }

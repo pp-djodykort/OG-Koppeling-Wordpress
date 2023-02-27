@@ -11,6 +11,13 @@ class OGAuthentication {
 	    'object_data_provincies' => 'ppOG_dataProvincies',
 	    'object_data_wonen_queue' => 'ppOG_dataWonen',
     );
+
+    public $sourceDBAuth = array(
+	    "hostname" => "s244.webhostingserver.nl",
+	    "username" => "deb142504_pixelplus",
+	    "password" => "100%procentVeiligWachtwoord",
+	    "database" => "deb142504_pixelplus"
+    );
 }
 class OGSettingsPage
 {
@@ -108,95 +115,106 @@ class OGSettingsPage
 }
 
 class OGCustomDB {
+    // ==== Declaring Variables ====
+
+    // ==== Start of Class ====
     function __construct() {
         // ==== Declaring Variables ====
         $ogAuthentication = new OGAuthentication();
 
         // ==== Start of Function ====
-        foreach ($ogAuthentication->tableNames as $tableName) {
-            if (!$this->tableExits($tableName)) {
-                $this->createTable($tableName);
-            }
-        }
+	    foreach ($ogAuthentication->tableNames as $tableName_Source => $tableName_Target) {
+		    if (!$this->tableExits($tableName_Target)) {
+			    $this->createTable($tableName_Target);
+		    }
+	    }
     }
 
-    function tableExits($table_name): bool {
-        // ==== Declaring Variables ====
-        global $wpdb;
+	function tableExits($tableName_Target): bool {
+		// ==== Declaring Variables ====
+		global $wpdb;
+		$sql = "SHOW TABLES LIKE '".$tableName_Target."'";
+		$result = $wpdb->get_results($sql);
+		// ==== Start of Function ====
+		if (!empty($result)) {
+			return True;
+		}
+		else {
+			return False;
+		}
 
-        $sql = "SHOW TABLES LIKE '".$table_name."'";
-        $result = $wpdb->get_results($sql);
+	}
+    function createTable($tableName_Target): void {
+        // ======== Declaring Variables ========
+	    $ogAuthentication = new OGAuthentication();
+	    $tableName_Source = array_flip($ogAuthentication->tableNames)[$tableName_Target];
 
-        // ==== Start of Function ====
-        if (!empty($result)) {
-            return True;
-        }
-        else {
-            return False;
-        }
-    }
-
-    function createTable($table_name): bool {
-        // ==== Declaring Variables ====
-        global $wpdb;
-        $tries = 0;
-
-        $charset_collate = $wpdb->get_charset_collate();
-        $sql = "CREATE TABLE ".$table_name." (
-            name_ID int(5) AUTO_INCREMENT PRIMARY KEY,
-            name varchar(255) NOT NULL,
-            description varchar(255) NOT NULL
-        ) ".$charset_collate.";";
-
-        // ==== Start of Function ====
-        while (true) {
-	        $result = $wpdb->query($sql);
-	        if ($result) {
-                return True;
-	        }
-            else {
-                sleep(1);
-                $tries++;
-                if ($tries > 3) {
-                    return False;
-                }
-            }
-        }
-    }
-
-    function copyIntoTable(): void {
-	    // ======== Declaring Variables ========
-        $ogAuthentication = new OGAuthentication();
-	    // Source Database
-	    $dbHostname = 's244.webhostingserver.nl';
-	    $dbUsername = "deb142504_pixelplus";
-	    $dbPassword = "100%procentVeiligWachtwoord";
-	    $db_source  = 'deb142504_pixelplus';
-	    //Target Database
+	    // Source Database Connection
+	    $dbSourceLogin = $ogAuthentication->sourceDBAuth;
+	    $source_connection = connectToDB($dbSourceLogin['hostname'], $dbSourceLogin['username'], $dbSourceLogin['password'], $dbSourceLogin['database']);
+        //Target Database Connection
 	    global $wpdb;
-	    $db_target = 'admin_og-wp';
+        $db_target = 'admin_og-wp';
 
-	    // Create Source Connection
-	    $source_connection = connectToDB( $dbHostname, $dbUsername, $dbPassword);
-
-	    // ======== Start of Function ========
+        // ======== Start of Function ========
+        // Getting data structure from source database and echoing it
         try {
-            // Loop through all the tables
-            foreach ($ogAuthentication->tableNames as $tableName_Target => $tableName_Source) {
-                // Get the data from the source database
-                $sql = "SELECT * FROM ".$db_source.".".$tableName_Source;
-                $result = $source_connection->query($sql);
+            $sql = "SHOW CREATE TABLE ".$tableName_Source;
+            $result = $source_connection->query($sql)->FetchAll(PDO::FETCH_ASSOC);
 
-                // Loop through the data
-                while ($row = $result->fetch_assoc()) {
-                    echo $row['name']."<br>";
+            $sql = $result[0]['Create Table'];
+            $sql = str_replace($tableName_Source, $tableName_Target, $sql);
 
-                }
-            }
-
+            $wpdb->query($sql);
         }
         catch (Exception $e) {
             echo 'Caught exception: ',  $e->getMessage(), "\n";
+        }
+
+
+
+
+
+
+
+
+
+
+    }
+    function copyIntoTable(): void {
+	    // ======== Declaring Variables ========
+        $ogAuthentication = new OGAuthentication();
+
+        // Source Database Connection
+        $dbSourceLogin = $ogAuthentication->sourceDBAuth;
+        $source_connection = connectToDB($dbSourceLogin['hostname'], $dbSourceLogin['username'], $dbSourceLogin['password'], $dbSourceLogin['database']);
+	    //Target Database Connection
+	    global $wpdb;
+	    $db_target = 'admin_og-wp';
+
+	    // ======== Start of Function ========
+        foreach ($ogAuthentication->tableNames as $tableName_Source => $tableName_Target) {
+            // Getting data structure from source database and echoing it
+            try {
+                $sql = "SELECT * FROM ".$tableName_Source;
+                $result = $source_connection->query($sql)->FetchAll(PDO::FETCH_ASSOC);
+                // Inserting the data into the database
+                foreach ($result as $row) {
+                    $wpdb->insert($tableName_Target, $row);
+                }
+                // Updating the data in the database
+                $sql = "SELECT * FROM ".$tableName_Target;
+                $result = $wpdb->get_results($sql);
+                foreach ($result as $row) {
+                    $wpdb->update($tableName_Target, $row, array('id' => $row->id));
+                }
+                echo("Table ".$tableName_Target." has been synced.<br>");
+
+
+            }
+            catch (Exception $e) {
+                echo 'Caught exception: ',  $e->getMessage(), "\n";
+            }
         }
 
 
