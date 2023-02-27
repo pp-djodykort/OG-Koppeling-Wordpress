@@ -1,7 +1,17 @@
 <?php
 // ========== Imports =========
-include_once './functions.php';
+include_once 'functions.php';
 
+class OGAuthentication {
+    public $tableNames = array(
+	    'object_data_bog_queue' => 'ppOG_dataBOG',
+	    'object_data_bouwnummers_queue' => 'ppOG_dataBouwnummers',
+	    'object_data_bouwtypen_queue' => 'ppOG_dataBouwTypen',
+	    'object_data_nieuwbouw_queue' => 'ppOG_dataNieuwbouw',
+	    'object_data_provincies' => 'ppOG_dataProvincies',
+	    'object_data_wonen_queue' => 'ppOG_dataWonen',
+    );
+}
 class OGSettingsPage
 {
     function __construct()
@@ -56,8 +66,22 @@ class OGSettingsPage
 
 // ==== HTML ====
     // HTML for OG Dashboard
-    function htmlOGDashboard(): void { htmlHeader('OG Dashboard');?>
-        <h1>cyka</h1>
+    function htmlOGDashboard(): void {
+        // ======== Declaring Variables ========
+	    $customDB = new OGCustomDB();
+
+        // ======== Start of Function ========
+        if (isset($_POST['buttonSync'])) {
+            $customDB->copyIntoTable();
+        }
+        htmlHeader('OG Dashboard');?>
+        <div class="wrap">
+            <p>Welkom op de OG Dashboard pagina.</p>
+            <!-- Create a button for a function that I'm gonna declare later -->
+            <form method="post">
+                Sync all the database tables: <input type="submit" name="buttonSync" value="Sync Tables">
+            </form>
+        </div>
     <?php htmlFooter('OG Dashboard');}
 
     // HTML for Settings Page
@@ -86,17 +110,10 @@ class OGSettingsPage
 class OGCustomDB {
     function __construct() {
         // ==== Declaring Variables ====
-        $tableNames = array(
-            'ppOG_dataBOG',
-            'ppOG_dataBouwnummers',
-            'ppOG_dataBouwTypen',
-            'ppOG_dataNieuwbouw',
-            'ppOG_dataProvincies',
-            'ppOG_dataWonen',
-        );
+        $ogAuthentication = new OGAuthentication();
 
         // ==== Start of Function ====
-        foreach ($tableNames as $tableName) {
+        foreach ($ogAuthentication->tableNames as $tableName) {
             if (!$this->tableExits($tableName)) {
                 $this->createTable($tableName);
             }
@@ -132,7 +149,7 @@ class OGCustomDB {
         ) ".$charset_collate.";";
 
         // ==== Start of Function ====
-        while (True) {
+        while (true) {
 	        $result = $wpdb->query($sql);
 	        if ($result) {
                 return True;
@@ -147,15 +164,41 @@ class OGCustomDB {
         }
     }
 
-    function copyIntoTable() {
-        // ==== Declaring Variables ====
-        $database_source = 'admin_og_wp-feeds';
-        $database_target = 'admin_og_wp';
+    function copyIntoTable(): void {
+	    // ======== Declaring Variables ========
+        $ogAuthentication = new OGAuthentication();
+	    // Source Database
+	    $dbHostname = 's244.webhostingserver.nl';
+	    $dbUsername = "deb142504_pixelplus";
+	    $dbPassword = "100%procentVeiligWachtwoord";
+	    $db_source  = 'deb142504_pixelplus';
+	    //Target Database
+	    global $wpdb;
+	    $db_target = 'admin_og-wp';
 
-        $table_source = 'object_data_bog_queue';
-        $table_target = 'ppOG_dataBOG';
+	    // Create Source Connection
+	    $source_connection = connectToDB( $dbHostname, $dbUsername, $dbPassword);
 
-        // ==== Start of Function ====
+	    // ======== Start of Function ========
+        try {
+            // Loop through all the tables
+            foreach ($ogAuthentication->tableNames as $tableName_Target => $tableName_Source) {
+                // Get the data from the source database
+                $sql = "SELECT * FROM ".$db_source.".".$tableName_Source;
+                $result = $source_connection->query($sql);
+
+                // Loop through the data
+                while ($row = $result->fetch_assoc()) {
+                    echo $row['name']."<br>";
+
+                }
+            }
+
+        }
+        catch (Exception $e) {
+            echo 'Caught exception: ',  $e->getMessage(), "\n";
+        }
+
 
     }
 }

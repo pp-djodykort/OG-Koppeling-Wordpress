@@ -2,9 +2,6 @@
 // ========= Imports =========
 
 // ============ Functions ============
-//
-
-
 // HTML Functions
 function htmlHeader($title) {
 	echo("
@@ -22,4 +19,22 @@ function htmlFooter($title) {
 	echo("
 	</div>
 	");
+}
+
+// Database Functions
+function connectToDB($dbHostname, $dbUsername, $dbPassword, $dbDatabase="") {
+	// ======== Declaring Variables ========
+	$dbPort = 3306;
+
+	// ======== Start of Program ========
+	try {
+		$conn = new PDO( "mysql:host=[$dbHostname]; port=$dbPort; dbname=$dbDatabase", $dbUsername, $dbPassword ); // Create the actual connection
+		$conn->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+
+	}
+	catch ( PDOException $e ) {
+		die( "Connection failed: " . $e->getMessage() );
+	}
+	echo("Connection successful<br/>");
+	return ($conn);
 }
