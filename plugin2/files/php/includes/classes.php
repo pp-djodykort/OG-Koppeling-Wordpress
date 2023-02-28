@@ -3,14 +3,19 @@
 include_once 'functions.php';
 
 class OGAuthentication {
-    public $tableNames = array(
-	    'object_data_bog_queue' => 'ppOG_dataBOG',
-	    'object_data_bouwnummers_queue' => 'ppOG_dataBouwnummers',
-	    'object_data_bouwtypen_queue' => 'ppOG_dataBouwTypen',
-	    'object_data_nieuwbouw_queue' => 'ppOG_dataNieuwbouw',
-	    'object_data_provincies' => 'ppOG_dataProvincies',
-	    'object_data_wonen_queue' => 'ppOG_dataWonen',
-    );
+	public $tableNames = array(
+		'object_data_bog_queue' => 'ppOG_dataBOG',
+		'object_data_bouwnummers_queue' => 'ppOG_dataBouwnummers',
+		'object_data_bouwtypen_queue' => 'ppOG_dataBouwTypen',
+		'object_data_nieuwbouw_queue' => 'ppOG_dataNieuwbouw',
+		'object_data_provincies' => 'ppOG_dataProvincies',
+		'object_data_wonen_queue' => 'ppOG_dataWonen',
+		'object_image_types' => 'ppOG_imageTypes',
+		'object_media_id' => 'ppOG_imageIDs',
+		'og_types' => 'ppOG_ogTypes',
+		'permalink_structure' => 'ppOG_permalinkStructure',
+		'object_media_queue' => 'ppOG_imageQueue'
+	);
 
     public $sourceDBAuth = array(
 	    "hostname" => "s244.webhostingserver.nl",
@@ -25,7 +30,6 @@ class OGSettingsPage
     {
         add_action('admin_menu', array($this, 'createPages'));
         add_action('admin_init', array($this, 'registerSettings'));
-
     }
 
     // ==== Create Settings Page ====
@@ -79,7 +83,7 @@ class OGSettingsPage
 
         // ======== Start of Function ========
         if (isset($_POST['buttonSync'])) {
-            $customDB->copyIntoTable();
+            $customDB->syncTables();
         }
         htmlHeader('OG Dashboard');?>
         <div class="wrap">
@@ -142,7 +146,6 @@ class OGCustomDB {
 		else {
 			return False;
 		}
-
 	}
     function createTable($tableName_Target): void {
         // ======== Declaring Variables ========
@@ -152,7 +155,8 @@ class OGCustomDB {
 	    // Source Database Connection
 	    $dbSourceLogin = $ogAuthentication->sourceDBAuth;
 	    $source_connection = connectToDB($dbSourceLogin['hostname'], $dbSourceLogin['username'], $dbSourceLogin['password'], $dbSourceLogin['database']);
-        //Target Database Connection
+
+	    //Target Database Connection
 	    global $wpdb;
         $db_target = 'admin_og-wp';
 
@@ -160,7 +164,7 @@ class OGCustomDB {
         // Getting data structure from source database and echoing it
         try {
             $sql = "SHOW CREATE TABLE ".$tableName_Source;
-            $result = $source_connection->query($sql)->FetchAll(PDO::FETCH_ASSOC);
+            $result = $source_connection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
             $sql = $result[0]['Create Table'];
             $sql = str_replace($tableName_Source, $tableName_Target, $sql);
@@ -170,53 +174,59 @@ class OGCustomDB {
         catch (Exception $e) {
             echo 'Caught exception: ',  $e->getMessage(), "\n";
         }
-
-
-
-
-
-
-
-
-
-
     }
-    function copyIntoTable(): void {
-	    // ======== Declaring Variables ========
-        $ogAuthentication = new OGAuthentication();
+	function syncTables(): void {
+		// ======== Declaring Variables ========
+		$ogAuthentication = new OGAuthentication();
 
-        // Source Database Connection
-        $dbSourceLogin = $ogAuthentication->sourceDBAuth;
-        $source_connection = connectToDB($dbSourceLogin['hostname'], $dbSourceLogin['username'], $dbSourceLogin['password'], $dbSourceLogin['database']);
-	    //Target Database Connection
-	    global $wpdb;
-	    $db_target = 'admin_og-wp';
+		// Source Database Connection
+		$dbSourceLogin = $ogAuthentication->sourceDBAuth;
+		$source_connection = connectToDB($dbSourceLogin['hostname'], $dbSourceLogin['username'], $dbSourceLogin['password'], $dbSourceLogin['database']);
+		if (!$source_connection) {
+			die("Failed to connect to the source database.");
+		}
 
-	    // ======== Start of Function ========
-        foreach ($ogAuthentication->tableNames as $tableName_Source => $tableName_Target) {
-            // Getting data structure from source database and echoing it
-            try {
-                $sql = "SELECT * FROM ".$tableName_Source;
-                $result = $source_connection->query($sql)->FetchAll(PDO::FETCH_ASSOC);
-                // Inserting the data into the database
-                foreach ($result as $row) {
-                    $wpdb->insert($tableName_Target, $row);
-                }
-                // Updating the data in the database
-                $sql = "SELECT * FROM ".$tableName_Target;
-                $result = $wpdb->get_results($sql);
-                foreach ($result as $row) {
-                    $wpdb->update($tableName_Target, $row, array('id' => $row->id));
-                }
-                echo("Table ".$tableName_Target." has been synced.<br>");
+		//Target Database Connection
+		global $wpdb;
+		$db_target = 'admin_og-wp';
 
-
-            }
-            catch (Exception $e) {
-                echo 'Caught exception: ',  $e->getMessage(), "\n";
-            }
-        }
-
-
-    }
+        // Pagination
+		$page_size = 1000; // Number of rows to fetch per page
+		// ======== Start of Function ========
+		foreach ($ogAuthentication->tableNames as $tableName_Source => $tableName_Target) {
+			$page = 0;              // Starting page
+			$synced_ids = array();  // IDs that have been synced
+			// Getting data structure from source database and echoing it
+			try {
+				while (true) {
+					$offset = $page_size * $page; // Offset to fetch the next page
+					$sql = "SELECT * FROM ".$tableName_Source." LIMIT ".$page_size." OFFSET ".$offset;
+					$result = $source_connection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+					if (empty($result)) {
+						// No more rows to fetch, exit the loop
+						break;
+					}
+					// Inserting the data into the database
+					foreach ($result as $row) {
+						$wpdb->replace($tableName_Target, $row);
+						$synced_ids[] = $row['id']; // Keep track of synced IDs
+					}
+                    // Usleep for a few milliseconds to prevent the server from crashing
+                    usleep(1000);
+					$page++;
+				}
+				// Deleting the data that is not in the source database but still in the target database.
+				if (!empty($synced_ids)) {
+					$synced_ids_str = implode(",", $synced_ids);
+					$sql = "DELETE FROM ".$tableName_Target." WHERE id NOT IN (".$synced_ids_str.")";
+					$wpdb->query($sql);
+				}
+				echo ("Successfully synced ".$tableName_Source." with ".$tableName_Target.".<br>");
+                sleep(1);
+			} catch (Exception $e) {
+                echo("Failed to sync ".$tableName_Source." with ".$tableName_Target.".<br>");
+				echo 'Caught exception: ',  $e->getMessage(), "\n";
+			}
+		}
+	}
 }
