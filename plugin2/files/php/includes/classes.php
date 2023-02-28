@@ -90,7 +90,7 @@ class OGSettingsPage
             <p>Welkom op de OG Dashboard pagina.</p>
             <!-- Create a button for a function that I'm gonna declare later -->
             <form method="post">
-                Sync all the database tables: <input type="submit" name="buttonSync" value="Sync Tables">
+                Synchroniseer: <input type="submit" name="buttonSync" value="Al het aanbod">
             </form>
         </div>
     <?php htmlFooter('OG Dashboard');}
