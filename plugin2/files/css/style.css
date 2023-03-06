@@ -1,0 +1,29 @@
+/* Styling Template Header */
+header {
+    /* Positioning */
+    padding-top: 50px;
+}
+
+header:after {
+    content: "";
+    /* Positioning */
+    display: table;
+    clear: both;
+}
+
+header h1 {
+    /* Sizing */
+    font-size: 2rem;
+
+    /* Positioning */
+    margin-left: 20px;
+    vertical-align: middle;
+}
+/* End Styling Template Header */
+
+/* Styling OG Dashboard */
+.syncForm input {
+    /* Positioning */
+    margin-bottom: 10px;
+}
+/* End Styling OG Dashboard */

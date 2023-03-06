@@ -8,19 +8,17 @@ function htmlHeader($title): void {
 	echo("
 	<head>
 		<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
+		<link rel='stylesheet' href='".plugins_url('css/style.css', dirname(__DIR__))."'>
 	</head>
-
-	<div class='container'>
-		<div class='row show-grid'>
-            <div class='col-md-8'>
-            	<img src='".plugins_url('img/pixelplus-logo.jpg', dirname(__DIR__))."' alt='Pixelplus Logo' style='float: left; width: 75px;'>
-				<h1 style='font-size: 2rem; float: left;'><b>$title</b></h1>
-			</div>
-  			<div class='col-md-4'>
-  				<h2>Statistieken</h2>
-			</div>
+	<header>
+		<div class='container-fluid'>
+			<!-- Having the logo and title next to each other -->
+			<img width='75px' src='".plugins_url('img/pixelplus-logo.jpg', dirname(__DIR__))."' alt='Pixelplus Logo' style='float: left;'>
+		
+			<h1 style=''><b>$title</b></h1>
+			
 		</div>
-	</div>
+	</header>
 	");
 }
 
@@ -31,6 +29,20 @@ function htmlFooter($title): void {
 	</div>
 	");
 }
+
+function welcomeMessage(): void {
+	$welcomeMessage = "Welcome";
+	$wpUser = _wp_get_current_user();
+
+	if ($wpUser->user_firstname != "") {
+		$welcomeMessage .= " " . $wpUser->user_firstname;
+	}
+	else {
+		$welcomeMessage .= " " . $wpUser->user_login;
+	}
+	echo("<p>$welcomeMessage</p>");
+}
+
 
 // Database Functions
 function connectToDB($dbHostname, $dbUsername, $dbPassword, $dbDatabase="") {

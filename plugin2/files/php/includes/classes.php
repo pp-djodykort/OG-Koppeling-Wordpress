@@ -30,6 +30,7 @@ class OGSettingsPage
     {
         add_action('admin_menu', array($this, 'createPages'));
         add_action('admin_init', array($this, 'registerSettings'));
+
     }
 
     // ==== Create Settings Page ====
@@ -44,7 +45,7 @@ class OGSettingsPage
             'dashicons-plus-alt',
             100);
 
-        // Create Submenu Item with Settings HTML
+        // Create Submenu Item for the Settings with Settings HTML
         add_submenu_page(
             'pixelplus-og-plugin',
             'Pixelplus OG - Settings',
@@ -52,6 +53,15 @@ class OGSettingsPage
             'manage_options',
             'pixelplus-og-plugin-settings',
             array($this, 'htmlSettingPage'));
+
+        // Create Submenu Item for the Aanbod with Admin Aanbod HTML
+        add_submenu_page(
+            'pixelplus-og-plugin',
+            'Pixelplus OG - Aanbod',
+            'OG - Aanbod',
+            'manage_options',
+            'pixelplus-og-plugin-aanbod',
+            array($this, 'htmlAdminAanbod'));
     }
 
     // ==== Register Settings ====
@@ -75,6 +85,7 @@ class OGSettingsPage
         register_setting('ppOG', 'ppOG_license_key');
     }
 
+    // ==== Creating an extra post type for 3341111
 // ==== HTML ====
     // HTML for OG Dashboard
     function htmlOGDashboard(): void {
@@ -86,25 +97,40 @@ class OGSettingsPage
             $customDB->syncTables();
         }
         htmlHeader('OG Dashboard');?>
-        <div class="wrap">
-            <p>Welkom op de OG Dashboard pagina.</p>
-            <!-- Create a button for a function that I'm gonna declare later -->
-            <form method="post">
-                Synchroniseer: <input type="submit" name="buttonSync" value="Al het aanbod">
+        <div class='container-fluid'>
+            <?php welcomeMessage(); ?>
+
+            <form method="post" class='syncForm'>
+                <!-- Blue update buttons -->
+                Synchroniseer: <input type="submit" name="buttonSync" value="Al het aanbod"><br/>
+                Synchroniseer: <input type="submit" name="buttonSync" value="Wonen"><br/>
+                Synchroniseer: <input type="submit" name="buttonSync" value="BOG"><br/>
+                Synchroniseer: <input type="submit" name="buttonSync" value="Nieuwbouw"><br/>
+                Synchroniseer: <input type="submit" name="buttonSync" value="A&LV">
             </form>
         </div>
     <?php htmlFooter('OG Dashboard');}
 
     // HTML for Settings Page
     function htmlSettingPage(): void { htmlHeader('OG Settings'); ?>
-        <form method='post' action='options.php'>
-            <?php
-            settings_fields('ppOG');
-            do_settings_sections('pixelplus-og-plugin');
-            submit_button();
-            ?>
-        </form>
+        <div class='container-fluid'>
+	        <?php welcomeMessage(); ?>
+            <form method='post' action='options.php'>
+		        <?php
+		        settings_fields('ppOG');
+		        do_settings_sections('pixelplus-og-plugin');
+		        submit_button();
+		        ?>
+            </form>
+        </div>
     <?php htmlFooter('OG Settings');}
+
+	// HTML for OG Aanbod Page
+    function htmlAdminAanbod(): void { htmlHeader('OG Aanbod'); ?>
+        <div class='container-fluid'>
+	        <?php welcomeMessage(); ?>
+        </div>
+    <?php htmlFooter('OG Aanbod');}
 
     // HTML for Settings Section
     function HTMLppOGSection1(): void { ?>
