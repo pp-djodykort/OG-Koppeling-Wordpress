@@ -13,12 +13,14 @@ function htmlHeader($title): void {
 	<header>
 		<div class='container-fluid'>
 			<!-- Having the logo and title next to each other -->
-			<img width='75px' src='".plugins_url('img/pixelplus-logo.jpg', dirname(__DIR__))."' alt='Pixelplus Logo' style='float: left;'>
+			<img src='".plugins_url('img/pixelplus-logo.jpg', dirname(__DIR__))."' alt='Pixelplus Logo'>
 		
-			<h1 style=''><b>$title</b></h1>
-			
-		</div>
+            <div class='div-Header'>
+                <span class='floatLeft'><h1><b>$title</b></h1></span>
+                <span class='floatRight'><h5>".welcomeMessage()."</h5></span>
+            </div>
 	</header>
+	<hr/>
 	");
 }
 
@@ -30,17 +32,17 @@ function htmlFooter($title): void {
 	");
 }
 
-function welcomeMessage(): void {
-	$welcomeMessage = "Welcome";
+function welcomeMessage(): string {
+	$welcomeMessage = "Welkom";
 	$wpUser = _wp_get_current_user();
 
 	if ($wpUser->user_firstname != "") {
-		$welcomeMessage .= " " . $wpUser->user_firstname;
+		$welcomeMessage .= " ".$wpUser->user_firstname;
 	}
 	else {
-		$welcomeMessage .= " " . $wpUser->user_login;
+		$welcomeMessage .= " ".$wpUser->user_login;
 	}
-	echo("<p>$welcomeMessage</p>");
+	return $welcomeMessage;
 }
 
 

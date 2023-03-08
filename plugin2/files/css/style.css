@@ -1,29 +1,74 @@
+/* ===== Declaring Variables ===== */
+:root {
+    /* Img header vars */
+    --headerImgHeight: 75px;
+    --imgLastSyncBigHeight: 37px;
+}
+
+/* ===== Start of CSS ===== */
+/* Global Styling*/
+.float-left {
+    float: left;
+}
+.float-right {
+    float: right;
+}
+/* End Global Styling*/
+
 /* Styling Template Header */
 header {
     /* Positioning */
-    padding-top: 50px;
+    padding: 50px 0 20px 0;
 }
-
+header img{
+    /* Styling */
+    height: var(--headerImgHeight);
+    /* Positioning */
+    padding-right: 20px;
+    float: left;
+}
+.div-Header {
+    display: table;
+    width: 79vw;
+    height: var(--headerImgHeight);
+}
+.floatLeft {
+    /* Positioning */
+    vertical-align: middle;
+    text-align: left;
+    /* Styling */
+    display: table-cell;
+}
+.floatRight {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: right;
+}
 header:after {
     content: "";
     /* Positioning */
     display: table;
     clear: both;
 }
-
-header h1 {
-    /* Sizing */
-    font-size: 2rem;
-
-    /* Positioning */
-    margin-left: 20px;
-    vertical-align: middle;
-}
 /* End Styling Template Header */
 
+
 /* Styling OG Dashboard */
-.syncForm input {
+.divAllAanbod button {
+    /* Styling */
+    border: solid 1px black;
+    display: inline-block;
+    cursor: pointer;
+    /* Coloring */
+    color: white;
+    box-shadow: 5px 5px 5px 0 black;
     /* Positioning */
-    margin-bottom: 10px;
+    padding: 15px 32px;
+    margin: 4px 2px;
+    /* Sizing */
+    width: 92% !important;
+    /* Fonting */
+    text-decoration: none;
+    font-size: 30px;
 }
 /* End Styling OG Dashboard */

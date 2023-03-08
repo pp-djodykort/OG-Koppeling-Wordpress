@@ -16,13 +16,52 @@ class OGAuthentication {
 		'permalink_structure' => 'ppOG_permalinkStructure',
 		'object_media_queue' => 'ppOG_imageQueue'
 	);
-
     public $sourceDBAuth = array(
 	    "hostname" => "s244.webhostingserver.nl",
 	    "username" => "deb142504_pixelplus",
 	    "password" => "100%procentVeiligWachtwoord",
 	    "database" => "deb142504_pixelplus"
     );
+}
+
+class WPColorScheme {
+    public array $mainColors = array(
+        'light' => 3,
+        'modern' => 1,
+        'coffee' => 2,
+        'ectoplasm' => 2,
+        'midnight' => 3,
+        'ocean' => 2,
+        'sunrise' => 2,
+        '80s-kid' => 1,
+        'adderley' => 2,
+        'aubergine' => 3,
+        'blue' => 1,
+        'contrast-blue' => 0,
+        'cruise' => 3,
+        'flat' => 2,
+        'kirk' => 0,
+        'lawn' => 3,
+        'modern-evergreen' => 3,
+        'primary' => 3,
+        'seashore' => 3,
+        'vinyard' => 3
+    );
+    function returnColor(): string
+    {
+        // ======== Declaring Variables ========
+        global $_wp_admin_css_colors;
+        $WPColorScheme = get_user_option('admin_color');
+        $boolResult = false;
+
+        // ======== Start of Function ========
+        foreach ($this->mainColors as $key => $value) {
+            if ($key == $WPColorScheme) {
+                return $_wp_admin_css_colors[$WPColorScheme]->colors[$this->mainColors[$key]];
+            }
+        }
+        return $_wp_admin_css_colors['fresh']->colors[2];
+    }
 }
 class OGSettingsPage
 {
@@ -90,24 +129,46 @@ class OGSettingsPage
     // HTML for OG Dashboard
     function htmlOGDashboard(): void {
         // ======== Declaring Variables ========
+        // Classes
 	    $customDB = new OGCustomDB();
+        $wpColorScheme = new WPColorScheme();
+        // Colors
+        $buttonColor = $wpColorScheme->returnColor();
 
         // ======== Start of Function ========
         if (isset($_POST['buttonSync'])) {
             $customDB->syncTables();
         }
+
         htmlHeader('OG Dashboard');?>
         <div class='container-fluid'>
-            <?php welcomeMessage(); ?>
+            <div class='row'>
+                <div class='col' style='border-right: solid 1px black'>
+                    <h2 class='text-center'>Synchroniseer Aanbod</h2>
+                    <!-- ==== Button to sync the tables ==== -->
+                    <form method='post''>
+                        <div class='divAllAanbod clearfix'>
+                            <!-- Big Sync Button -->
+                            <button style='background-color: <?php echo($buttonColor) ?>' class='text-center text-justify'>
+                                Volledige aanbod<br/>
+                                synchroniseren
+                            </button>
+                            <!-- Last sync time -->
+                            <div class='mt-3 d-table'>
+                                <img class='float-left me-2' src='<?php echo(plugins_url('img/recent-logo.png', dirname(__DIR__))) ?>' width='37px'>
+                                <span class='text-center align-middle'>Laatste synchronisatie: vandaag 14.15</span>
+                            </div>
+                        </div>
 
-            <form method="post" class='syncForm'>
-                <!-- Blue update buttons -->
-                Synchroniseer: <input type="submit" name="buttonSync" value="Al het aanbod"><br/>
-                Synchroniseer: <input type="submit" name="buttonSync" value="Wonen"><br/>
-                Synchroniseer: <input type="submit" name="buttonSync" value="BOG"><br/>
-                Synchroniseer: <input type="submit" name="buttonSync" value="Nieuwbouw"><br/>
-                Synchroniseer: <input type="submit" name="buttonSync" value="A&LV">
-            </form>
+                    <!-- 4 Smaller Sync Buttons -->
+                    </form>
+                </div>
+
+                <div class='col'>
+                    <h2 class='text-center'>Statistieken</h2>
+
+                </div>
+            </div>
         </div>
     <?php htmlFooter('OG Dashboard');}
 
@@ -203,56 +264,11 @@ class OGCustomDB {
     }
 	function syncTables(): void {
 		// ======== Declaring Variables ========
-		$ogAuthentication = new OGAuthentication();
 
-		// Source Database Connection
-		$dbSourceLogin = $ogAuthentication->sourceDBAuth;
-		$source_connection = connectToDB($dbSourceLogin['hostname'], $dbSourceLogin['username'], $dbSourceLogin['password'], $dbSourceLogin['database']);
-		if (!$source_connection) {
-			die("Failed to connect to the source database.");
-		}
 
-		//Target Database Connection
-		global $wpdb;
-		$db_target = 'admin_og-wp';
-
-        // Pagination
-		$page_size = 1000; // Number of rows to fetch per page
 		// ======== Start of Function ========
-		foreach ($ogAuthentication->tableNames as $tableName_Source => $tableName_Target) {
-			$page = 0;              // Starting page
-			$synced_ids = array();  // IDs that have been synced
-			// Getting data structure from source database and echoing it
-			try {
-				while (true) {
-					$offset = $page_size * $page; // Offset to fetch the next page
-					$sql = "SELECT * FROM ".$tableName_Source." LIMIT ".$page_size." OFFSET ".$offset;
-					$result = $source_connection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-					if (empty($result)) {
-						// No more rows to fetch, exit the loop
-						break;
-					}
-					// Inserting the data into the database
-					foreach ($result as $row) {
-						$wpdb->replace($tableName_Target, $row);
-						$synced_ids[] = $row['id']; // Keep track of synced IDs
-					}
-                    // Usleep for a few milliseconds to prevent the server from crashing
-                    usleep(1000);
-					$page++;
-				}
-				// Deleting the data that is not in the source database but still in the target database.
-				if (!empty($synced_ids)) {
-					$synced_ids_str = implode(",", $synced_ids);
-					$sql = "DELETE FROM ".$tableName_Target." WHERE id NOT IN (".$synced_ids_str.")";
-					$wpdb->query($sql);
-				}
-				echo ("Successfully synced ".$tableName_Source." with ".$tableName_Target.".<br>");
-                sleep(1);
-			} catch (Exception $e) {
-                echo("Failed to sync ".$tableName_Source." with ".$tableName_Target.".<br>");
-				echo 'Caught exception: ',  $e->getMessage(), "\n";
-			}
-		}
+        echo('Syncing Tables'.PHP_EOL);
+
+
 	}
 }
