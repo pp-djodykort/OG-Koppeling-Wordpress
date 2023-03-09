@@ -23,7 +23,6 @@ class OGAuthentication {
 	    "database" => "deb142504_pixelplus"
     );
 }
-
 class WPColorScheme {
     public array $mainColors = array(
         'light' => 3,
@@ -69,38 +68,68 @@ class OGSettingsPage
     {
         add_action('admin_menu', array($this, 'createPages'));
         add_action('admin_init', array($this, 'registerSettings'));
-
     }
 
-    // ==== Create Settings Page ====
+    // ======== Create Settings Page ========
     function createPages(): void {
+        // ==== Items OG Admin ====
         // Create Menu Item with OG Dashboard HTML
         add_menu_page(
-            'Pixelplus OG - Dashboard',
-            'Pixelplus OG',
+            'OG - Admin Dashboard',
+            'OG Admin',
             'manage_options',
             'pixelplus-og-plugin',
-            array($this, 'htmlOGDashboard'),
+            array($this, 'htmlOGAdminDashboard'),
             'dashicons-plus-alt',
             100);
-
         // Create Submenu Item for the Settings with Settings HTML
         add_submenu_page(
             'pixelplus-og-plugin',
-            'Pixelplus OG - Settings',
+            'OG - Settings',
             'OG - Settings',
             'manage_options',
             'pixelplus-og-plugin-settings',
-            array($this, 'htmlSettingPage'));
+            array($this, 'htmlOGAdminSettings'));
 
-        // Create Submenu Item for the Aanbod with Admin Aanbod HTML
-        add_submenu_page(
-            'pixelplus-og-plugin',
-            'Pixelplus OG - Aanbod',
-            'OG - Aanbod',
+        // ==== Items OG Aanbod ====
+        // Create Menu Item with OG Aanbod HTML
+        add_menu_page(
+            'OG - Aanbod Dashboard',
+            'OG Aanbod',
             'manage_options',
             'pixelplus-og-plugin-aanbod',
-            array($this, 'htmlAdminAanbod'));
+            array($this, 'htmlOGAanbodDashboard'),
+            'dashicons-plus-alt',
+            40);
+        // Create 4 submenu custom post types
+        add_submenu_page(
+            'pixelplus-og-plugin-aanbod',
+            'OG - Wonen',
+            'OG - Wonen',
+            'manage_options',
+            'pixelplus-og-plugin-aanbod-wonen',
+            array($this, 'htmlOGAanbodWonen'));
+        add_submenu_page(
+            'pixelplus-og-plugin-aanbod',
+            'OG - BOG',
+            'OG - BOG',
+            'manage_options',
+            'pixelplus-og-plugin-aanbod-bog',
+            array($this, 'htmlOGAanbodBOG'));
+        add_submenu_page(
+            'pixelplus-og-plugin-aanbod',
+            'OG - Nieuwbouw',
+            'OG - Nieuwbouw',
+            'manage_options',
+            'pixelplus-og-plugin-aanbod-nieuwbouw',
+            array($this, 'htmlOGAanbodNieuwbouw'));
+        add_submenu_page(
+            'pixelplus-og-plugin-aanbod',
+            'OG - A&LV',
+            'OG - A&LV',
+            'manage_options',
+            'pixelplus-og-plugin-aanbod-alv',
+            array($this, 'htmlOGAanbodALV'));
     }
 
     // ==== Register Settings ====
@@ -124,85 +153,42 @@ class OGSettingsPage
         register_setting('ppOG', 'ppOG_license_key');
     }
 
-    // ==== Creating an extra post type for 3341111
-// ==== HTML ====
-    // HTML for OG Dashboard
-    function htmlOGDashboard(): void {
-        // ======== Declaring Variables ========
-        // Classes
-	    $customDB = new OGCustomDB();
-        $wpColorScheme = new WPColorScheme();
-        // Colors
-        $buttonColor = $wpColorScheme->returnColor();
-
-        // ======== Start of Function ========
-        if (isset($_POST['buttonSync'])) {
-            $customDB->syncTables();
-        }
-
-        htmlHeader('OG Dashboard');?>
-        <div class='container-fluid'>
-            <div class='row'>
-                <div class='col' style='border-right: solid 1px black'>
-                    <h2 class='text-center'>Synchroniseer Aanbod</h2>
-                    <!-- ==== Button to sync the tables ==== -->
-                    <form method='post''>
-                        <div class='divAllAanbod clearfix'>
-                            <!-- Big Sync Button -->
-                            <button style='background-color: <?php echo($buttonColor) ?>' class='text-center text-justify'>
-                                Volledige aanbod<br/>
-                                synchroniseren
-                            </button>
-                            <!-- Last sync time -->
-                            <div class='mt-3 d-table'>
-                                <img class='float-left me-2' src='<?php echo(plugins_url('img/recent-logo.png', dirname(__DIR__))) ?>' width='37px'>
-                                <span class='text-center align-middle'>Laatste synchronisatie: vandaag 14.15</span>
-                            </div>
-                        </div>
-
-                    <!-- 4 Smaller Sync Buttons -->
-                    </form>
-                </div>
-
-                <div class='col'>
-                    <h2 class='text-center'>Statistieken</h2>
-
-                </div>
-            </div>
-        </div>
-    <?php htmlFooter('OG Dashboard');}
-
-    // HTML for Settings Page
-    function htmlSettingPage(): void { htmlHeader('OG Settings'); ?>
-        <div class='container-fluid'>
-	        <?php welcomeMessage(); ?>
-            <form method='post' action='options.php'>
-		        <?php
-		        settings_fields('ppOG');
-		        do_settings_sections('pixelplus-og-plugin');
-		        submit_button();
-		        ?>
-            </form>
-        </div>
-    <?php htmlFooter('OG Settings');}
-
-	// HTML for OG Aanbod Page
-    function htmlAdminAanbod(): void { htmlHeader('OG Aanbod'); ?>
-        <div class='container-fluid'>
-	        <?php welcomeMessage(); ?>
-        </div>
-    <?php htmlFooter('OG Aanbod');}
-
-    // HTML for Settings Section
-    function HTMLppOGSection1(): void { ?>
-        <p>Enter your license key to enable updates and support.</p>
-    <?php }
-
-    // HTML for License Key Field
-    function HTMLppOGLicenseKey(): void { ?>
-        <input type='text' name='ppOG_license_key' value='<?php echo get_option('ppOG_license_key'); ?>'>
-    <?php }
-
+    // ==== HTML ====
+    // OG Admin
+    function HTMLOGAdminDashboard(): void { htmlHeader('OG Admin Dashboard'); ?>
+        <h1>test</h1>
+    <?php htmlFooter('OG Admin Dashboard');}
+    function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings'); ?>
+        <form method="post" action="options.php">
+            <?php settings_fields('ppOG'); ?>
+            <?php do_settings_sections('pixelplus-og-plugin'); ?>
+            <?php submit_button(); ?>
+        </form>
+    <?php htmlFooter('OG Admin Settings');}
+        // Settings Section
+        function HTMLppOGSection1(): void { ?>
+            <p>Enter your license key to enable updates and support.</p>
+        <?php }
+        // Settings Field
+        function HTMLppOGLicenseKey(): void { ?>
+            <input type='text' name='ppOG_license_key' value='<?php echo get_option('ppOG_license_key'); ?>'>
+        <?php }
+    // OG Aanbod
+    function HTMLOGAanbodDashboard(): void { htmlHeader('OG Aanbod Dashboard'); ?>
+            <h1>test</h1>
+        <?php htmlFooter('OG Aanbod Dashboard');}
+    function HTMLOGAanbodWonen(): void { htmlHeader('OG Wonen'); ?>
+        <h1>test</h1>
+    <?php htmlFooter('OG Aanbod Wonen');}
+    function HTMLOGAanbodBOG(): void { htmlHeader('OG BOG'); ?>
+        <h1>test</h1>
+    <?php htmlFooter('OG Aanbod BOG');}
+    function HTMLOGAanbodNieuwbouw(): void { htmlHeader('OG Nieuwbouw'); ?>
+        <h1>test</h1>
+    <?php htmlFooter('OG Nieuwbouw');}
+    function HTMLOGAanbodALV(): void { htmlHeader('OG Aanbod A&LV'); ?>
+        <h1>test</h1>
+    <?php htmlFooter('OG Aanbod A&LV');}
 }
 
 class OGCustomDB {
