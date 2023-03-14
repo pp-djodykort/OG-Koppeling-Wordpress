@@ -4,16 +4,41 @@ include_once 'functions.php';
 
 // =========== Data Classes ===========
 class OGSettingsData {
-    public $settings = array(
-        /* Option group */ 'ppOGSettingsGroup' => array(/* Option name */'ggOGSettings' => array(
-            // Section 1 (Licensing)
-            /* SectionID */'ppOGSectionLicence' => array(/* Section Title */ 'Licentie' => array(
-                // Setting 1
-                /* settingFieldID */'ppOGSettingLicenceKey' => /* settingFieldTitle */ 'Licentie sleutel')
+    // ============ Declare Variables ============
+    public $adminSettings = array(
+        // Settings 1
+        /* Option Group= */ 'ppOGAdminOptions' => array(
+            // General information
+            'settingPageSlug' => 'pixelplus-og-plugin-settings',
+            // Sections
+            'sections' => array(
+                // Section 1
+                /* Section Title= */'Licentie' => array(
+                    'sectionID' => 'ppOGSectionLicence',
+                    'sectionCallback' => 'htmlLicenceSection',
+                    // Fields
+                    'fields' => array(
+                        // Field 1
+                        /* Setting Field Title= */'Licentie Sleutel' => array(
+                            'fieldID' => 'ppOGLicenceKey',
+                            'fieldCallback' => 'htmlLicenceKeyField',
+                        ),
+                    )
+
+                )
             )
-        )
-    ));
-    }
+        ),
+    );
+
+    // ============ HTML Functions ============
+    function htmlLicenceSection(): void { ?>
+        <p>Settings for the OG Plugin</p>
+    <?php }
+    // OG Admin Settings Field
+    function htmlLicenceKeyField(): void { ?>
+        <input type="text" name="ppOGLicenceKey" value="<?php echo esc_attr(get_option('ppOGLicenceKey')); ?>" />
+    <?php }
+}
 class OGAuthentication {
     public $tableNames = array(
         'object_data_bog_queue' => 'ppOG_dataBOG',
@@ -98,7 +123,7 @@ class OGActivationAndDeactivation {
 
 // ====== Excecuted every time the plugin is loaded ======
 // Settings Page
-class OGSettingsPage
+class OGPages
 {
     function __construct()
     {
@@ -126,7 +151,6 @@ class OGSettingsPage
             'manage_options',
             'pixelplus-og-plugin-settings',
             array($this, 'htmlOGAdminSettings'));
-
         // ==== Items OG Aanbod ====
         // Create Menu Item with OG Aanbod HTML
         add_menu_page(
@@ -171,29 +195,39 @@ class OGSettingsPage
     function registerSettings(): void {
         // ==== Vars ====
         $settings = new OGSettingsData();
-        $settingsPageSlug = 'pixelplus-og-plugin-settings';
 
         // ==== Start of Function ====
-        // Register Settings Section
-        add_settings_section(
-            'ppOG_section1',
-            'Licensing',
-            array($this, 'HTMLppOGSection1'),
-            'pixelplus-og-plugin');
-        // Register Settings Field
-        add_settings_field(
-            'ppOG_license_key',
-            'License Key',
-            array($this, 'HTMLppOGLicenseKey'),
-            'pixelplus-og-plugin',
-            'ppOG_section1');
-
-        // Register Settings
-        register_setting('ppOG', 'ppOG_license_key');
-
+        // Setting sections and use the OGSettingsData adminSettings data
+        foreach($settings->adminSettings as $optionGroup => $optionArray) {
+            foreach ($optionArray['sections'] as $sectionTitle => $sectionArray) {
+                // Creating the Section
+                add_settings_section(
+                    $sectionArray['sectionID'],
+                    $sectionTitle,
+                    array($settings, $sectionArray['sectionCallback']),
+                    $optionArray['settingPageSlug'],
+                );
+                foreach ($sectionArray['fields'] as $fieldTitle => $fieldArray) {
+                    // Creating the Field
+                    add_settings_field(
+                        $fieldArray['fieldID'],
+                        $fieldTitle,
+                        array($settings, $fieldArray['fieldCallback']),
+                        $optionArray['settingPageSlug'],
+                        $sectionArray['sectionID'],
+                    );
+                    // Registering the Field
+                    register_setting($optionGroup, $fieldArray['fieldID']);
+                }
+            }
+        }
     }
 
-    // ==== HTML ====
+    // ============ Custom Post Types ============
+    // Creating the Custom Post Types under the OG Aanbod Menu Submenus that are created in the createPages function
+    // ==== Wonen ====
+
+    // ============ HTML ============
     // OG Admin
     function HTMLOGAdminDashboard(): void {
         // ======== Declaring Variables ========
@@ -238,21 +272,14 @@ class OGSettingsPage
             </div>
         </div>
         <?php htmlFooter('OG Admin Dashboard');}
+    // OG Admin Settings
     function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings'); ?>
         <form method="post" action="options.php">
-            <?php settings_fields('ppOG'); ?>
-            <?php do_settings_sections('pixelplus-og-plugin'); ?>
+            <?php settings_fields('ppOGAdminOptions'); ?>
+            <?php do_settings_sections('pixelplus-og-plugin-settings'); ?>
             <?php submit_button(); ?>
         </form>
     <?php htmlFooter('OG Admin Settings');}
-        // Settings Section
-        function HTMLppOGSection1(): void { ?>
-            <p>Enter your license key to enable updates and support.</p>
-        <?php }
-        // Settings Field
-        function HTMLppOGLicenseKey(): void { ?>
-            <input type='text' name='ppOG_license_key' value='<?php echo get_option('ppOG_license_key'); ?>'>
-        <?php }
     // OG Aanbod
     function HTMLOGAanbodDashboard(): void { htmlHeader('OG Aanbod Dashboard'); ?>
 
@@ -270,7 +297,6 @@ class OGSettingsPage
         <h1>test</h1>
     <?php htmlFooter('OG Aanbod A&LV');}
 }
-
 
 class OGCustomDB {
     // ==== Declaring Variables ====
