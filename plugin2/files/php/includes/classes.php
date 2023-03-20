@@ -12,17 +12,17 @@ class OGSettingsData {
             'settingPageSlug' => 'pixelplus-og-plugin-settings',
             // Sections
             'sections' => array(
-                // Section 1
+                // Section 1 - Licentie section
                 /* Section Title= */'Licentie' => array(
                     'sectionID' => 'ppOGSectionLicence',
                     'sectionCallback' => 'htmlLicenceSection',
                     // Fields
                     'fields' => array(
-                        // Field 1
+                        // Field 1 - Licentie sleutel
                         /* Setting Field Title= */'Licentie Sleutel' => array(
                             'fieldID' => 'ppOGLicenceKey',
                             'fieldCallback' => 'htmlLicenceKeyField',
-                        ),
+                        )
                     )
 
                 )
@@ -31,13 +31,18 @@ class OGSettingsData {
     );
 
     // ============ HTML Functions ============
+    // Sections
     function htmlLicenceSection(): void { ?>
         <p>Settings for the OG Plugin</p>
     <?php }
-    // OG Admin Settings Field
+    // Fields
     function htmlLicenceKeyField(): void { ?>
         <input type="text" name="ppOGLicenceKey" value="<?php echo esc_attr(get_option('ppOGLicenceKey')); ?>" />
     <?php }
+}
+class OGPostTypeData {
+    public $postTypes = array(
+    );
 }
 class OGAuthentication {
     public $tableNames = array(
@@ -122,7 +127,7 @@ class OGActivationAndDeactivation {
 }
 
 // ====== Excecuted every time the plugin is loaded ======
-// Settings Page
+// Creating Pages
 class OGPages
 {
     function __construct()
@@ -133,60 +138,78 @@ class OGPages
 
     // ======== Create Settings Page ========
     function createPages(): void {
+        // ======= Declaring Variables =======
+
         // ==== Items OG Admin ====
         // Create Menu Item with OG Dashboard HTML
         add_menu_page(
-            'OG - Admin Dashboard',
+            'Admin Dashboard',
             'OG Admin',
             'manage_options',
             'pixelplus-og-plugin',
             array($this, 'htmlOGAdminDashboard'),
             'dashicons-plus-alt',
             100);
+        // Changing the name of the first submenu item by creating a submenu item with the same name
+        add_submenu_page(
+            'pixelplus-og-plugin',
+            'Admin Dashboard',
+            'Dashboard',
+            'manage_options',
+            'pixelplus-og-plugin',
+            array($this, 'htmlOGAdminDashboard'));
         // Create Submenu Item for the Settings with Settings HTML
         add_submenu_page(
             'pixelplus-og-plugin',
-            'OG - Settings',
-            'OG - Settings',
+            'Settings',
+            'Settings',
             'manage_options',
             'pixelplus-og-plugin-settings',
             array($this, 'htmlOGAdminSettings'));
         // ==== Items OG Aanbod ====
         // Create Menu Item with OG Aanbod HTML
         add_menu_page(
-            'OG - Aanbod Dashboard',
+            'Aanbod Dashboard',
             'OG Aanbod',
             'manage_options',
             'pixelplus-og-plugin-aanbod',
             array($this, 'htmlOGAanbodDashboard'),
             'dashicons-plus-alt',
             40);
+        // Changing the name of the first submenu item by creating a submenu item with the same name
+        add_submenu_page(
+            'pixelplus-og-plugin-aanbod',
+            'Aanbod Dashboard',
+            'Dashboard',
+            'manage_options',
+            'pixelplus-og-plugin-aanbod',
+            array($this, 'htmlOGAanbodDashboard'));
         // Create 4 submenu custom post types
         add_submenu_page(
             'pixelplus-og-plugin-aanbod',
-            'OG - Wonen',
-            'OG - Wonen',
+            'Wonen',
+            'Wonen',
             'manage_options',
             'pixelplus-og-plugin-aanbod-wonen',
             array($this, 'htmlOGAanbodWonen'));
         add_submenu_page(
             'pixelplus-og-plugin-aanbod',
-            'OG - BOG',
-            'OG - BOG',
+            'BOG',
+            'BOG',
             'manage_options',
             'pixelplus-og-plugin-aanbod-bog',
             array($this, 'htmlOGAanbodBOG'));
         add_submenu_page(
             'pixelplus-og-plugin-aanbod',
-            'OG - Nieuwbouw',
-            'OG - Nieuwbouw',
+            'Nieuwbouw',
+            'Nieuwbouw',
             'manage_options',
             'pixelplus-og-plugin-aanbod-nieuwbouw',
             array($this, 'htmlOGAanbodNieuwbouw'));
         add_submenu_page(
             'pixelplus-og-plugin-aanbod',
-            'OG - A&LV',
-            'OG - A&LV',
+            'A&LV',
+            'A&LV',
             'manage_options',
             'pixelplus-og-plugin-aanbod-alv',
             array($this, 'htmlOGAanbodALV'));
@@ -222,10 +245,6 @@ class OGPages
             }
         }
     }
-
-    // ============ Custom Post Types ============
-    // Creating the Custom Post Types under the OG Aanbod Menu Submenus that are created in the createPages function
-    // ==== Wonen ====
 
     // ============ HTML ============
     // OG Admin
@@ -296,6 +315,77 @@ class OGPages
     function HTMLOGAanbodALV(): void { htmlHeader('OG Aanbod A&LV'); ?>
         <h1>test</h1>
     <?php htmlFooter('OG Aanbod A&LV');}
+}
+// Creating Custom Post types
+class OGPostTypes {
+    function __construct()
+    {
+        add_action('init', array($this, 'createPostTypes'));
+//        add_action('init', array($this, 'insert_og_wonen_objects'));
+    }
+
+    // Functions
+    function createPostTypes() {
+        // ==== Declaring Variables ====
+        $postTypes = new OGPostTypeData();
+
+        // ==== Start of Function ====
+        $labels = array(
+            'name' => 'OG Wonen Objects',
+            'singular_name' => 'OG Wonen Object',
+            'add_new' => 'Add New',
+            'add_new_item' => 'Add New OG Wonen Object',
+            'edit_item' => 'Edit OG Wonen Object',
+            'new_item' => 'New OG Wonen Object',
+            'view_item' => 'View OG Wonen Object',
+            'search_items' => 'Search OG Wonen Objects',
+            'not_found' => 'No OG Wonen Objects found',
+            'not_found_in_trash' => 'No OG Wonen Objects found in Trash',
+            'parent_item_colon' => '',
+            'menu_name' => 'OG Wonen Objects'
+        );
+
+        $args = array(
+            'labels' => $labels,
+            'public' => true,
+            'has_archive' => true,
+            'publicly_queryable' => true,
+            'query_var' => true,
+            'rewrite' => array('slug' => 'og-wonen-object'),
+            'capability_type' => 'post',
+            'hierarchical' => false,
+            'menu_position' => null,
+            'supports' => array('title', 'editor', 'thumbnail', 'custom-fields'),
+            'taxonomies' => array()
+        );
+
+        register_post_type('og-wonen-object', $args);
+    }
+    function insert_og_wonen_objects() {
+        global $wpdb;
+        $results = $wpdb->get_results("SELECT * FROM tbl_OG_wonen");
+
+        foreach ($results as $result) {
+            $post = array(
+                'post_title' => $result->object_ObjectCode,
+                'post_status' => 'publish',
+                'post_type' => 'og-wonen-object'
+            );
+
+            $post_id = wp_insert_post($post);
+
+            if ($post_id) {
+                add_post_meta($post_id, 'id_provincies', $result->id_provincies);
+                add_post_meta($post_id, 'datum_toegevoegd', $result->datum_toegevoegd);
+                add_post_meta($post_id, 'toegevoegd_door', $result->toegevoegd_door);
+                add_post_meta($post_id, 'datum_gewijzigd', $result->datum_gewijzigd);
+                add_post_meta($post_id, 'gewijzigd_door', $result->gewijzigd_door);
+                add_post_meta($post_id, 'object_ObjectCode', $result->object_ObjectCode);
+            }
+        }
+    }
+
+
 }
 
 class OGCustomDB {
