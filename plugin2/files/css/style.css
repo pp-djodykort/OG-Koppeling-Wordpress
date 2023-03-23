@@ -54,21 +54,70 @@ header:after {
 
 
 /* Styling OG Dashboard */
+/* Styling the button to kinda looks like a wordpress button*/
 .divAllAanbod button {
     /* Styling */
-    border: solid 1px black;
-    display: inline-block;
+    color: #fff;
     cursor: pointer;
-    /* Coloring */
-    color: white;
-    box-shadow: 5px 5px 5px 0 black;
     /* Positioning */
-    padding: 15px 32px;
-    margin: 4px 2px;
+    margin: 0 0 0 10px;
+    padding: 5px 10px;
     /* Sizing */
-    width: 92% !important;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    width: 30% !important;
     /* Fonting */
     text-decoration: none;
-    font-size: 30px;
+    text-shadow: none;
+    box-shadow: none;
+    font-size: 20px;
+    outline: none;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -webkit-appearance: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
+.divSmallAanbod button {
+    /* Styling */
+    color: black;
+    background-color: white;
+    cursor: pointer;
+    /* Positioning */
+    padding: 5px 10px;
+    /* Sizing */
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    width: 17.5% !important;
+    /* Fonting */
+    text-decoration: none;
+    text-shadow: none;
+    box-shadow: none;
+    font-size: 20px;
+    outline: none;
+    white-space: nowrap;
+    vertical-align: middle;
+    -webkit-appearance: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.divSmallAanbod img {
+    float: left;
+}
+.divSmallAanbod span {
+    text-align: center;
+}
+.divSmallAanbod div span {
+    font-size: 15px;
+}
+/* Doing the same div picture in button thing as I did in the header */
+
+
 /* End Styling OG Dashboard */
