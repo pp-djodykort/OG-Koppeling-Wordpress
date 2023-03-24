@@ -4,13 +4,6 @@ include_once 'functions.php';
 
 // ==== Activation and Deactivation ====
 class OGActivationAndDeactivation {
-    // ======== Construct ========
-	function __construct() {
-		// Activation
-		register_activation_hook(__FILE__, array($this, 'activate'));
-		// Deactivation
-		register_deactivation_hook(__FILE__, array($this, 'deactivate'));
-	}
 	// ======== Activation ========
 	function activate() {
 	}
@@ -61,7 +54,9 @@ class OGSettingsData {
                         )
                     )
                 )
-            )
+            ),
+            // Backend
+
         ),
     );
 
@@ -250,7 +245,6 @@ class WPColorScheme {
         return $_wp_admin_css_colors['fresh']->colors[2];
     }
 }
-
 // ====== Excecuted every time the plugin is loaded ======
 // Creating Pages
 class OGPages
@@ -320,6 +314,7 @@ class OGPages
         // ==== Start of Function ====
         // Setting sections and use the OGSettingsData adminSettings data
         foreach($settings->adminSettings as $optionGroup => $optionArray) {
+            // Settings for on settings page
             foreach ($optionArray['sections'] as $sectionTitle => $sectionArray) {
                 // Creating the Section
                 add_settings_section(
@@ -341,6 +336,9 @@ class OGPages
                     register_setting($optionGroup, $fieldArray['fieldID']);
                 }
             }
+
+            // Settings for backend registration
+
         }
     }
 
