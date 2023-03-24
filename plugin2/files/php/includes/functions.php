@@ -45,20 +45,9 @@ function welcomeMessage(): string {
 	return $welcomeMessage;
 }
 
-
-// Database Functions
-function connectToDB($dbHostname, $dbUsername, $dbPassword, $dbDatabase="") {
-	// ======== Declaring Variables ========
-	$dbPort = 3306;
-
-	// ======== Start of Program ========
-	try {
-		$conn = new PDO( "mysql:host=[$dbHostname]; port=$dbPort; dbname=$dbDatabase", $dbUsername, $dbPassword ); // Create the actual connection
-		$conn->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-
-	}
-	catch ( PDOException $e ) {
-		die( "Connection failed: " . $e->getMessage() );
-	}
-	return ($conn);
+// Normal functions
+function getLoadTime(): string {
+	// tell me how much time this took
+	$time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
+	return "This page took $time seconds to load.";
 }

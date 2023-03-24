@@ -14,6 +14,7 @@ include_once 'files/php/includes/functions.php';
 
 // ============ Declaring Variables ============
 $activateAndDeactivate = new OGActivationAndDeactivation();
+$yes = new OGPostTypes();
 
 $settingsPage = new OGPages();
 

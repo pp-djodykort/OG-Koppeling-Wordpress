@@ -2,6 +2,42 @@
 // ========== Imports =========
 include_once 'functions.php';
 
+// ==== Activation and Deactivation ====
+class OGActivationAndDeactivation {
+    // ======== Construct ========
+	function __construct() {
+		// Activation
+		register_activation_hook(__FILE__, array($this, 'activate'));
+		// Deactivation
+		register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+	}
+	// ======== Activation ========
+	function activate() {
+	}
+	// ======== Deactivation ========
+	function deactivate()
+	{
+		$this->deletePostType();
+	}
+
+	// ============ Functions ============
+	function deletePostType() {
+		// ==== Vars ====
+		$postTypeData = new OGPostTypeData();
+        global $wpdb;
+        $postTypes = $postTypeData->customPostTypes;
+
+        // ==== Start of Function ====
+		foreach ($postTypes as $postType => $postTypeArgs) {
+            // Check if post type exists
+            if (post_type_exists($postType)) {
+                // Delete post type
+                unregister_post_type($postType);
+            }
+        }
+	}
+}
+
 // =========== Data Classes ===========
 class OGSettingsData {
     // ============ Declare Variables ============
@@ -24,7 +60,6 @@ class OGSettingsData {
                             'fieldCallback' => 'htmlLicenceKeyField',
                         )
                     )
-
                 )
             )
         ),
@@ -44,110 +79,136 @@ class OGPostTypeData {
     // Wonen, BOG, Nieuwbouw en A&LV
     public $customPostTypes = array(
         // Post Type 1
-        /* Menu name */'Wonen' => array(
-            'post_type' => 'og-wonen-object',
-            'post_type_labels' => array(
-                'name' => 'OG Wonen Objecten',
-                'singular_name' => 'OG Wonen Object',
-                'add_new' => 'Nieuwe toevoegen',
-                'add_new_item' => 'Nieuw OG Wonen Object toevoegen',
-                'edit_item' => 'OG Wonen Object bewerken',
-                'new_item' => 'Nieuw OG Wonen Object',
-                'view_item' => 'Bekijk OG Wonen Object',
-                'search_items' => 'Zoek naar OG Wonen Objecten',
-                'not_found' => 'Geen OG Wonen Objecten gevonden',
-                'not_found_in_trash' => 'Geen OG Wonen Objecten gevonden in de prullenbak',
-                'parent_item_colon' => '',
-                'menu_name' => 'Wonen'
-            ),
+        /* post_type */'og-wonen' => array(
             'post_type_args' => array(
-                'public' => true,
-                'has_archive' => true,
-                'rewrite' => array('slug' => 'wonen'),
-                'menu_icon' => 'dashicons-admin-home',
-                'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'taxonomies' => array('category', 'post_tag')
+                'labels' => array(
+	                'name' => 'OG Wonen Objecten',
+	                'singular_name' => 'OG Wonen Object',
+	                'add_new' => 'Nieuwe toevoegen',
+	                'add_new_item' => 'Nieuw OG Wonen Object toevoegen',
+	                'edit_item' => 'OG Wonen Object bewerken',
+	                'new_item' => 'Nieuw OG Wonen Object',
+	                'view_item' => 'Bekijk OG Wonen Object',
+	                'search_items' => 'Zoek naar OG Wonen Objecten',
+	                'not_found' => 'Geen OG Wonen Objecten gevonden',
+	                'not_found_in_trash' => 'Geen OG Wonen Objecten gevonden in de prullenbak',
+	                'parent_item_colon' => '',
+	                'menu_name' => 'Wonen'
+                ),
+                'post_type_meta' => array(
+                    'meta_box_title' => 'OG Wonen Object',
+                    'meta_box_id' => 'og-wonen-object',
+                    'meta_box_context' => 'normal',
+                    'meta_box_priority' => 'high',
+                    'meta_box_fields' => array(
+                        'OG Wonen Object' => array(
+                            'type' => 'text',
+                            'id' => 'og-wonen-object',
+                            'name' => 'og-wonen-object',
+                            'label' => 'OG Wonen Object',
+                            'placeholder' => 'OG Wonen Object',
+                            'description' => 'OG Wonen Object',
+                            'value' => '',
+                            'required' => true
+                        )
+                    )
+                ),
+	            'public' => true,
+                'seperate_table' => true,
+	            'has_archive' => true,
+	            'publicly_queryable' => true,
+	            'query_var' => true,
+	            'capability_type' => 'post',
+	            'hierarchical' => false,
+	            'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+	            'show_in_menu' => 'edit.php?post_type=og-wonen-object',
+	            'taxonomies' => array('category', 'post_tag')
             )
         ),
         // Post Type 2
-        /* Menu name */'BOG' => array(
-            'post_type' => 'og-bog-object',
-            'post_type_labels' => array(
-                'name' => 'OG BOG Objecten',
-                'singular_name' => 'OG BOG Object',
-                'add_new' => 'Nieuwe toevoegen',
-                'add_new_item' => 'Nieuw OG BOG Object toevoegen',
-                'edit_item' => 'OG BOG Object bewerken',
-                'new_item' => 'Nieuw OG BOG Object',
-                'view_item' => 'Bekijk OG BOG Object',
-                'search_items' => 'Zoek naar OG BOG Objecten',
-                'not_found' => 'Geen OG BOG Objecten gevonden',
-                'not_found_in_trash' => 'Geen OG BOG Objecten gevonden in de prullenbak',
-                'parent_item_colon' => '',
-                'menu_name' => 'BOG'
-            ),
+        /* post_type */'og-bog' => array(
             'post_type_args' => array(
+                'labels' => array(
+                    'name' => 'OG BOG Objecten',
+                    'singular_name' => 'OG BOG Object',
+                    'add_new' => 'Nieuwe toevoegen',
+                    'add_new_item' => 'Nieuw OG BOG Object toevoegen',
+                    'edit_item' => 'OG BOG Object bewerken',
+                    'new_item' => 'Nieuw OG BOG Object',
+                    'view_item' => 'Bekijk OG BOG Object',
+                    'search_items' => 'Zoek naar OG BOG Objecten',
+                    'not_found' => 'Geen OG BOG Objecten gevonden',
+                    'not_found_in_trash' => 'Geen OG BOG Objecten gevonden in de prullenbak',
+                    'parent_item_colon' => '',
+                    'menu_name' => 'BOG'
+                ),
                 'public' => true,
                 'has_archive' => true,
-                'rewrite' => array('slug' => 'bog'),
-                'menu_icon' => 'dashicons-admin-home',
+                'publicly_queryable' => true,
+                'query_var' => true,
+                'capability_type' => 'post',
+                'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                'show_in_menu' => 'edit.php?post_type=og-bog-object',
                 'taxonomies' => array('category', 'post_tag')
             )
         ),
         // Post Type 3
-        /* Menu name */'Nieuwbouw' => array(
-            'post_type' => 'og-nieuwbouw-object',
-            'post_type_labels' => array(
-                'name' => 'OG Nieuwbouw Objecten',
-                'singular_name' => 'OG Nieuwbouw Object',
-                'add_new' => 'Nieuwe toevoegen',
-                'add_new_item' => 'Nieuw OG Nieuwbouw Object toevoegen',
-                'edit_item' => 'OG Nieuwbouw Object bewerken',
-                'new_item' => 'Nieuw OG Nieuwbouw Object',
-                'view_item' => 'Bekijk OG Nieuwbouw Object',
-                'search_items' => 'Zoek naar OG Nieuwbouw Objecten',
-                'not_found' => 'Geen OG Nieuwbouw Objecten gevonden',
-                'not_found_in_trash' => 'Geen OG Nieuwbouw Objecten gevonden in de prullenbak',
-                'parent_item_colon' => '',
-                'menu_name' => 'Nieuwbouw'
-            ),
+        /* post_type */'og-nieuwbouw' => array(
             'post_type_args' => array(
+                'labels' => array(
+                    'name' => 'OG Nieuwbouw Objecten',
+                    'singular_name' => 'OG Nieuwbouw Object',
+                    'add_new' => 'Nieuwe toevoegen',
+                    'add_new_item' => 'Nieuw OG Nieuwbouw Object toevoegen',
+                    'edit_item' => 'OG Nieuwbouw Object bewerken',
+                    'new_item' => 'Nieuw OG Nieuwbouw Object',
+                    'view_item' => 'Bekijk OG Nieuwbouw Object',
+                    'search_items' => 'Zoek naar OG Nieuwbouw Objecten',
+                    'not_found' => 'Geen OG Nieuwbouw Objecten gevonden',
+                    'not_found_in_trash' => 'Geen OG Nieuwbouw Objecten gevonden in de prullenbak',
+                    'parent_item_colon' => '',
+                    'menu_name' => 'Nieuwbouw'
+                ),
                 'public' => true,
                 'has_archive' => true,
-                'rewrite' => array('slug' => 'nieuwbouw'),
-                'menu_icon' => 'dashicons-admin-home',
+                'publicly_queryable' => true,
+                'query_var' => true,
+                'capability_type' => 'post',
+                'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                'show_in_menu' => 'edit.php?post_type=og-nieuwbouw-object',
                 'taxonomies' => array('category', 'post_tag')
             )
         ),
         // Post Type 4
-        /* Menu name */'A&LV' => array(
-            'post_type' => 'og-alv-object',
-            'post_type_labels' => array(
-                'name' => 'OG A&LV Objecten',
-                'singular_name' => 'OG A&LV Object',
-                'add_new' => 'Nieuwe toevoegen',
-                'add_new_item' => 'Nieuw OG A&LV Object toevoegen',
-                'edit_item' => 'OG A&LV Object bewerken',
-                'new_item' => 'Nieuw OG A&LV Object',
-                'view_item' => 'Bekijk OG A&LV Object',
-                'search_items' => 'Zoek naar OG A&LV Objecten',
-                'not_found' => 'Geen OG A&LV Objecten gevonden',
-                'not_found_in_trash' => 'Geen OG A&LV Objecten gevonden in de prullenbak',
-                'parent_item_colon' => '',
-                'menu_name' => 'A&LV'
-            ),
+        /* post_type */'og-alv' => array(
             'post_type_args' => array(
+                'labels' => array(
+                    'name' => 'OG A&LV Objecten',
+                    'singular_name' => 'OG A&LV Object',
+                    'add_new' => 'Nieuwe toevoegen',
+                    'add_new_item' => 'Nieuw OG A&LV Object toevoegen',
+                    'edit_item' => 'OG A&LV Object bewerken',
+                    'new_item' => 'Nieuw OG A&LV Object',
+                    'view_item' => 'Bekijk OG A&LV Object',
+                    'search_items' => 'Zoek naar OG A&LV Objecten',
+                    'not_found' => 'Geen OG A&LV Objecten gevonden',
+                    'not_found_in_trash' => 'Geen OG A&LV Objecten gevonden in de prullenbak',
+                    'parent_item_colon' => '',
+                    'menu_name' => 'A&LV'
+                ),
                 'public' => true,
                 'has_archive' => true,
-                'rewrite' => array('slug' => 'alv'),
-                'menu_icon' => 'dashicons-admin-home',
+                'publicly_queryable' => true,
+                'query_var' => true,
+                'capability_type' => 'post',
+                'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                'show_in_menu' => 'edit.php?post_type=og-alv-object',
                 'taxonomies' => array('category', 'post_tag')
             )
-        ),
-        // End Post Type
+        )
     );
 }
 class WPColorScheme {
@@ -189,26 +250,6 @@ class WPColorScheme {
         return $_wp_admin_css_colors['fresh']->colors[2];
     }
 }
-// ==== Activation and Deactivation ====
-class OGActivationAndDeactivation {
-    // ======== Activation ========
-    function activate() {
-    }
-    // ======== Deactivation ========
-    function deactivate()
-    {
-        add_action('init', array($this, 'deletePostType'));
-    }
-
-    // ============ Functions ============
-    function deletePostType() {
-        // ==== Vars ====
-        $postType = 'post_type';
-        // ==== Start of Function ====
-        unregister_post_type($postType);
-    }
-
-}
 
 // ====== Excecuted every time the plugin is loaded ======
 // Creating Pages
@@ -216,16 +257,18 @@ class OGPages
 {
     function __construct()
     {
+        // Creating the Pages / Custom Post Types
         add_action('admin_menu', array($this, 'createPages'));
+        // Registering all the needed settings for the plugin
         add_action('admin_init', array($this, 'registerSettings'));
     }
 
     // ======== Create Settings Page ========
     function createPages(): void {
         // ======= Declaring Variables =======
-        $postTypeData = new OGPostTypeData();
+	    $postTypeData = new OGPostTypeData();
         // ==== Items OG Admin ====
-        // Create Menu Item with OG Dashboard HTML
+        // Menu Item: OG Dashboard
         add_menu_page(
             'Admin Dashboard',
             'OG Admin',
@@ -234,7 +277,7 @@ class OGPages
             array($this, 'htmlOGAdminDashboard'),
             'dashicons-plus-alt',
             100);
-        // Changing the name of the first submenu item by creating a submenu item with the same name
+        // First sub-menu item name change
         add_submenu_page(
             'pixelplus-og-plugin',
             'Admin Dashboard',
@@ -242,7 +285,7 @@ class OGPages
             'manage_options',
             'pixelplus-og-plugin',
             array($this, 'htmlOGAdminDashboard'));
-        // Create Submenu Item for the Settings with Settings HTML
+        // Second sub-menu: OG Admin Settings
         add_submenu_page(
             'pixelplus-og-plugin',
             'Settings',
@@ -250,8 +293,8 @@ class OGPages
             'manage_options',
             'pixelplus-og-plugin-settings',
             array($this, 'htmlOGAdminSettings'));
-        // ==== Items OG Aanbod ====
-        // Create Menu Item with OG Aanbod HTML
+
+        // Menu Item: OG Aanbod Dashboard
         add_menu_page(
             'Aanbod Dashboard',
             'OG Aanbod',
@@ -260,15 +303,14 @@ class OGPages
             array($this, 'htmlOGAanbodDashboard'),
             'dashicons-admin-multisite',
             40);
-        // Changing the name of the first submenu item by creating a submenu item with the same name
-        add_submenu_page(
-            'pixelplus-og-plugin-aanbod',
-            'Aanbod Dashboard',
-            'Dashboard',
-            'manage_options',
-            'pixelplus-og-plugin-aanbod',
-            array($this, 'htmlOGAanbodDashboard'));
-        // Create 4 custom post types
+        // First sub-menu item name change
+	    add_submenu_page(
+		    'pixelplus-og-plugin-aanbod',
+		    'Aanbod Dashboard',
+		    'Dashboard',
+		    'manage_options',
+		    'pixelplus-og-plugin-aanbod',
+		    array($this, 'htmlOGAanbodDashboard'));
     }
     // ==== Register Settings ====
     function registerSettings(): void {
@@ -336,9 +378,9 @@ class OGPages
                     <!-- ==== Button to sync the tables ==== -->
                     <form method='post'>
                         <h2>Synchroniseer Aanbod</h2>
-
+                        <!-- Wordpress Big Sync Button -->
                         <div class='divAllAanbod clearfix'>
-                            <!-- Wordpress Big Sync Button -->
+
                             <button type='submit' name='buttonSync' style='background-color: <?php echo($buttonColor) ?>'>
                                 Volledig aanbod<br/>Synchroniseren
                             </button>
@@ -352,7 +394,7 @@ class OGPages
                         <h3>Synchroniseer per categorie</h3>
                         <div class='divSmallAanbod clearfix'>
                             <!-- Wonen -->
-                            <button type='submit' name='buttonSyncWonen'>
+                            <button type='submit' name='buttonSyncWonen' style='border-color: <?php echo($buttonColor) ?>'>
                                 <img src='<?php echo(plugins_url('img/house-icon.png', dirname(__DIR__))) ?>' width='40px' alt=''><span>Wonen</span>
                             </button>
                             <div class='mt-2 d-table'>
@@ -361,7 +403,7 @@ class OGPages
                             </div><br/>
 
                             <!-- BOG -->
-                            <button type='submit' name='buttonSyncBOG'>
+                            <button type='submit' name='buttonSyncBOG' style='border-color: <?php echo($buttonColor) ?>'>
                                 <img src='<?php echo(plugins_url('img/bog-logo.png', dirname(__DIR__))) ?>' width='40px' alt=''><span>BOG</span>
                             </button><br/>
                             <div class='mt-2 d-table'>
@@ -370,7 +412,7 @@ class OGPages
                             </div><br/>
 
                             <!-- Nieuwbouw -->
-                            <button type='submit' name='buttonSyncNieuwbouw'>
+                            <button type='submit' name='buttonSyncNieuwbouw' style='border-color: <?php echo($buttonColor) ?>'>
                                 <img src='<?php echo(plugins_url('img/nieuwbouw.png', dirname(__DIR__))) ?>' width='40px' alt=''><span>Nieuwbouw</span>
                             </button><br/>
                             <div class='mt-2 d-table'>
@@ -379,20 +421,18 @@ class OGPages
                             </div><br/>
 
                             <!-- A&LV -->
-                            <button type='submit' name='buttonSyncALV'>
+                            <button type='submit' name='buttonSyncALV' style='border-color: <?php echo($buttonColor) ?>'>
                                 <img src='<?php echo(plugins_url('img/ALV-logo.png', dirname(__DIR__))) ?>' width='40px' alt=''><span>A&LV</span>
                             </button><br/>
                             <div class='mt-2 d-table'>
                                 <img class='float-left me-2' alt='Error: recent-logo.png' src='<?php echo(plugins_url('img/recent-logo.png', dirname(__DIR__))) ?>' width='20px'>
                                 <span class='text-center align-middle'>Laatste synchronisatie: vandaag 14.15</span>
                             </div><br/>
-
-                    </div>
+                        </div>
                     </form>
-
-                    <div class='col'>
-                        <h2 class='text-center'>Statistieken</h2>
-                    </div>
+                </div>
+                <div class='col'>
+                    <h2 class='text-center'>Statistieken</h2>
                 </div>
             </div>
         </div>
@@ -407,9 +447,89 @@ class OGPages
     <?php htmlFooter('OG Admin Settings');}
     // OG Aanbod
     function HTMLOGAanbodDashboard(): void { htmlHeader('OG Aanbod Dashboard'); ?>
-
+        <p>dingdong bishass</p>
     <?php htmlFooter('OG Aanbod Dashboard');}
+
 }
+
+class OGPostTypes {
+    // ==== Declaring Variables ====
+
+    // ==== Start of Class ====
+    function __construct() {
+        add_action('admin_menu', array($this, 'createPostTypes'));
+//        add_action('init' , array($this, 'checkPostTypeContent'));
+    }
+
+    // Functions
+    function createPostTypes() {
+        // ==== Declaring Variables ====
+	    $postTypeData = new OGPostTypeData();
+
+        // ==== Start of Function ====
+	    // Create the 4 OG Custom Post Types to put in the menu
+	    foreach($postTypeData->customPostTypes as $postType => $postTypeArray) {
+		    // args array with labels
+		    register_post_type($postType, $postTypeArray['post_type_args']);
+            // adding meta boxes
+		    add_submenu_page(
+			    'pixelplus-og-plugin-aanbod',
+			    $postTypeArray['post_type_args']['labels']['menu_name'],
+			    $postTypeArray['post_type_args']['labels']['menu_name'],
+			    'manage_options',
+			    'edit.php?post_type=' . $postType
+		    );
+	    }
+    }
+
+    function checkPostTypeContent() {
+	    // ==== Declaring Variables ====
+        $postTypeData = new OGPostTypeData();
+	    global $wpdb;
+
+        // ==== Start of Function ====
+
+        foreach ($postTypeData->customPostTypes as $postType => $postTypeArray) {
+            // DB
+	        $tableName = 'tbl_OG_'. str_replace('og-', '', $postType);
+
+	        // Check if table exists
+            $tableExists = $wpdb->get_var("SHOW TABLES LIKE '$tableName'");
+            if ($tableExists != $tableName) {
+                echo('Table '.$tableName.' does not exist<br/><br/>');
+                continue;
+            }
+
+	        // Getting the content of that table
+	        $results = $wpdb->get_results("SELECT * FROM $tableName");
+
+            // Comparing each TiaraID with the posts TiaraID to see if it exists to determine
+            // if it needs to be added, deleted or updated
+            foreach ($results as $result) {
+                $dbTiaraID = $result->object_ObjectTiaraID;
+
+                // Check if post exists
+                $postExists = get_posts(array(
+                    'post_type' => $postType,
+                    'meta_key' => 'object_ObjectTiaraID',
+                    'meta_value' => $dbTiaraID
+                ));
+
+                // If post does not exist, add it
+                if (empty($postExists)) {
+	                echo( 'Post does not exist, adding it<br/>' );
+	                $postID = wp_insert_post( array(
+		                'post_title'  => $result->object_ObjectNaam,
+		                'post_type'   => $postType,
+		                'post_status' => 'publish'
+	                ) );
+                }
+            }
+        }
+	    echo(getLoadTime());
+    }
+}
+
 
 class OGSync {
     // ==== Declaring Variables ====
@@ -420,7 +540,7 @@ class OGSync {
 
 		// ======== Start of Function ========
         echo('Syncing Tables Wonen'.PHP_EOL);
-        $ding = wp_remote_get('https://og-feeds2.pixelplus.nl/api/import.php?token=5OeaDu1MU7MMBWXrJvtQkNv5pTBrps1m&type=wonen');
+        $ding = wp_remote_get('https://og-feeds2.pixelplus.nl/api/import.php?token=5OeaDu1MU7MMBWXrJvtQkNv5pTBrps1m&type=wonen&id=4178995');
         var_dump($ding);
 	}
     function syncBOG(): void {
