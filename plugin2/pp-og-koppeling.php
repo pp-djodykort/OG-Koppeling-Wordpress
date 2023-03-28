@@ -16,7 +16,7 @@ include_once 'files/php/includes/functions.php';
 $activateAndDeactivate = new OGActivationAndDeactivation();
 $yes = new OGPostTypes();
 
-$settingsPage = new OGPages();
+$pages = new OGPages();
 
 // ============ Start of Program ============
 // Activation and Deactivation and Uninstall

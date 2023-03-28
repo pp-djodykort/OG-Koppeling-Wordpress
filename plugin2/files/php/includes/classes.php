@@ -449,7 +449,6 @@ class OGPages
     <?php htmlFooter('OG Aanbod Dashboard');}
 
 }
-
 class OGPostTypes {
     // ==== Declaring Variables ====
 
@@ -527,15 +526,12 @@ class OGPostTypes {
 	    echo(getLoadTime());
     }
 }
-
-
 class OGSync {
     // ==== Declaring Variables ====
 
     // ==== Start of Class ====
 	function syncWonen(): void {
 		// ======== Declaring Variables ========
-
 		// ======== Start of Function ========
         echo('Syncing Tables Wonen'.PHP_EOL);
         $ding = wp_remote_get('https://og-feeds2.pixelplus.nl/api/import.php?token=5OeaDu1MU7MMBWXrJvtQkNv5pTBrps1m&type=wonen&id=4178995');
