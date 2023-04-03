@@ -394,16 +394,8 @@ class OGPages
                 'Settings',
                 'manage_options',
                 'pixelplus-og-plugin-settings',
-                array($this, 'HTMLOGAdminSettings'));
-            // ==== Pages for on the Settins Submenu ====
-            // License
-            add_submenu_page(
-                'pixelplus-og-plugin-settings',
-                'License',
-                'License',
-                'manage_options',
-                'pixelplus-og-plugin-settings-license',
                 array($this, 'HTMLOGAdminSettingsLicense'));
+            // ==== Pages for on the Settins Submenu ====
 
         }
         else {
@@ -412,7 +404,7 @@ class OGPages
             'OG Admin',
             'manage_options',
             'pixelplus-og-plugin-settings',
-            array($this, 'HTMLOGAdminSettings'),
+            array($this, 'HTMLOGAdminSettingsLicense'),
             'dashicons-plus-alt',
             100);
         }
@@ -567,11 +559,7 @@ class OGPages
     function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings');set_current_screen('pixelplus-og-plugin-settings'); ?>
         <h1>hi</h1>
     <?php htmlFooter('OG Admin Settings');}
-
         function HTMLOGAdminSettingsLicense(): void { htmlHeader('OG Admin Settings - Licentie');
-        // Manually highlighting the main sub-menu item
-        global $submenu_file;
-        $submenu_file = 'admin.php?page=pixelplus-og-plugin-settings';
         // if isset submit_license
         if(isset($_POST['submit_license'])) {
             // if isset license_key
