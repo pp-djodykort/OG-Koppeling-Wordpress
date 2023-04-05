@@ -31,4 +31,7 @@ if ($license->checkActivation()) {
 // ============ Start of Program ============
 add_action('admin_notices', function() {
     echo(getLoadTime());
+
+    // Making a new licensekey
+
 });

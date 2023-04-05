@@ -44,17 +44,13 @@ function htmlHeader($title): void {
 	<hr/>
 	");
 }
-
 function htmlFooter($title): void {
-    // Getting the expiration date of the license
-
     echo("
 	<!-- Bootstrap -->
 	<script src='".plugins_url('js/bootstrap.min.js', dirname(__DIR__))."'></script>
 	</div>
 	");
 }
-
 function welcomeMessage(): string {
     $welcomeMessage = "Welkom";
     $wpUser = _wp_get_current_user();
@@ -66,6 +62,40 @@ function welcomeMessage(): string {
         $welcomeMessage .= " ".$wpUser->user_login;
     }
     return $welcomeMessage;
+}
+
+// ============ JS Functions ============
+function hidePasswordByName($name): void {
+    echo("
+    <script>
+        // ======== Declaring Variables ========
+        let passwordTextField = document.getElementsByName('$name')[0];
+        
+        // ======== Functions ========
+        function showPassword() {
+            if (passwordTextField.type === 'password') {
+                passwordTextField.type = 'text';
+                document.getElementsByName('$name')[0].type = 'text';
+                document.getElementsByClassName('eye')[0].src = '" .plugins_url('img/eye-slash.svg', dirname(__DIR__))."';
+            }
+            else {
+                passwordTextField.type = 'password';
+                document.getElementsByClassName('eye')[0].src = '".plugins_url('img/eye.svg', dirname(__DIR__))."';
+            }
+        }
+        
+        // ======== Start of Function ========
+        // Hide password
+        passwordTextField.type = 'password';
+        
+        // Creating a test button
+        button = document.getElementsByName('$name')[0].insertAdjacentHTML('afterend', '<img width=\"37px\" src=\"".plugins_url('img/eye.svg', dirname(__DIR__))."\" alt=\"Show Password\" class=\"eye\" onclick=\"showPassword()\">');
+        // Giving the button a cursor pointer
+        document.getElementsByClassName('eye')[0].style.cursor = 'pointer';
+        // A bit of margin to the right
+        document.getElementsByClassName('eye')[0].style.marginLeft = '14px';
+    </script>
+    ");
 }
 
 // ============ Normal Functions ============

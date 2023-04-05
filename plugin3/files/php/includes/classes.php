@@ -150,7 +150,7 @@ class OGPostTypeData {
                     'not_found' => 'Geen OG A&LV Objecten gevonden',
                     'not_found_in_trash' => 'Geen OG A&LV Objecten gevonden in de prullenbak',
                     'parent_item_colon' => '',
-                    'menu_name' => 'A&LV'
+                    'menu_name' => 'ALV'
                 ),
                 'public' => true,
                 'has_archive' => true,
@@ -209,12 +209,12 @@ class OGSettingsData {
     // Strings
     public $settingPrefix = 'ppOG_';
     // Arrays
-    public $settings = [
+    public array $settings = [
         /* Setting Name */'licenseKey' => /* Default Value */'',
         /* Setting Name */'licenseStatus' => /* Default Value */'not checked',
         /* Setting Name */'objectAccess' => /* Default Value */'',
     ];
-    public $adminSettings = [
+    public array $adminSettings = [
         // Settings 1
         /* Option Group= */ 'ppOG_AdminOptions' => [
             // General information
@@ -241,7 +241,7 @@ class OGSettingsData {
     // ============ HTML Functions ============
     // Sections
     function htmlLicenceSection(): void { ?>
-        <p>Settings for the OG Plugin</p>
+        <p>De licentiesleutel die de plugin activeert</p>
     <?php }
     // Fields
     function htmlLicenceKeyField(): void { ?>
@@ -255,21 +255,21 @@ class OGLicense {
     // A function for registering base settings of the unactivated plugin as activation hook.
     function checkActivation(): bool {
         // ==== Declaring Variables ====
+        // Classes
         $settingData = new OGSettingsData();
-
-        // ==== Start of Function ====
-        // Getting the licenseStatus
+        // Vars
         $licenseStatus = get_option($settingData->settingPrefix.'licenseStatus');
 
-        // Checking if licenseStatus is 'not checked'
+        // ==== Start of Function ====
+        // Check if licenseStatus is 'not checked'
         if ($licenseStatus == 'not checked') {
-            // Say that the plugin is not yet activate
-
+            // Display a message and return False
             add_action('admin_notices', function() {
                 echo('De OG Koppeling Plugin is nog niet geactiveerd. Ga naar de OG Admin Instellingen om de plugin te activeren.');
             });
             return False;
         }
+
         try {
             // Begin decrypting the licenseKey
             for ($i = 0; $i < 2; $i++) {
@@ -278,34 +278,51 @@ class OGLicense {
             }
             // Exploding
             $licenseStatus = explode(';', $licenseStatus);
-            if (isset($licenseStatus[1])) {
-                // Checking if the license hasn't expired
-                if ($licenseStatus[1] >= date('d-m-Y')) {
-                    // If the license has expired, say that the plugin is not activated
-                    add_action('admin_notices', function() {
-                        echo('De OG Koppeling Plugin is niet meer geactiveerd. Contacteer Pixelplus voor een nieuwe licentie sleutel of verlenging.');
-                    });
-                    return False;
-                } // If the license hasn't expired, say that the plugin is activated
-                else {
-                    return True;
+
+            if ($licenseStatus[0] == 'ppOGActivatedBaby') {
+                if (isset($licenseStatus[1])) {
+                    // Checking if the license hasn't expired
+                    if (date($licenseStatus[1]) <= date('d-m-Y')) {
+                        // If the license has expired, display a message and return False
+                        add_action('admin_notices', function() {
+                            echo("date now: ".date('d-m-Y'));
+                            echo('De OG Koppeling Plugin is niet meer geactiveerd. Contacteer Pixelplus voor een nieuwe licentie sleutel of verlenging.');
+                        });
+                        return False;
+                    } else {
+                        // If the license is valid, return True
+                        return True;
+                    }
                 }
             }
-            else {
-                // If the licenseKey is not valid, say that the plugin is not activated
-                add_action('admin_notices', function() {
-                    echo('Contacteer PixelPlus, er is iets fout gegaan met de licentie status!');
-                });
-                return False;
-            }
-        }
-        catch (Exception $e) {
-            // If the licenseKey is not valid, say that the plugin is not activated
+        } catch (Exception $e) {
+            // If there's an exception, display a message and return False
             add_action('admin_notices', function() {
                 echo('Contacteer PixelPlus, er is iets fout gegaan met de licentie status!');
             });
             return False;
         }
+        // If licenseStatus is not 'not checked' or 'ppOGActivatedBaby', display a message and return False
+        add_action('admin_notices', function() {
+            echo('Contacteer PixelPlus, er is iets fout gegaan met de licentie status!');
+        });
+        return False;
+    }
+
+    // A function to see, which OG Post types the user has access to
+    function checkPostTypeAccess(): array {
+        // ==== Declaring Variables ====
+        $settingData = new OGSettingsData();
+
+        // ==== Start of Function ====
+        // Getting the objectAccess option
+        $objectAccess = get_option($settingData->settingPrefix.'objectAccess');
+
+        // Exploding the objectAccess option into an array
+        $objectAccess = explode(';', $objectAccess);
+
+        // Return the array
+        return $objectAccess;
     }
 }
 class OGPostTypes {
@@ -320,14 +337,13 @@ class OGPostTypes {
     // Functions
     function createPostTypes() {
         // ==== Declaring Variables ====
+        // Classes
         $postTypeData = new OGPostTypeData();
+        $license = new OGLicense();
+        // Vars
+        $objectAccess = $license->checkPostTypeAccess();
 
         // ==== Start of Function ====
-        // Getting the objectAccess option
-        $objectAccess = get_option('ppOG_objectAccess');
-
-        // Exploding the objectAccess option into an array
-        $objectAccess = explode(';', $objectAccess);
 
         // Create the OG Custom Post Types (if the user has access to it)
         foreach($postTypeData->customPostTypes as $postType => $postTypeArray) {
@@ -365,15 +381,52 @@ class OGPages
     // ======== Create Settings Page ========
     function createPages(): void {
         // ======= Declaring Variables =======
+        // Classes
         $license = new OGLicense();
-        $boolPluginActivated = $license->checkActivation();
         $postTypeData = new OGPostTypeData();
+        // Vars
+        $boolPluginActivated = $license->checkActivation();
+        $objectAccess = $license->checkPostTypeAccess();
+        // ==== OG Settings ====
+        add_menu_page(
+            'Admin Settings',
+            'OG Settings',
+            'manage_options',
+            'pixelplus-og-plugin-settings',
+            array($this, 'HTMLOGAdminSettings'),
+            'dashicons-admin-generic',
+            101
+        );
+        add_submenu_page(
+            'pixelplus-og-plugin-settings',
+            'Algemeen',
+            'Algemeen',
+            'manage_options',
+            'pixelplus-og-plugin-settings',
+            array($this, 'HTMLOGAdminSettings')
+        );
+        // Submenu Items based on the OG Post Types
+        if ($boolPluginActivated) {
+            foreach ($postTypeData->customPostTypes as $postType => $postTypeArray) {
+                if (in_array($postType, $objectAccess)) {
+                    $name = $postTypeArray['post_type_args']['labels']['menu_name'];
+                    add_submenu_page(
+                        'pixelplus-og-plugin-settings',
+                        $name,
+                        $name,
+                        'manage_options',
+                        'pixelplus-og-plugin-settings-' . strtolower($name),
+                        array($this, 'HTMLOGAdminSettings'.$name)
+                    );
+                }
+            }
+        }
         // ==== Items OG Admin ====
         if ($boolPluginActivated) {
             // Menu Item: OG Dashboard
             add_menu_page(
                 'Admin Dashboard',
-                'OG Admin',
+                'OG Admin Dashboard',
                 'manage_options',
                 'pixelplus-og-plugin',
                 array($this, 'HTMLOGAdminDashboard'),
@@ -387,26 +440,6 @@ class OGPages
                 'manage_options',
                 'pixelplus-og-plugin',
                 array($this, 'HTMLOGAdminDashboard'));
-            // Second sub-menu: OG Admin Settings
-            add_submenu_page(
-                'pixelplus-og-plugin',
-                'Settings',
-                'Settings',
-                'manage_options',
-                'pixelplus-og-plugin-settings',
-                array($this, 'HTMLOGAdminSettingsLicense'));
-            // ==== Pages for on the Settins Submenu ====
-
-        }
-        else {
-            add_menu_page(
-            'Admin Dashboard',
-            'OG Admin',
-            'manage_options',
-            'pixelplus-og-plugin-settings',
-            array($this, 'HTMLOGAdminSettingsLicense'),
-            'dashicons-plus-alt',
-            100);
         }
         // ==== Items OG Aanbod ====
         if ($boolPluginActivated) {
@@ -556,10 +589,7 @@ class OGPages
         </div>
         <?php htmlFooter('OG Admin Dashboard');}
     // OG Admin Settings
-    function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings');set_current_screen('pixelplus-og-plugin-settings'); ?>
-        <h1>hi</h1>
-    <?php htmlFooter('OG Admin Settings');}
-        function HTMLOGAdminSettingsLicense(): void { htmlHeader('OG Admin Settings - Licentie');
+    function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings - Algemeen');
         // if isset submit_license
         if(isset($_POST['submit_license'])) {
             // if isset license_key
@@ -573,11 +603,25 @@ class OGPages
         }
         ?>
         <form method="post" action="options.php">
-            <?php settings_fields('ppOG_AdminOptions'); ?>
-            <?php do_settings_sections('pixelplus-og-plugin-settings'); ?>
-            <?php submit_button(null, 'primary', 'submit_license'); ?>
+            <?php settings_fields('ppOG_AdminOptions');
+            do_settings_sections('pixelplus-og-plugin-settings');
+            submit_button(null, 'primary', 'submit_license');
+            hidePasswordByName('ppOG_licenseKey');
+            ?>
         </form>
-        <?php htmlFooter('OG Admin Settings - Licentie');}
+    <?php htmlFooter('OG Admin Settings - Licentie');}
+        function HTMLOGAdminSettingsWonen() { htmlHeader('OG Admin Settings - Wonen'); ?>
+
+        <?php htmlFooter('OG Admin Settings - Wonen');}
+        function HTMLOGAdminSettingsBOG() { htmlHeader('OG Admin Settings - BOG'); ?>
+
+        <?php htmlFooter('OG Admin Settings - BOG');}
+        function HTMLOGAdminSettingsNieuwbouw() { htmlHeader('OG Admin Settings - Nieuwbouw'); ?>
+
+        <?php htmlFooter('OG Admin Settings - Nieuwbouw');}
+        function HTMLOGAdminSettingsALV() { htmlHeader('OG Admin Settings - A&LV'); ?>
+
+        <?php htmlFooter('OG Admin Settings - A&LV');}
     // OG Aanbod
     function HTMLOGAanbodDashboard(): void { htmlHeader('OG Aanbod Dashboard'); ?>
         <p>dingdong bishass</p>
