@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "data": {
+    "types": [
+      "wonen",
+      "bog",
+      "nieuwbouw"
+    ]
+  }
+}

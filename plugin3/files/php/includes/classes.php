@@ -8,6 +8,7 @@ class OGActivationAndDeactivation {
     function activate() {
         $this->registerSettings();
     }
+
     // ======== Deactivation ========
     function deactivate()
     {
@@ -211,7 +212,6 @@ class OGSettingsData {
     // Arrays
     public array $settings = [
         /* Setting Name */'licenseKey' => /* Default Value */'',
-        /* Setting Name */'licenseStatus' => /* Default Value */'not checked',
         /* Setting Name */'objectAccess' => /* Default Value */'',
     ];
     public array $adminSettings = [
@@ -248,67 +248,70 @@ class OGSettingsData {
         // ===== Declaring Variables =====
         // Vars
         $licenseKey = get_option($this->settingPrefix.'licenseKey');
-        // From API
-        $response = json_decode(wp_remote_get('http://localhost/Wordpress-Test-License-System?licenseKey='.$licenseKey)['body'], true);
 
         // ===== Start of Function =====
-        print_r($response);
         // Check if licenseKey is empty
         if ($licenseKey == '') {
             // Display a message
             echo('De licentiesleutel is nog niet ingevuld.');
         }
-        else {
-            if ($response['status'] == 'active') {
-                // Display a message
-                echo('De licentiesleutel is geactiveerd.');
-            }
-            elseif ($response['status'] == 'invalid') {
-                // Display a message
-                echo('De licentiesleutel is niet geactiveerd.');
-            }
-            else {
-                // Display a message
-                echo('ERROR: Er is iets fout gegaan.');
-            }
-        }
-        echo(" <input type='text' name='".$this->settingPrefix."licenseKey' value='".esc_attr(get_option($this->settingPrefix.'licenseKey'))."' ");
+        echo(" <input type='text' name='".$this->settingPrefix."licenseKey' value='".esc_attr($licenseKey)."' ");
     }
 }
 
 // ========== Inactivated state of Plugin ==========
 class OGLicense {
     // ============ Functions ============
+    function getJSONFromAPI($url) {
+        // ======== Start of Function ========
+        // Turn off ssl verification
+        add_filter('https_ssl_verify', '__return_false');
+        // Get data from API
+        $data = json_decode(wp_remote_get($url,)['body'], true);
+
+        // Return data
+        return $data;
+    }
     // A function for registering base settings of the unactivated plugin as activation hook.
     function checkActivation(): bool {
         // ======== Declaring Variables ========
         $settingData = new OGSettingsData();
 
         # Cache
-        $cacheFile = plugins_url('caches/licenseCache.json', dirname(__DIR__));
+        $cacheFile = plugin_dir_path(dirname(__DIR__, 1)).'caches/licenseCache.json';
         $data = null;
 
         # API
         $url = "https://og-feeds2.pixelplus.nl/api/validate.php";
+        $args = array(
+            'licenseKey' => get_option($settingData->settingPrefix.'licenseKey'),
+        );
         // ======== Start of Function ========
         // If file exists and is not older than 1 hour
-        if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < 1) {
-//            $data = file_get_contents($cacheFile);
-//            $data = json_decode($data, true);
+        if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < 3600) {
+            $data = file_get_contents($cacheFile);
+            $data = json_decode($data, true);
+            if ($data['success'] == 'success') {
+                return True;
+            }
             echo 'File exists';
         }
         else {
-            // Get data from API
-            $data = json_decode(wp_remote_get($url.'?licenseKey='.get_option($settingData->settingPrefix.'licenseKey'))['body'], true);
-//
-//            // Save data to cache
-//            file_put_contents($cacheFile, json_encode($data));
-            echo 'File does not exist';
+            foreach (range(0, 3) as $i) {
+                // Get data from API
+                $this->getJSONFromAPI($url, $args);
+                print_r($data);
+                // Check if data is valid
+                if ($data['success'] == 'success') {
+                    // Save data to cache
+                    file_put_contents($cacheFile, json_encode($data));
+                    // Check if the user has access to the OG Post Types
+                    echo 'File is updated';
+                    return True;
+                }
+            }
         }
-
-
-
-        return True;
+        return False;
     }
 
     // A function to see, which OG Post types the user has access to
@@ -332,7 +335,7 @@ class OGPostTypes {
 
     // ==== Start of Class ====
     function __construct() {
-        add_action('admin_menu', array($this, 'createPostTypes'));
+        add_action('init', array($this, 'createPostTypes'));
 //        add_action('init' , array($this, 'checkPostTypeContent'));
     }
 
@@ -355,14 +358,7 @@ class OGPostTypes {
             }
             // args array with labels
             register_post_type($postType, $postTypeArray['post_type_args']);
-            // adding meta boxes
-            add_submenu_page(
-                'pixelplus-og-plugin-aanbod',
-                $postTypeArray['post_type_args']['labels']['menu_name'],
-                $postTypeArray['post_type_args']['labels']['menu_name'],
-                'manage_options',
-                'edit.php?post_type=' . $postType
-            );
+            // Subpages are created elsewhere
         }
     }
 }
@@ -389,7 +385,8 @@ class OGPages
         // Vars
         $boolPluginActivated = $license->checkActivation();
         $objectAccess = $license->checkPostTypeAccess();
-        // ==== OG Settings ====
+
+        // Making the Global Settings Page
         add_menu_page(
             'Admin Settings',
             'OG Settings',
@@ -407,11 +404,15 @@ class OGPages
             'pixelplus-og-plugin-settings',
             array($this, 'HTMLOGAdminSettings')
         );
-        // Submenu Items based on the OG Post Types
+
+        // ======= When Plugin is activated =======
         if ($boolPluginActivated) {
+            // ==== OG Settings ====
+            // Submenu Items based on the OG Post Types for in the OG Settings
             foreach ($postTypeData->customPostTypes as $postType => $postTypeArray) {
                 if (in_array($postType, $objectAccess)) {
                     $name = $postTypeArray['post_type_args']['labels']['menu_name'];
+                    // Creating submenu for in the OG Settings
                     add_submenu_page(
                         'pixelplus-og-plugin-settings',
                         $name,
@@ -422,9 +423,8 @@ class OGPages
                     );
                 }
             }
-        }
-        // ==== Items OG Admin ====
-        if ($boolPluginActivated) {
+
+            // ==== Items OG Admin ====
             // Menu Item: OG Dashboard
             add_menu_page(
                 'Admin Dashboard',
@@ -442,9 +442,8 @@ class OGPages
                 'manage_options',
                 'pixelplus-og-plugin',
                 array($this, 'HTMLOGAdminDashboard'));
-        }
-        // ==== Items OG Aanbod ====
-        if ($boolPluginActivated) {
+
+            // ==== Items OG Aanbod ====
             // Menu Item: OG Aanbod Dashboard
             add_menu_page(
                 'Aanbod Dashboard',
@@ -462,6 +461,17 @@ class OGPages
                 'manage_options',
                 'pixelplus-og-plugin-aanbod',
                 array($this, 'HTMLOGAanbodDashboard'));
+            // Submenu Items based on the OG Post Types for in the OG Aanbod
+            foreach ($postTypeData->customPostTypes as $postType => $postTypeArray) {
+                // Creating submenu for in the OG Aanbod
+                add_submenu_page(
+                    'pixelplus-og-plugin-aanbod',
+                    $postTypeArray['post_type_args']['labels']['menu_name'],
+                    $postTypeArray['post_type_args']['labels']['menu_name'],
+                    'manage_options',
+                    'edit.php?post_type=' . $postType
+                );
+            }
         }
     }
     // ==== Register Settings ====
@@ -623,32 +633,11 @@ class OGSync {
     // ==== Declaring Variables ====
 
     // ==== Start of Class ====
-    function syncWonen(): void {
+    function syncTiaraItem(): void {
         // ======== Declaring Variables ========
         // ======== Start of Function ========
         echo('Syncing Tables Wonen'.PHP_EOL);
         $ding = wp_remote_get('https://og-feeds2.pixelplus.nl/api/import.php?token=5OeaDu1MU7MMBWXrJvtQkNv5pTBrps1m&type=wonen&id=4178995');
         var_dump($ding);
-    }
-    function syncBOG(): void {
-        // ======== Declaring Variables ========
-
-        // ======== Start of Function ========
-        echo('Syncing Tables'.PHP_EOL);
-
-    }
-    function syncNieuwbouw(): void {
-        // ======== Declaring Variables ========
-
-        // ======== Start of Function ========
-        echo('Syncing Tables'.PHP_EOL);
-
-    }
-    function syncALV(): void {
-        // ======== Declaring Variables ========
-
-        // ======== Start of Function ========
-        echo('Syncing Tables'.PHP_EOL);
-
     }
 }
