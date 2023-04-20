@@ -244,36 +244,9 @@ class OGSettingsData {
         <p>De licentiesleutel die de plugin activeert</p>
     <?php }
     // Fields
-    function htmlLicenceKeyField(): void {
-        // ===== Declaring Variables =====
-        // Vars
-        $licenseKey = get_option($this->settingPrefix.'licenseKey');
-        // From API
-        $response = json_decode(wp_remote_get('http://localhost/Wordpress-Test-License-System?licenseKey='.$licenseKey)['body'], true);
-
-        // ===== Start of Function =====
-        print_r($response);
-        // Check if licenseKey is empty
-        if ($licenseKey == '') {
-            // Display a message
-            echo('De licentiesleutel is nog niet ingevuld.');
-        }
-        else {
-            if ($response['status'] == 'active') {
-                // Display a message
-                echo('De licentiesleutel is geactiveerd.');
-            }
-            elseif ($response['status'] == 'invalid') {
-                // Display a message
-                echo('De licentiesleutel is niet geactiveerd.');
-            }
-            else {
-                // Display a message
-                echo('ERROR: Er is iets fout gegaan.');
-            }
-        }
-        echo(" <input type='text' name='".$this->settingPrefix."licenseKey' value='".esc_attr(get_option($this->settingPrefix.'licenseKey'))."' ");
-    }
+    function htmlLicenceKeyField(): void { ?>
+        <input type="text" name="ppOG_licenseKey" value="<?php echo esc_attr(get_option('ppOG_licenseKey')); ?>" />
+    <?php }
 }
 
 // ========== Inactivated state of Plugin ==========
@@ -281,34 +254,59 @@ class OGLicense {
     // ============ Functions ============
     // A function for registering base settings of the unactivated plugin as activation hook.
     function checkActivation(): bool {
-        // ======== Declaring Variables ========
+        // ==== Declaring Variables ====
+        // Classes
         $settingData = new OGSettingsData();
+        // Vars
+        $licenseStatus = get_option($settingData->settingPrefix.'licenseStatus');
 
-        # Cache
-        $cacheFile = plugins_url('caches/licenseCache.json', dirname(__DIR__));
-        $data = null;
-
-        # API
-        $url = "https://og-feeds2.pixelplus.nl/api/validate.php";
-        // ======== Start of Function ========
-        // If file exists and is not older than 1 hour
-        if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < 1) {
-//            $data = file_get_contents($cacheFile);
-//            $data = json_decode($data, true);
-            echo 'File exists';
-        }
-        else {
-            // Get data from API
-            $data = json_decode(wp_remote_get($url.'?licenseKey='.get_option($settingData->settingPrefix.'licenseKey'))['body'], true);
-//
-//            // Save data to cache
-//            file_put_contents($cacheFile, json_encode($data));
-            echo 'File does not exist';
+        // ==== Start of Function ====
+        // Check if licenseStatus is 'not checked'
+        if ($licenseStatus == 'not checked') {
+            // Display a message and return False
+            add_action('admin_notices', function() {
+                echo('De OG Koppeling Plugin is nog niet geactiveerd. Ga naar de OG Admin Instellingen om de plugin te activeren.');
+            });
+            return False;
         }
 
+        try {
+            // Begin decrypting the licenseKey
+            for ($i = 0; $i < 2; $i++) {
+                $licenseStatus = base64_decode($licenseStatus);
+                $licenseStatus = hex2bin($licenseStatus);
+            }
+            // Exploding
+            $licenseStatus = explode(';', $licenseStatus);
 
-
-        return True;
+            if ($licenseStatus[0] == 'ppOGActivatedBaby') {
+                if (isset($licenseStatus[1])) {
+                    // Checking if the license hasn't expired
+                    if (date($licenseStatus[1]) <= date('d-m-Y')) {
+                        // If the license has expired, display a message and return False
+                        add_action('admin_notices', function() {
+                            echo("date now: ".date('d-m-Y'));
+                            echo('De OG Koppeling Plugin is niet meer geactiveerd. Contacteer Pixelplus voor een nieuwe licentie sleutel of verlenging.');
+                        });
+                        return False;
+                    } else {
+                        // If the license is valid, return True
+                        return True;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // If there's an exception, display a message and return False
+            add_action('admin_notices', function() {
+                echo('Contacteer PixelPlus, er is iets fout gegaan met de licentie status!');
+            });
+            return False;
+        }
+        // If licenseStatus is not 'not checked' or 'ppOGActivatedBaby', display a message and return False
+        add_action('admin_notices', function() {
+            echo('Contacteer PixelPlus, er is iets fout gegaan met de licentie status!');
+        });
+        return False;
     }
 
     // A function to see, which OG Post types the user has access to
@@ -592,15 +590,25 @@ class OGPages
         <?php htmlFooter('OG Admin Dashboard');}
     // OG Admin Settings
     function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings - Algemeen');
-        $settingsData = new OGSettingsData();
+        // if isset submit_license
+        if(isset($_POST['submit_license'])) {
+            // if isset license_key
+            if(isset($_POST['license_key'])) {
+                // if license_key is not empty
+                if(!empty($_POST['license_key'])) {
+                    // update license_key
+                    update_option('license_key', $_POST['license_key']);
+                }
+            }
+        }
         ?>
         <form method="post" action="options.php">
-            <?php settings_fields($settingsData->settingPrefix.'AdminOptions');
+            <?php settings_fields('ppOG_AdminOptions');
             do_settings_sections('pixelplus-og-plugin-settings');
-            hidePasswordByName($settingsData->settingPrefix.'licenseKey');
-            submit_button('Opslaan', 'primary', 'submit_license');
+            submit_button(null, 'primary', 'submit_license');
+            hidePasswordByName('ppOG_licenseKey');
             ?>
-         </form>
+        </form>
     <?php htmlFooter('OG Admin Settings - Licentie');}
         function HTMLOGAdminSettingsWonen() { htmlHeader('OG Admin Settings - Wonen'); ?>
 
@@ -618,6 +626,7 @@ class OGPages
     function HTMLOGAanbodDashboard(): void { htmlHeader('OG Aanbod Dashboard'); ?>
         <p>dingdong bishass</p>
         <?php htmlFooter('OG Aanbod Dashboard');}
+
 }
 class OGSync {
     // ==== Declaring Variables ====
