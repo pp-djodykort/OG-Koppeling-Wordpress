@@ -7,6 +7,7 @@ class OGActivationAndDeactivation {
     // ======== Activation ========
     function activate() {
         $this->registerSettings();
+        $this->createCacheFiles();
     }
 
     // ======== Deactivation ========
@@ -27,6 +28,31 @@ class OGActivationAndDeactivation {
             add_option($settingData->settingPrefix.$settingName, $settingValue);
         }
     }
+
+    function createCacheFiles() {
+        // ==== Declaring Variables ====
+        # Classes
+        $settingsData = new OGSettingsData();
+
+        # Variables
+        $cacheFolder = plugin_dir_path(dirname(__DIR__, 1)).$settingsData->cacheFolder;
+
+        // ==== Start of Function ====
+        // Creating the cache files
+        foreach ($settingsData->cacheFiles as $cacheFile) {
+            // Creating the cache folder if it doesn't exist
+            if (!file_exists($cacheFolder)) {
+                mkdir($cacheFolder, 0777, true);
+            }
+
+            // Creating the cache file if it doesn't exist
+            if (!file_exists($cacheFolder.$cacheFile)) {
+                $file = fopen($cacheFolder.$cacheFile, 'w');
+                fwrite($file, '');
+                fclose($file);
+            }
+        }
+    }
 }
 
 // ==== Data Classes ====
@@ -34,7 +60,7 @@ class OGPostTypeData {
     // Wonen, BOG, Nieuwbouw en A&LV
     public $customPostTypes = array(
         // Post Type 1
-        /* post_type */'og-wonen' => array(
+        /* post_type */'wonen' => array(
             'post_type_args' => array(
                 'labels' => array(
                     'name' => 'OG Wonen Objecten',
@@ -81,7 +107,7 @@ class OGPostTypeData {
             )
         ),
         // Post Type 2
-        /* post_type */'og-bog' => array(
+        /* post_type */'bog' => array(
             'post_type_args' => array(
                 'labels' => array(
                     'name' => 'OG BOG Objecten',
@@ -109,7 +135,7 @@ class OGPostTypeData {
             )
         ),
         // Post Type 3
-        /* post_type */'og-nieuwbouw' => array(
+        /* post_type */'nieuwbouw' => array(
             'post_type_args' => array(
                 'labels' => array(
                     'name' => 'OG Nieuwbouw Objecten',
@@ -137,7 +163,7 @@ class OGPostTypeData {
             )
         ),
         // Post Type 4
-        /* post_type */'og-alv' => array(
+        /* post_type */'alv' => array(
             'post_type_args' => array(
                 'labels' => array(
                     'name' => 'OG A&LV Objecten',
@@ -209,7 +235,12 @@ class OGSettingsData {
     // ============ Declare Variables ============
     // Strings
     public $settingPrefix = 'ppOG_';
+    public $cacheFolder = 'caches/';
     // Arrays
+    public array $cacheFiles = [
+        'licenseCache' => 'licenseCache.json',
+    ];
+
     public array $settings = [
         /* Setting Name */'licenseKey' => /* Default Value */'',
         /* Setting Name */'objectAccess' => /* Default Value */'',
@@ -262,22 +293,13 @@ class OGSettingsData {
 // ========== Inactivated state of Plugin ==========
 class OGLicense {
     // ============ Functions ============
-    function getJSONFromAPI($url, $args=null) {
-        // ======== Start of Function ========
-        // Get data from API
-        $data = json_decode(wp_remote_get($url, $args)['body'], true);
-
-        // Return data
-        return $data;
-    }
-
-    function checkLicense() {
+    function checkLicense(): mixed {
         // ============= Declaring Variables =============
         # Classes
         $settingData = new OGSettingsData();
 
         # Cache
-        $cacheFile = plugin_dir_path(dirname(__DIR__, 1)).'caches/licenseCache.json';
+        $cacheFile = plugin_dir_path(dirname(__DIR__, 1)) . $settingData->cacheFolder . $settingData->cacheFiles['licenseCache'];
         $data = null;
 
         # API
@@ -296,7 +318,7 @@ class OGLicense {
             }
             else {
                 // Getting the data from API
-                $data = $this->getJSONFromAPI($url.$qArgs);
+                $data = getJSONFromAPI($url.$qArgs);
                 // Saving the data to the cache file
                 file_put_contents($cacheFile, json_encode($data));
 
@@ -312,10 +334,8 @@ class OGLicense {
             }
         }
         else {
-            adminNotice('error', $data);
             // Getting the data from API
-            $data = $this->getJSONFromAPI($url.$qArgs);
-            // Saving the data to the cache file
+            $data = getJSONFromAPI($url.$qArgs);
 
             // Checking and updating the og types
             if (isset($data['success']) && ($data['success'] == true)) {
@@ -324,7 +344,7 @@ class OGLicense {
                 }
                 print_r($string);
             }
-
+            // Saving the data to the cache file
             file_put_contents($cacheFile, json_encode($data));
             return $data;
         }
@@ -335,16 +355,14 @@ class OGLicense {
     function checkActivation() {
         // ======== Declaring Variables ========
         $jsonData = $this->checkLicense();
-        adminNotice('normal', $jsonData);
 
         // ======== Start of Function ========
         // Checking if the license is valid
         if (isset($jsonData['success']) && $jsonData['success'] == true) {
-            adminNotice('success', "True");
             return True;
         }
         else {
-            adminNotice('success', "False");
+            adminNotice('error', "De licentie is niet actief!");
             return False;
         }
     }
@@ -352,15 +370,19 @@ class OGLicense {
     // A function to see, which OG Post types the user has access to
     function checkPostTypeAccess(): array {
         // ==== Declaring Variables ====
+        # Classes
         $settingData = new OGSettingsData();
 
         // ==== Start of Function ====
-        // Getting the objectAccess option
-        $objectAccess = get_option($settingData->settingPrefix.'objectAccess');
+        $objectAccess = $this->checkLicense();
 
-        // Exploding the objectAccess option into an array
-        $objectAccess = explode(';', $objectAccess);
-
+        // Check if data exists
+        if (isset($objectAccess['data']['types'])) {
+            $objectAccess = $objectAccess['data']['types'];
+        }
+        else {
+            $objectAccess = [];
+        }
         // Return the array
         return $objectAccess;
     }

@@ -15,13 +15,10 @@ function OGUninstallPlugin() {
         return strpos($key, 'ppOG_') === 0;
     }, ARRAY_FILTER_USE_KEY);
 
-    // Deleting all settings
+    // Deleting all settings in database
     foreach ($OGoptions as $option => $value) {
         delete_option($option);
     }
-
-    // ======== Deleting Custom Post Types ========
-
 }
 
 // ============ HTML Functions ============
@@ -126,6 +123,14 @@ function hidePasswordByName($name): void {
 }
 
 // ============ Normal Functions ============
+function getJSONFromAPI($url, $args=null) {
+	// ======== Start of Function ========
+	// Get data from API
+	$data = json_decode(wp_remote_get($url, $args)['body'], true);
+
+	// Return data
+	return $data;
+}
 function getLoadTime(): string {
     // tell me how much time this took
     $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
