@@ -262,19 +262,18 @@ class OGSettingsData {
 // ========== Inactivated state of Plugin ==========
 class OGLicense {
     // ============ Functions ============
-    function getJSONFromAPI($url) {
+    function getJSONFromAPI($url, $args=null) {
         // ======== Start of Function ========
-        // Turn off ssl verification
-        add_filter('https_ssl_verify', '__return_false');
         // Get data from API
-        $data = json_decode(wp_remote_get($url,)['body'], true);
+        $data = json_decode(wp_remote_get($url, $args)['body'], true);
 
         // Return data
         return $data;
     }
-    // A function for registering base settings of the unactivated plugin as activation hook.
-    function checkActivation(): bool {
-        // ======== Declaring Variables ========
+
+    function checkLicense() {
+        // ============= Declaring Variables =============
+        # Classes
         $settingData = new OGSettingsData();
 
         # Cache
@@ -282,36 +281,72 @@ class OGLicense {
         $data = null;
 
         # API
-        $url = "https://og-feeds2.pixelplus.nl/api/validate.php";
-        $args = array(
-            'licenseKey' => get_option($settingData->settingPrefix.'licenseKey'),
-        );
-        // ======== Start of Function ========
-        // If file exists and is not older than 1 hour
+        $url = "https://og-feeds2.pixelplus.nl/api/validate.php?";
+        $qArgs = "token=".get_option($settingData->settingPrefix.'licenseKey');
+
+        // ================ Start of Function =============
+        // Checking if our cache file exists AND if the modification time is less than 1 hour
         if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < 3600) {
-            $data = file_get_contents($cacheFile);
-            $data = json_decode($data, true);
-            if ($data['success'] == 'success') {
-                return True;
+            // Getting the data from the cache file
+            $data = json_decode(file_get_contents($cacheFile), true);
+
+            // Checking if the data['success'] == True. If so then return otherwise check the API if anything changed by any chance
+            if (isset($data['success']) && ($data['success'] == true)) {
+                return $data;
             }
-            echo 'File exists';
+            else {
+                // Getting the data from API
+                $data = $this->getJSONFromAPI($url.$qArgs);
+                // Saving the data to the cache file
+                file_put_contents($cacheFile, json_encode($data));
+
+                // Checking if the data['success'] == True. If so then return otherwise return the data
+                if (isset($data['success']) && ($data['success'] == true)) {
+                    foreach ($data['data']['types'] as $value) {
+                        $string .= $value.';';
+                    }
+
+                    print_r($string);
+                }
+                return $data;
+            }
         }
         else {
-            foreach (range(0, 3) as $i) {
-                // Get data from API
-                $this->getJSONFromAPI($url, $args);
-                print_r($data);
-                // Check if data is valid
-                if ($data['success'] == 'success') {
-                    // Save data to cache
-                    file_put_contents($cacheFile, json_encode($data));
-                    // Check if the user has access to the OG Post Types
-                    echo 'File is updated';
-                    return True;
+            adminNotice('error', $data);
+            // Getting the data from API
+            $data = $this->getJSONFromAPI($url.$qArgs);
+            // Saving the data to the cache file
+
+            // Checking and updating the og types
+            if (isset($data['success']) && ($data['success'] == true)) {
+                foreach ($data['data']['types'] as $value) {
+                    $string .= $value.';';
                 }
+                print_r($string);
             }
+
+            file_put_contents($cacheFile, json_encode($data));
+            return $data;
         }
-        return False;
+
+    }
+
+    // A function for registering base settings of the unactivated plugin as activation hook.
+    function checkActivation() {
+        // ======== Declaring Variables ========
+        $jsonData = $this->checkLicense();
+        adminNotice('normal', $jsonData);
+
+        // ======== Start of Function ========
+        // Checking if the license is valid
+        if (isset($jsonData['success']) && $jsonData['success'] == true) {
+            adminNotice('success', "True");
+            return True;
+        }
+        else {
+            adminNotice('success', "False");
+            return False;
+        }
     }
 
     // A function to see, which OG Post types the user has access to
@@ -464,13 +499,15 @@ class OGPages
             // Submenu Items based on the OG Post Types for in the OG Aanbod
             foreach ($postTypeData->customPostTypes as $postType => $postTypeArray) {
                 // Creating submenu for in the OG Aanbod
-                add_submenu_page(
-                    'pixelplus-og-plugin-aanbod',
-                    $postTypeArray['post_type_args']['labels']['menu_name'],
-                    $postTypeArray['post_type_args']['labels']['menu_name'],
-                    'manage_options',
-                    'edit.php?post_type=' . $postType
-                );
+                if (in_array($postType, $objectAccess)) {
+                    add_submenu_page(
+                        'pixelplus-og-plugin-aanbod',
+                        $postTypeArray['post_type_args']['labels']['menu_name'],
+                        $postTypeArray['post_type_args']['labels']['menu_name'],
+                        'manage_options',
+                        'edit.php?post_type=' . $postType
+                    );
+                }
             }
         }
     }

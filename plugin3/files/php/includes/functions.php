@@ -64,6 +64,33 @@ function welcomeMessage(): string {
     return $welcomeMessage;
 }
 
+function adminNotice($type, $strInput): void {
+    if ($type == "error") {
+        add_action('admin_notices', function() use ($strInput) {
+            echo ("<div class='alert alert-danger' role='alert'>"); print_r($strInput); echo ("</div>");
+        });
+    }
+    else if ($type == "success") {
+        add_action('admin_notices', function() use ($strInput) {
+            echo ("<div class='alert alert-success' role='alert'>"); print_r($strInput); echo ("</div>");
+        });
+    }
+    else if ($type == "warning") {
+        add_action('admin_notices', function() use ($strInput) {
+            echo ("<div class='alert alert-warning' role='alert'>"); print_r($strInput); echo ("</div>");
+        });
+    }
+    else if ($type == "info") {
+        add_action('admin_notices', function() use ($strInput) {
+            echo ("<div class='alert alert-info' role='alert'>"); print_r($strInput); echo ("</div>");
+        });
+    }
+    else {
+        add_action('admin_notices', function() use ($strInput) {
+            echo ("<div class='alert alert-primary' role='alert'>"); print_r($strInput); echo ("</div>");
+        });
+    }
+}
 // ============ JS Functions ============
 function hidePasswordByName($name): void {
     echo("
