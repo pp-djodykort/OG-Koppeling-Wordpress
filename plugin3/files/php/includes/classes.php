@@ -503,7 +503,7 @@ class OGPages
             // ==== Items OG Aanbod ====
             // Menu Item: OG Aanbod Dashboard
             add_menu_page(
-                'Aanbod Dashboard',
+                'OG Aanbod',
                 'OG Aanbod',
                 'manage_options',
                 'pixelplus-og-plugin-aanbod',
