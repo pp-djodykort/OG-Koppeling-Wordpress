@@ -102,12 +102,12 @@ class OGPostTypeData {
                 'capability_type' => 'post',
                 'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'edit.php?post_type=og-wonen-object',
+                'show_in_menu' => 'edit.php?post_type=wonen-object',
                 'taxonomies' => array('category', 'post_tag')
             )
         ),
         // Post Type 2
-        /* post_type */'bog' => array(
+        /* post_type */'bog' => array( 
             'post_type_args' => array(
                 'labels' => array(
                     'name' => 'OG BOG Objecten',
@@ -130,7 +130,7 @@ class OGPostTypeData {
                 'capability_type' => 'post',
                 'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'edit.php?post_type=og-bog-object',
+                'show_in_menu' => 'edit.php?post_type=bog-object',
                 'taxonomies' => array('category', 'post_tag')
             )
         ),
@@ -158,7 +158,7 @@ class OGPostTypeData {
                 'capability_type' => 'post',
                 'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'edit.php?post_type=og-nieuwbouw-object',
+                'show_in_menu' => 'edit.php?post_type=nieuwbouw-object',
                 'taxonomies' => array('category', 'post_tag')
             )
         ),
@@ -186,7 +186,7 @@ class OGPostTypeData {
                 'capability_type' => 'post',
                 'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'edit.php?post_type=og-alv-object',
+                'show_in_menu' => 'edit.php?post_type=alv-object',
                 'taxonomies' => array('category', 'post_tag')
             )
         )
@@ -242,8 +242,7 @@ class OGSettingsData {
     ];
 
     public array $settings = [
-        /* Setting Name */'licenseKey' => /* Default Value */'',
-        /* Setting Name */'objectAccess' => /* Default Value */'',
+        /* Setting Name */'licenseKey' => /* Default Value */'', // License Key
     ];
     public array $adminSettings = [
         // Settings 1
@@ -387,38 +386,6 @@ class OGLicense {
         return $objectAccess;
     }
 }
-class OGPostTypes {
-    // ==== Declaring Variables ====
-
-    // ==== Start of Class ====
-    function __construct() {
-        add_action('init', array($this, 'createPostTypes'));
-//        add_action('init' , array($this, 'checkPostTypeContent'));
-    }
-
-    // Functions
-    function createPostTypes() {
-        // ==== Declaring Variables ====
-        // Classes
-        $postTypeData = new OGPostTypeData();
-        $license = new OGLicense();
-        // Vars
-        $objectAccess = $license->checkPostTypeAccess();
-
-        // ==== Start of Function ====
-
-        // Create the OG Custom Post Types (if the user has access to it)
-        foreach($postTypeData->customPostTypes as $postType => $postTypeArray) {
-            // Checking if the user has access to the post type
-            if (!in_array($postType, $objectAccess)) {
-                continue;
-            }
-            // args array with labels
-            register_post_type($postType, $postTypeArray['post_type_args']);
-            // Subpages are created elsewhere
-        }
-    }
-}
 class OGPages
 {
     function __construct()
@@ -527,7 +494,7 @@ class OGPages
                         $postTypeArray['post_type_args']['labels']['menu_name'],
                         $postTypeArray['post_type_args']['labels']['menu_name'],
                         'manage_options',
-                        'edit.php?post_type=' . $postType
+                        'edit.php?post_type=' . $postType,
                     );
                 }
             }
@@ -669,24 +636,115 @@ class OGPages
             hidePasswordByName($settingsData->settingPrefix.'licenseKey');
             submit_button('Opslaan', 'primary', 'submit_license');
             ?>
-         </form>
-    <?php htmlFooter('OG Admin Settings - Licentie');}
-        function HTMLOGAdminSettingsWonen() { htmlHeader('OG Admin Settings - Wonen'); ?>
+        </form>
+        <?php htmlFooter('OG Admin Settings - Licentie');}
+    function HTMLOGAdminSettingsWonen() { htmlHeader('OG Admin Settings - Wonen'); ?>
 
         <?php htmlFooter('OG Admin Settings - Wonen');}
-        function HTMLOGAdminSettingsBOG() { htmlHeader('OG Admin Settings - BOG'); ?>
+    function HTMLOGAdminSettingsBOG() { htmlHeader('OG Admin Settings - BOG'); ?>
 
         <?php htmlFooter('OG Admin Settings - BOG');}
-        function HTMLOGAdminSettingsNieuwbouw() { htmlHeader('OG Admin Settings - Nieuwbouw'); ?>
+    function HTMLOGAdminSettingsNieuwbouw() { htmlHeader('OG Admin Settings - Nieuwbouw'); ?>
 
         <?php htmlFooter('OG Admin Settings - Nieuwbouw');}
-        function HTMLOGAdminSettingsALV() { htmlHeader('OG Admin Settings - A&LV'); ?>
+    function HTMLOGAdminSettingsALV() { htmlHeader('OG Admin Settings - A&LV'); ?>
 
         <?php htmlFooter('OG Admin Settings - A&LV');}
     // OG Aanbod
     function HTMLOGAanbodDashboard(): void { htmlHeader('OG Aanbod Dashboard'); ?>
         <p>dingdong bishass</p>
         <?php htmlFooter('OG Aanbod Dashboard');}
+}
+// ========== Fully activated state of the plugin ==========
+class OGPostTypes {
+    // ==== Declaring Variables ====
+
+    // ==== Start of Class ====
+    function __construct() {
+        add_action('init', array($this, 'createPostTypes'));
+    }
+
+    // Functions
+    function createPostTypes() {
+        // ==== Declaring Variables ====
+        // Classes
+        $postTypeData = new OGPostTypeData();
+        $license = new OGLicense();
+        // Vars
+        $objectAccess = $license->checkPostTypeAccess();
+
+        // ==== Start of Function ====
+
+        // Create the OG Custom Post Types (if the user has access to it)
+        foreach($postTypeData->customPostTypes as $postType => $postTypeArray) {
+            // Checking if the user has access to the post type
+            if (!in_array($postType, $objectAccess)) {
+                continue;
+            }
+            // args array with labels
+            register_post_type($postType, $postTypeArray['post_type_args']);
+            // Subpages are created elsewhere
+        }
+    }
+}
+class OGOffers {
+    // ==== Declaring Variables ====
+
+    // ==== Start of Class ====
+    function __construct() {
+        add_action('init', array($this, 'createPosts'));
+    }
+
+    // ======== Functions ========
+    // This function is for getting the column info and putting that as meta data in the custom post types.
+    function createPosts() {
+        // ======== Declaring Variables ========
+        global $wpdb;
+
+        // Getting the column info from the database
+        $wonenObjects = $wpdb->get_results('SELECT * FROM ppOG_dataWonen');
+        $bogObjects = $wpdb->get_results('SELECT * FROM ppOG_dataBOG');
+        $nieuwbouwObjects = $wpdb->get_results('SELECT * FROM ppOG_dataNieuwbouw');
+
+        $post_data = [
+            'post_title' => '',
+            'post_content' => '',
+            'post_status' => 'publish',
+            'post_type' => '',
+
+        ];
+
+        // ======== Start of Function ========
+        echo('Creating Posts...'.PHP_EOL);
+
+        // ======= Wonen =======
+        // Looping through them and putting them into the post type wonen
+        foreach($wonenObjects as $wonenObject) {
+            // Check if post already exists with this data
+            $boolExists = $wpdb->('SELECT COUNT(*) FROM wp_posts WHERE post_title = "'.$wonenObject->object_ObjectTiaraID.'"');
+
+            print_r($boolExists);
+
+            $post_data['post_title'] = $wonenObject->object_ObjectTiaraID;
+            $post_data['post_content'] = $wonenObject->objectDetails_Aanbiedingstekst;
+            $post_data['post_type'] = 'wonen';
+
+        }
+    }
+
+    // This function is for getting the data from the database off the synced tables into the custom post types.
+    function addDa() {
+        // ======== Declaring Variables ========
+        global $wpdb;
+
+
+        // ======== Start of Function ========
+        echo('Checking Database...'.PHP_EOL);
+
+
+        $wonenData = $wpdb->get_results('SELECT * FROM ppOG_dataWonen');
+        print_r($wonenData);
+    }
 }
 class OGSync {
     // ==== Declaring Variables ====

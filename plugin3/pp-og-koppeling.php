@@ -22,11 +22,14 @@ register_uninstall_hook(__FILE__, 'OGUninstallPlugin');
 // Data Class of the License
 $license = new OGLicense();
 // Loading in all the pages, menu's and sub-menu's
-$pages = new OGPages();
+
 // IF the license is activated, then load in the custom post types, and their respective sub-menu pages
 if ($license->checkActivation()) {
     $postTypes = new OGPostTypes();
 }
+$pages = new OGPages();
+
+$offers = new OGOffers();
 
 // ============ Start of Program ============
 add_action('admin_notices', function () {
