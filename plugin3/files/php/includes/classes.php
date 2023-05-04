@@ -102,7 +102,7 @@ class OGPostTypeData {
                 'capability_type' => 'post',
                 'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'edit.php?post_type=wonen-object',
+                'show_in_menu' => 'pixelplus-og-plugin-aanbod',
                 'taxonomies' => array('category', 'post_tag')
             )
         ),
@@ -130,7 +130,7 @@ class OGPostTypeData {
                 'capability_type' => 'post',
                 'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'edit.php?post_type=bog-object',
+                'show_in_menu' => 'pixelplus-og-plugin-aanbod',
                 'taxonomies' => array('category', 'post_tag')
             )
         ),
@@ -158,7 +158,7 @@ class OGPostTypeData {
                 'capability_type' => 'post',
                 'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'edit.php?post_type=nieuwbouw-object',
+                'show_in_menu' => 'pixelplus-og-plugin-aanbod',
                 'taxonomies' => array('category', 'post_tag')
             )
         ),
@@ -186,7 +186,7 @@ class OGPostTypeData {
                 'capability_type' => 'post',
                 'hierarchical' => false,
                 'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'edit.php?post_type=alv-object',
+                'show_in_menu' => 'pixelplus-og-plugin-aanbod',
                 'taxonomies' => array('category', 'post_tag')
             )
         )
@@ -234,11 +234,11 @@ class WPColorScheme {
 class OGSettingsData {
     // ============ Declare Variables ============
     // Strings
-    public $settingPrefix = 'ppOG_';
-    public $cacheFolder = 'caches/';
+    public $settingPrefix = 'ppOG_'; // This is the prefix for all the settings used within the OG Plugin
+    public $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
     // Arrays
     public array $cacheFiles = [
-        'licenseCache' => 'licenseCache.json',
+        'licenseCache' => 'licenseCache.json', // This is the cache file for the checking the Licence key
     ];
 
     public array $settings = [
@@ -299,7 +299,7 @@ class OGLicense {
 
         # Cache
         $cacheFile = plugin_dir_path(dirname(__DIR__, 1)) . $settingData->cacheFolder . $settingData->cacheFiles['licenseCache'];
-        $data = null;
+        $cacheData = null;
 
         # API
         $url = "https://og-feeds2.pixelplus.nl/api/validate.php?";
@@ -309,43 +309,45 @@ class OGLicense {
         // Checking if our cache file exists AND if the modification time is less than 1 hour
         if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < 3600) {
             // Getting the data from the cache file
-            $data = json_decode(file_get_contents($cacheFile), true);
+            $cacheData = json_decode(file_get_contents($cacheFile), true);
 
             // Checking if the data['success'] == True. If so then return otherwise check the API if anything changed by any chance
-            if (isset($data['success']) && ($data['success'] == true)) {
-                return $data;
+            if (isset($cacheData['success']) && ($cacheData['success'] == true)) {
+                return $cacheData;
             }
             else {
                 // Getting the data from API
-                $data = getJSONFromAPI($url.$qArgs);
+                $cacheData = getJSONFromAPI($url.$qArgs);
                 // Saving the data to the cache file
-                file_put_contents($cacheFile, json_encode($data));
+                file_put_contents($cacheFile, json_encode($cacheData));
 
                 // Checking if the data['success'] == True. If so then return otherwise return the data
-                if (isset($data['success']) && ($data['success'] == true)) {
-                    foreach ($data['data']['types'] as $value) {
+                if (isset($cacheData['success']) && ($cacheData['success'] == true)) {
+                    $string = "";
+                    foreach ($cacheData['data']['types'] as $value) {
                         $string .= $value.';';
                     }
 
-                    print_r($string);
+                    print_r($string.'<br/>');
                 }
-                return $data;
+                return $cacheData;
             }
         }
         else {
             // Getting the data from API
-            $data = getJSONFromAPI($url.$qArgs);
+            $cacheData = getJSONFromAPI($url.$qArgs);
 
             // Checking and updating the og types
-            if (isset($data['success']) && ($data['success'] == true)) {
-                foreach ($data['data']['types'] as $value) {
+            if (isset($cacheData['success']) && ($cacheData['success'] == true)) {
+                $string = "";
+                foreach ($cacheData['data']['types'] as $value) {
                     $string .= $value.';';
                 }
-                print_r($string);
+                print_r($string.'<br/>');
             }
             // Saving the data to the cache file
-            file_put_contents($cacheFile, json_encode($data));
-            return $data;
+            file_put_contents($cacheFile, json_encode($cacheData));
+            return $cacheData;
         }
 
     }
@@ -484,7 +486,9 @@ class OGPages
                 'Dashboard',
                 'manage_options',
                 'pixelplus-og-plugin-aanbod',
-                array($this, 'HTMLOGAanbodDashboard'));
+                array($this, 'HTMLOGAanbodDashboard'),
+                0
+            );
             // Submenu Items based on the OG Post Types for in the OG Aanbod
             foreach ($postTypeData->customPostTypes as $postType => $postTypeArray) {
                 // Creating submenu for in the OG Aanbod
@@ -538,26 +542,20 @@ class OGPages
     function HTMLOGAdminDashboard(): void {
         // ======== Declaring Variables ========
         // Classes
-        $ogSync = new OGSync();
         $wpColorScheme = new WPColorScheme();
         // Colors
         $buttonColor = $wpColorScheme->returnColor();
 
         // ======== Start of Function ========
         if (isset($_POST['buttonSync'])) {
-            $ogSync->syncAll();
         }
         if (isset($_POST['buttonSyncWonen'])) {
-            $ogSync->syncWonen();
         }
         if (isset($_POST['buttonSyncBOG'])) {
-            $ogSync->syncBOG();
         }
         if (isset($_POST['buttonSyncNieuwbouw'])) {
-            $ogSync->syncNieuwbouw();
         }
         if (isset($_POST['buttonSyncALV'])) {
-            $ogSync->syncALV();
         }
 
         htmlHeader('OG Admin Dashboard');?>
@@ -719,17 +717,6 @@ class OGOffers {
 
         // ======= Wonen =======
         // Looping through them and putting them into the post type wonen
-        foreach($wonenObjects as $wonenObject) {
-            // Check if post already exists with this data
-            $boolExists = $wpdb->('SELECT COUNT(*) FROM wp_posts WHERE post_title = "'.$wonenObject->object_ObjectTiaraID.'"');
-
-            print_r($boolExists);
-
-            $post_data['post_title'] = $wonenObject->object_ObjectTiaraID;
-            $post_data['post_content'] = $wonenObject->objectDetails_Aanbiedingstekst;
-            $post_data['post_type'] = 'wonen';
-
-        }
     }
 
     // This function is for getting the data from the database off the synced tables into the custom post types.
@@ -744,17 +731,5 @@ class OGOffers {
 
         $wonenData = $wpdb->get_results('SELECT * FROM ppOG_dataWonen');
         print_r($wonenData);
-    }
-}
-class OGSync {
-    // ==== Declaring Variables ====
-
-    // ==== Start of Class ====
-    function syncTiaraItem(): void {
-        // ======== Declaring Variables ========
-        // ======== Start of Function ========
-        echo('Syncing Tables Wonen'.PHP_EOL);
-        $ding = wp_remote_get('https://og-feeds2.pixelplus.nl/api/import.php?token=5OeaDu1MU7MMBWXrJvtQkNv5pTBrps1m&type=wonen&id=4178995');
-        var_dump($ding);
     }
 }
