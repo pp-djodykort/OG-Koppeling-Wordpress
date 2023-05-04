@@ -327,8 +327,6 @@ class OGLicense {
                     foreach ($cacheData['data']['types'] as $value) {
                         $string .= $value.';';
                     }
-
-                    print_r($string.'<br/>');
                 }
                 return $cacheData;
             }
@@ -343,7 +341,6 @@ class OGLicense {
                 foreach ($cacheData['data']['types'] as $value) {
                     $string .= $value.';';
                 }
-                print_r($string.'<br/>');
             }
             // Saving the data to the cache file
             file_put_contents($cacheFile, json_encode($cacheData));
@@ -489,19 +486,6 @@ class OGPages
                 array($this, 'HTMLOGAanbodDashboard'),
                 0
             );
-            // Submenu Items based on the OG Post Types for in the OG Aanbod
-            foreach ($postTypeData->customPostTypes as $postType => $postTypeArray) {
-                // Creating submenu for in the OG Aanbod
-                if (in_array($postType, $objectAccess)) {
-                    add_submenu_page(
-                        'pixelplus-og-plugin-aanbod',
-                        $postTypeArray['post_type_args']['labels']['menu_name'],
-                        $postTypeArray['post_type_args']['labels']['menu_name'],
-                        'manage_options',
-                        'edit.php?post_type=' . $postType,
-                    );
-                }
-            }
         }
     }
     // ==== Register Settings ====
