@@ -27,5 +27,3 @@ function saveToJSON($varJSON, $fileName) {
     fwrite($fp, $varJSON);
     fclose($fp);
 }
-
-

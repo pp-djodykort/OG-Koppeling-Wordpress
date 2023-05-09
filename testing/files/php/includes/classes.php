@@ -54,3 +54,36 @@ class getOGDataFromRealworks {
         $this->getData();
     }
 }
+
+class OGTestOffers {
+    // ========= Declaring Variables =========
+    public $tableNames = ['tbl_OG_wonen', 'ppOG_dataBOG', 'ppOG_dataNieuwbouw'];
+
+    // ============== Start of Class ==============
+    function __construct() {
+        add_action('init', array($this, 'test'));
+    }
+
+    // ============== Functions ==============
+    function test() {
+        // ==== Declaring Variables ====
+        # Classes
+        global $wpdb;
+
+        # Variables
+        $tableNames = $this->tableNames;
+        $ogColumns = [];
+        $ogOffers = [];
+
+        foreach ($tableNames as $tableName) {
+            print($tableName."<br/>");
+            $ogOffers = array_merge($ogOffers, [$wpdb->get_results("SELECT * FROM ".$tableName)]);
+            $ogColumns = array_merge($ogColumns, [$wpdb->get_results("SHOW COLUMNS FROM ".$tableName)]);
+        }
+        // ==== Start of Program ====
+        print_r('Count of the things: '.count($ogOffers).'<br/>');
+
+
+
+    }
+}
