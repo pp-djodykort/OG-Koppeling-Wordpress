@@ -57,140 +57,160 @@ class OGActivationAndDeactivation {
 
 // ==== Data Classes ====
 class OGPostTypeData {
-    // Wonen, BOG, Nieuwbouw en A&LV
-    public $customPostTypes = array(
-        // Post Type 1
-        /* post_type */'wonen' => array(
-            'post_type_args' => array(
-                'labels' => array(
-                    'name' => 'OG Wonen Objecten',
-                    'singular_name' => 'OG Wonen Object',
-                    'add_new' => 'Nieuwe toevoegen',
-                    'add_new_item' => 'Nieuw OG Wonen Object toevoegen',
-                    'edit_item' => 'OG Wonen Object bewerken',
-                    'new_item' => 'Nieuw OG Wonen Object',
-                    'view_item' => 'Bekijk OG Wonen Object',
-                    'search_items' => 'Zoek naar OG Wonen Objecten',
-                    'not_found' => 'Geen OG Wonen Objecten gevonden',
-                    'not_found_in_trash' => 'Geen OG Wonen Objecten gevonden in de prullenbak',
-                    'parent_item_colon' => '',
-                    'menu_name' => 'Wonen'
-                ),
-                'post_type_meta' => array(
-                    'meta_box_title' => 'OG Wonen Object',
-                    'meta_box_id' => 'og-wonen-object',
-                    'meta_box_context' => 'normal',
-                    'meta_box_priority' => 'high',
-                    'meta_box_fields' => array(
-                        'OG Wonen Object' => array(
-                            'type' => 'text',
-                            'id' => 'og-wonen-object',
-                            'name' => 'og-wonen-object',
-                            'label' => 'OG Wonen Object',
-                            'placeholder' => 'OG Wonen Object',
-                            'description' => 'OG Wonen Object',
-                            'value' => '',
-                            'required' => true
+    // ============ Declaring Variables ============
+
+    // ============ Begin of Class ============
+    function customPostTypes() {
+        // ===== Declaring Variables =====
+        # Classes
+        $license = new OGLicense();
+
+        # Variables
+        $objectAccess = $license->checkPostTypeAccess();
+        $customPostTypes = array(
+            // Post Type 1
+            /* post_type */'wonen' => array(
+                'post_type_args' => array(
+                    'labels' => array(
+                        'name' => 'OG Wonen Objecten',
+                        'singular_name' => 'OG Wonen Object',
+                        'add_new' => 'Nieuwe toevoegen',
+                        'add_new_item' => 'Nieuw OG Wonen Object toevoegen',
+                        'edit_item' => 'OG Wonen Object bewerken',
+                        'new_item' => 'Nieuw OG Wonen Object',
+                        'view_item' => 'Bekijk OG Wonen Object',
+                        'search_items' => 'Zoek naar OG Wonen Objecten',
+                        'not_found' => 'Geen OG Wonen Objecten gevonden',
+                        'not_found_in_trash' => 'Geen OG Wonen Objecten gevonden in de prullenbak',
+                        'parent_item_colon' => '',
+                        'menu_name' => 'Wonen'
+                    ),
+                    'post_type_meta' => array(
+                        'meta_box_title' => 'OG Wonen Object',
+                        'meta_box_id' => 'og-wonen-object',
+                        'meta_box_context' => 'normal',
+                        'meta_box_priority' => 'high',
+                        'meta_box_fields' => array(
+                            'OG Wonen Object' => array(
+                                'type' => 'text',
+                                'id' => 'og-wonen-object',
+                                'name' => 'og-wonen-object',
+                                'label' => 'OG Wonen Object',
+                                'placeholder' => 'OG Wonen Object',
+                                'description' => 'OG Wonen Object',
+                                'value' => '',
+                                'required' => true
+                            )
                         )
-                    )
-                ),
-                'public' => true,
-                'seperate_table' => true,
-                'has_archive' => true,
-                'publicly_queryable' => true,
-                'query_var' => true,
-                'capability_type' => 'post',
-                'hierarchical' => false,
-                'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'pixelplus-og-plugin-aanbod',
-                'taxonomies' => array('category', 'post_tag')
+                    ),
+                    'public' => true,
+                    'seperate_table' => true,
+                    'has_archive' => true,
+                    'publicly_queryable' => true,
+                    'query_var' => true,
+                    'capability_type' => 'post',
+                    'hierarchical' => false,
+                    'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'taxonomies' => array('category', 'post_tag')
+                )
+            ),
+            // Post Type 2
+            /* post_type */'bog' => array(
+                'post_type_args' => array(
+                    'labels' => array(
+                        'name' => 'OG BOG Objecten',
+                        'singular_name' => 'OG BOG Object',
+                        'add_new' => 'Nieuwe toevoegen',
+                        'add_new_item' => 'Nieuw OG BOG Object toevoegen',
+                        'edit_item' => 'OG BOG Object bewerken',
+                        'new_item' => 'Nieuw OG BOG Object',
+                        'view_item' => 'Bekijk OG BOG Object',
+                        'search_items' => 'Zoek naar OG BOG Objecten',
+                        'not_found' => 'Geen OG BOG Objecten gevonden',
+                        'not_found_in_trash' => 'Geen OG BOG Objecten gevonden in de prullenbak',
+                        'parent_item_colon' => '',
+                        'menu_name' => 'BOG'
+                    ),
+                    'public' => true,
+                    'has_archive' => true,
+                    'publicly_queryable' => true,
+                    'query_var' => true,
+                    'capability_type' => 'post',
+                    'hierarchical' => false,
+                    'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'taxonomies' => array('category', 'post_tag')
+                )
+            ),
+            // Post Type 3
+            /* post_type */'nieuwbouw' => array(
+                'post_type_args' => array(
+                    'labels' => array(
+                        'name' => 'OG Nieuwbouw Objecten',
+                        'singular_name' => 'OG Nieuwbouw Object',
+                        'add_new' => 'Nieuwe toevoegen',
+                        'add_new_item' => 'Nieuw OG Nieuwbouw Object toevoegen',
+                        'edit_item' => 'OG Nieuwbouw Object bewerken',
+                        'new_item' => 'Nieuw OG Nieuwbouw Object',
+                        'view_item' => 'Bekijk OG Nieuwbouw Object',
+                        'search_items' => 'Zoek naar OG Nieuwbouw Objecten',
+                        'not_found' => 'Geen OG Nieuwbouw Objecten gevonden',
+                        'not_found_in_trash' => 'Geen OG Nieuwbouw Objecten gevonden in de prullenbak',
+                        'parent_item_colon' => '',
+                        'menu_name' => 'Nieuwbouw'
+                    ),
+                    'public' => true,
+                    'has_archive' => true,
+                    'publicly_queryable' => true,
+                    'query_var' => true,
+                    'capability_type' => 'post',
+                    'hierarchical' => false,
+                    'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'taxonomies' => array('category', 'post_tag')
+                )
+            ),
+            // Post Type 4
+            /* post_type */'alv' => array(
+                'post_type_args' => array(
+                    'labels' => array(
+                        'name' => 'OG A&LV Objecten',
+                        'singular_name' => 'OG A&LV Object',
+                        'add_new' => 'Nieuwe toevoegen',
+                        'add_new_item' => 'Nieuw OG A&LV Object toevoegen',
+                        'edit_item' => 'OG A&LV Object bewerken',
+                        'new_item' => 'Nieuw OG A&LV Object',
+                        'view_item' => 'Bekijk OG A&LV Object',
+                        'search_items' => 'Zoek naar OG A&LV Objecten',
+                        'not_found' => 'Geen OG A&LV Objecten gevonden',
+                        'not_found_in_trash' => 'Geen OG A&LV Objecten gevonden in de prullenbak',
+                        'parent_item_colon' => '',
+                        'menu_name' => 'ALV'
+                    ),
+                    'public' => true,
+                    'has_archive' => true,
+                    'publicly_queryable' => true,
+                    'query_var' => true,
+                    'capability_type' => 'post',
+                    'hierarchical' => false,
+                    'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'taxonomies' => array('category', 'post_tag')
+                )
             )
-        ),
-        // Post Type 2
-        /* post_type */'bog' => array( 
-            'post_type_args' => array(
-                'labels' => array(
-                    'name' => 'OG BOG Objecten',
-                    'singular_name' => 'OG BOG Object',
-                    'add_new' => 'Nieuwe toevoegen',
-                    'add_new_item' => 'Nieuw OG BOG Object toevoegen',
-                    'edit_item' => 'OG BOG Object bewerken',
-                    'new_item' => 'Nieuw OG BOG Object',
-                    'view_item' => 'Bekijk OG BOG Object',
-                    'search_items' => 'Zoek naar OG BOG Objecten',
-                    'not_found' => 'Geen OG BOG Objecten gevonden',
-                    'not_found_in_trash' => 'Geen OG BOG Objecten gevonden in de prullenbak',
-                    'parent_item_colon' => '',
-                    'menu_name' => 'BOG'
-                ),
-                'public' => true,
-                'has_archive' => true,
-                'publicly_queryable' => true,
-                'query_var' => true,
-                'capability_type' => 'post',
-                'hierarchical' => false,
-                'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'pixelplus-og-plugin-aanbod',
-                'taxonomies' => array('category', 'post_tag')
-            )
-        ),
-        // Post Type 3
-        /* post_type */'nieuwbouw' => array(
-            'post_type_args' => array(
-                'labels' => array(
-                    'name' => 'OG Nieuwbouw Objecten',
-                    'singular_name' => 'OG Nieuwbouw Object',
-                    'add_new' => 'Nieuwe toevoegen',
-                    'add_new_item' => 'Nieuw OG Nieuwbouw Object toevoegen',
-                    'edit_item' => 'OG Nieuwbouw Object bewerken',
-                    'new_item' => 'Nieuw OG Nieuwbouw Object',
-                    'view_item' => 'Bekijk OG Nieuwbouw Object',
-                    'search_items' => 'Zoek naar OG Nieuwbouw Objecten',
-                    'not_found' => 'Geen OG Nieuwbouw Objecten gevonden',
-                    'not_found_in_trash' => 'Geen OG Nieuwbouw Objecten gevonden in de prullenbak',
-                    'parent_item_colon' => '',
-                    'menu_name' => 'Nieuwbouw'
-                ),
-                'public' => true,
-                'has_archive' => true,
-                'publicly_queryable' => true,
-                'query_var' => true,
-                'capability_type' => 'post',
-                'hierarchical' => false,
-                'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'pixelplus-og-plugin-aanbod',
-                'taxonomies' => array('category', 'post_tag')
-            )
-        ),
-        // Post Type 4
-        /* post_type */'alv' => array(
-            'post_type_args' => array(
-                'labels' => array(
-                    'name' => 'OG A&LV Objecten',
-                    'singular_name' => 'OG A&LV Object',
-                    'add_new' => 'Nieuwe toevoegen',
-                    'add_new_item' => 'Nieuw OG A&LV Object toevoegen',
-                    'edit_item' => 'OG A&LV Object bewerken',
-                    'new_item' => 'Nieuw OG A&LV Object',
-                    'view_item' => 'Bekijk OG A&LV Object',
-                    'search_items' => 'Zoek naar OG A&LV Objecten',
-                    'not_found' => 'Geen OG A&LV Objecten gevonden',
-                    'not_found_in_trash' => 'Geen OG A&LV Objecten gevonden in de prullenbak',
-                    'parent_item_colon' => '',
-                    'menu_name' => 'ALV'
-                ),
-                'public' => true,
-                'has_archive' => true,
-                'publicly_queryable' => true,
-                'query_var' => true,
-                'capability_type' => 'post',
-                'hierarchical' => false,
-                'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                'show_in_menu' => 'pixelplus-og-plugin-aanbod',
-                'taxonomies' => array('category', 'post_tag')
-            )
-        )
-    );
+        );
+
+        // ===== Start of Construct =====
+        foreach ($customPostTypes as $postType => $postTypeArgs) {
+            if (!in_array($postType, $objectAccess)) {
+                // Deleting it out of the array
+                unset($customPostTypes[$postType]);
+            }
+        }
+        // Returning the array
+        return $customPostTypes;
+    }
 }
 class WPColorScheme {
     public array $mainColors = array(
@@ -405,6 +425,7 @@ class OGPages
         // Classes
         $license = new OGLicense();
         $postTypeData = new OGPostTypeData();
+        $postTypeData = $postTypeData->customPostTypes();
         // Vars
         $boolPluginActivated = $license->checkActivation();
         $objectAccess = $license->checkPostTypeAccess();
@@ -432,7 +453,7 @@ class OGPages
         if ($boolPluginActivated) {
             // ==== OG Settings ====
             // Submenu Items based on the OG Post Types for in the OG Settings
-            foreach ($postTypeData->customPostTypes as $postType => $postTypeArray) {
+            foreach ($postTypeData as $postType => $postTypeArray) {
                 if (in_array($postType, $objectAccess)) {
                     $name = $postTypeArray['post_type_args']['labels']['menu_name'];
                     // Creating submenu for in the OG Settings
@@ -644,6 +665,7 @@ class OGPostTypes {
     // ==== Start of Class ====
     function __construct() {
         add_action('init', array($this, 'createPostTypes'));
+        add_action('init', array($this, 'checkMigrationPostTypes'));
     }
 
     // Functions
@@ -651,21 +673,38 @@ class OGPostTypes {
         // ==== Declaring Variables ====
         // Classes
         $postTypeData = new OGPostTypeData();
-        $license = new OGLicense();
-        // Vars
-        $objectAccess = $license->checkPostTypeAccess();
+        $postTypeData = $postTypeData->customPostTypes();
 
         // ==== Start of Function ====
 
         // Create the OG Custom Post Types (if the user has access to it)
-        foreach($postTypeData->customPostTypes as $postType => $postTypeArray) {
-            // Checking if the user has access to the post type
-            if (!in_array($postType, $objectAccess)) {
-                continue;
-            }
-            // args array with labels
+        foreach($postTypeData as $postType => $postTypeArray) {
             register_post_type($postType, $postTypeArray['post_type_args']);
             // Subpages are created elsewhere
+        }
+    }
+    # This function is for checking if the post types are migrated to different tables / metadata tables
+    function checkMigrationPostTypes() {
+        // ==== Declaring Variables ====
+        # Classes
+        global $wpdb;
+        $postTypeData = new OGPostTypeData();
+        $postTypeData = $postTypeData->customPostTypes();
+
+        # Variables
+        $defaultPrefix = "wp_cpt_";
+        $sqlCheck = "SHOW TABLES LIKE '".$defaultPrefix."";
+
+        // ==== Start of Function ====
+        // Checking
+        foreach ($postTypeData as $postType => $postTypeArray) {
+            // Preparing the statement
+            $result = $wpdb->get_results($sqlCheck.$postType."'");
+
+            if (empty($result)) {
+                // Migrating the data
+                adminNotice('error', 'Please migrate the '.strtoupper($postType).' custom post type to the new table structure using the CPT Tables Plugin.');
+            }
         }
     }
 }
