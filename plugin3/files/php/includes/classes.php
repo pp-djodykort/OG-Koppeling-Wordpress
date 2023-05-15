@@ -113,6 +113,13 @@ class OGPostTypeData {
                     'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
                     'show_in_menu' => 'pixelplus-og-plugin-aanbod',
                     'taxonomies' => array('category', 'post_tag')
+                ),
+                'database_tables' => array(
+                    'tbl_OG_wonen' => array(
+                        'ID' => 'object_ObjectTiaraID',
+                        'post_title' => 'objectDetails_Adres_NL_Straatnaam;objectDetails_Adres_NL_Huisnummer',
+                        'post_content' => 'objectDetails_Aanbiedingstekst'
+                    )
                 )
             ),
             // Post Type 2
@@ -141,6 +148,13 @@ class OGPostTypeData {
                     'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
                     'show_in_menu' => 'pixelplus-og-plugin-aanbod',
                     'taxonomies' => array('category', 'post_tag')
+                ),
+                'database_tables' => array(
+                    'ppOG_dataBOG' => array(
+                        'ID' => 'object_ObjectTiaraID',
+                        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer',
+                        'post_content' => 'objectDetails_Aanbiedingstekst'
+                    )
                 )
             ),
             // Post Type 3
@@ -169,6 +183,13 @@ class OGPostTypeData {
                     'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
                     'show_in_menu' => 'pixelplus-og-plugin-aanbod',
                     'taxonomies' => array('category', 'post_tag')
+                ),
+                'database_tables' => array(
+                    'ppOG_dataNieuwbouw' => array(
+                        'ID' => 'object_ObjectTiaraID',
+                        'post_title' => 'project_ProjectDetails_Projectnaam',
+                        'post_content' => 'project_ProjectDetails_Presentatie_Aanbiedingstekst'
+                    )
                 )
             ),
             // Post Type 4
@@ -197,6 +218,13 @@ class OGPostTypeData {
                     'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
                     'show_in_menu' => 'pixelplus-og-plugin-aanbod',
                     'taxonomies' => array('category', 'post_tag')
+                ),
+                'database_tables' => array(
+                    'ppOG_dataALV' => array(
+                        'ID' => 'object_ObjectTiaraID',
+                        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer',
+                        'post_content' => 'objectDetails_Aanbiedingstekst'
+                    )
                 )
             )
         );
@@ -262,7 +290,8 @@ class OGSettingsData {
     ];
 
     public array $settings = [
-        /* Setting Name */'licenseKey' => /* Default Value */'', // License Key
+        /* Setting Name */'licenseKey' => /* Default Value */       '',     // License Key
+        /* Setting Name */'firstInitiation' => /* Default Value */  'false',  // First Initiation
     ];
     public array $adminSettings = [
         // Settings 1
@@ -668,7 +697,7 @@ class OGPostTypes {
         add_action('init', array($this, 'checkMigrationPostTypes'));
     }
 
-    // Functions
+    // =========== Functions ===========
     function createPostTypes() {
         // ==== Declaring Variables ====
         // Classes
@@ -680,7 +709,6 @@ class OGPostTypes {
         // Create the OG Custom Post Types (if the user has access to it)
         foreach($postTypeData as $postType => $postTypeArray) {
             register_post_type($postType, $postTypeArray['post_type_args']);
-            // Subpages are created elsewhere
         }
     }
     # This function is for checking if the post types are migrated to different tables / metadata tables
@@ -709,50 +737,155 @@ class OGPostTypes {
     }
 }
 class OGOffers {
-    // ==== Declaring Variables ====
-
     // ==== Start of Class ====
     function __construct() {
-        add_action('init', array($this, 'createPosts'));
+        $this->examinePosts();
     }
 
     // ======== Functions ========
     // This function is for getting the column info and putting that as meta data in the custom post types.
-    function createPosts() {
+    function createPost($typeObjects ,$object) {
         // ======== Declaring Variables ========
-        global $wpdb;
-
-        // Getting the column info from the database
-        $wonenObjects = $wpdb->get_results('SELECT * FROM ppOG_dataWonen');
-        $bogObjects = $wpdb->get_results('SELECT * FROM ppOG_dataBOG');
-        $nieuwbouwObjects = $wpdb->get_results('SELECT * FROM ppOG_dataNieuwbouw');
-
+        # Variables
         $post_data = [
             'post_title' => '',
             'post_content' => '',
-            'post_status' => 'publish',
-            'post_type' => '',
-
+            'post_status' => 'draft',
+            'post_type' => ''
         ];
+        switch ($typeObjects) {
+            case 'wonen':
+                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam.' '.$object->objectDetails_Adres_NL_Huisnummer;
+                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
+                $post_data['post_type'] = 'wonen';
+                break;
+            case 'bog':
+                $post_data['post_title'] = $object->objectDetails_Adres_Straatnaam.' '.$object->objectDetails_Adres_Huisnummer;
+                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
+                $post_data['post_type'] = 'bog';
+                break;
+            case 'nieuwbouw':
+                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam.' '.$object->objectDetails_Adres_NL_Huisnummer;
+                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
+                $post_data['post_type'] = 'nieuwbouw';
+                break;
+            case 'alv':
+                $post_data['post_type'] = 'alv';
+                break;
+        }
 
         // ======== Start of Function ========
-        echo('Creating Posts...'.PHP_EOL);
+        $postID = wp_insert_post($post_data);
 
-        // ======= Wonen =======
-        // Looping through them and putting them into the post type wonen
+        # Adding the meta data
+        foreach ($object as $key => $value) {
+            add_post_meta($postID, $key, $value);
+        }
+        # Adding the meta data for the images
+
+        # Publishing the post
+        wp_update_post(array('ID' => $postID, 'post_status' => 'publish'));
     }
 
-    // This function is for getting the data from the database off the synced tables into the custom post types.
-    function addDa() {
+    function overwritePost($typeObjects, $object, $postID) {
         // ======== Declaring Variables ========
-        global $wpdb;
+        $post_data = [
+            'ID' => $postID,
+            'post_title' => '',
+            'post_content' => ''
+        ];
 
+        switch ($typeObjects) {
+            case 'wonen':
+                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam.' '.$object->objectDetails_Adres_NL_Huisnummer;
+                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
+                break;
+            case 'bog':
+                $post_data['post_title'] = $object->objectDetails_Adres_Straatnaam.' '.$object->objectDetails_Adres_Huisnummer;
+                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
+                break;
+            case 'nieuwbouw':
+
+                break;
+            case 'alv':
+
+                break;
+        }
 
         // ======== Start of Function ========
-        echo('Checking Database...'.PHP_EOL);
+        # Overwriting the post data
+        wp_update_post(array(
+            'post_title' => $object->objectDetails_Adres_NL_Straatnaam.' '.$object->objectDetails_Adres_NL_Huisnummer,
+            'post_content' => $object->objectDetails_Aanbiedingstekst
+        ));
 
+        # Overwriting the meta data
+        foreach ($object as $key => $value) {
+            update_post_meta($postID, $key, $value);
+        }
+    }
 
-        $wonenData = $wpdb->get_results('SELECT * FROM ppOG_dataWonen');
-        print_r($wonenData);
+    function checkPosts($objects, $typeObjects) {
+        foreach ($objects as $object) {
+            // ==== Declaring Variables ====
+            # Classes
+            // WP Query with metadata
+            $postData = new WP_Query(array(
+                'post_type' => $typeObjects,
+                'meta_key' => 'object_ObjectTiaraID',
+                'meta_value' => $object->object_ObjectTiaraID
+            ));
+            # Variables
+            // Post
+            $postExists = $postData->have_posts();
+
+            if ($postExists) {
+                $dateUpdatedPost = $postData->posts[0]->datum_gewijzigd;
+            }
+            // Object
+            $tiaraID = $object->object_ObjectTiaraID;
+            $dateUpdatedObject = $object->datum_gewijzigd;
+
+            // ==== Start of Function ====
+            // Check if the object is already in the posts
+            if ($postExists) {
+                // Check if the object is updated
+                if ($dateUpdatedPost != $dateUpdatedObject) {
+                    // Overwrite the post
+                    $this->overwritePost($object, $postData->posts[0]->ID);
+                    adminNotice('success', 'The object with the Tiara ID: '.$tiaraID.' is now overwritten.<br/>');
+                }
+                else {
+                    adminNotice('success', 'The object with the Tiara ID: '.$tiaraID.' is already up to date.<br/>');
+                }
+            }
+
+            else {
+                $this->createPost($typeObjects ,$object);
+                adminNotice('success', 'The object with the Tiara ID: '.$tiaraID.' is created.<br/>');
+            }
+        }
+    }
+
+    function examinePosts() {
+        // ======== Declaring Variables ========
+        # Classes
+        global $wpdb;
+        $settingsData = new OGSettingsData();
+
+        # Variables
+        // Getting the column info from the database
+        $wonenObjects = $wpdb->get_results('SELECT * FROM `tbl_OG_wonen`');
+        $bogObjects = $wpdb->get_results('SELECT * FROM `ppOG_dataBOG`');
+        $nieuwbouwObjects = $wpdb->get_results('SELECT * FROM `ppOG_dataNieuwbouw`');
+
+        // ======== Start of Function ========
+        // ======= Wonen =======
+        // Looping through them and putting them into the post type wonen
+        $this->checkPosts($wonenObjects, 'wonen');
+
+        // ======= BOG =======
+        // Looping through them and putting them into the post type wonen
+        $this->checkPosts($bogObjects, 'bog');
     }
 }
