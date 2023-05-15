@@ -57,8 +57,6 @@ class OGActivationAndDeactivation {
 
 // ==== Data Classes ====
 class OGPostTypeData {
-    // ============ Declaring Variables ============
-
     // ============ Begin of Class ============
     function customPostTypes() {
         // ===== Declaring Variables =====
@@ -220,11 +218,7 @@ class OGPostTypeData {
                     'taxonomies' => array('category', 'post_tag')
                 ),
                 'database_tables' => array(
-                    'ppOG_dataALV' => array(
-                        'ID' => 'object_ObjectTiaraID',
-                        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer',
-                        'post_content' => 'objectDetails_Aanbiedingstekst'
-                    )
+                    'ppOG_dataALV' => null
                 )
             )
         );
@@ -241,6 +235,7 @@ class OGPostTypeData {
     }
 }
 class WPColorScheme {
+    // ================ Declaring Variables ================
     public array $mainColors = array(
         'light' => 3,
         'modern' => 1,
@@ -263,6 +258,8 @@ class WPColorScheme {
         'seashore' => 3,
         'vinyard' => 3
     );
+
+    // ================ Begin of Class ================
     function returnColor(): string
     {
         // ======== Declaring Variables ========
@@ -291,7 +288,6 @@ class OGSettingsData {
 
     public array $settings = [
         /* Setting Name */'licenseKey' => /* Default Value */       '',     // License Key
-        /* Setting Name */'firstInitiation' => /* Default Value */  'false',  // First Initiation
     ];
     public array $adminSettings = [
         // Settings 1
@@ -742,150 +738,151 @@ class OGOffers {
         $this->examinePosts();
     }
 
-    // ======== Functions ========
-    // This function is for getting the column info and putting that as meta data in the custom post types.
-    function createPost($typeObjects ,$object) {
+    // ================ Functions ================
+    function updatePost($postTypeName, $postID, $object) {
         // ======== Declaring Variables ========
-        # Variables
         $post_data = [
+            'ID' => $postID,
+            'post_title' => '',
+            'post_content' => '',
+        ];
+
+        switch ($postTypeName) {
+            case 'wonen':
+                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam." ".$object->objectDetails_Adres_NL_Huisnummer;
+                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
+                break;
+            case 'bog':
+                $post_data['post_title'] = $object->objectDetails_Adres_Straatnaam." ".$object->objectDetails_Adres_Huisnummer;
+                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
+                break;
+            case 'nieuwbouw':
+                $post_data['post_title'] = $object->project_ProjectDetails_Projectnaam;
+                $post_data['post_content'] = $object->project_ProjectDetails_Presentatie_Aanbiedingstekst;
+                break;
+            case 'alv':
+                $post_data['post_title'] = '';
+                $post_data['post_content'] = '';
+                break;
+        }
+
+        // ======== Start of Function ========
+        # Overwriting the post
+        wp_update_post($post_data);
+
+        # Updating the post meta
+        foreach ($object as $key => $value) {
+            update_post_meta($postID, $key, $value);
+        }
+    }
+
+    function createPost($postTypeName, $object) {
+        // ======== Declaring Variables ========
+        $post_data = [
+            'post_type' => $postTypeName,
             'post_title' => '',
             'post_content' => '',
             'post_status' => 'draft',
-            'post_type' => ''
         ];
-        switch ($typeObjects) {
+
+        switch ($postTypeName) {
             case 'wonen':
-                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam.' '.$object->objectDetails_Adres_NL_Huisnummer;
+                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam." ".$object->objectDetails_Adres_NL_Huisnummer;
                 $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
-                $post_data['post_type'] = 'wonen';
                 break;
             case 'bog':
-                $post_data['post_title'] = $object->objectDetails_Adres_Straatnaam.' '.$object->objectDetails_Adres_Huisnummer;
+                $post_data['post_title'] = $object->objectDetails_Adres_Straatnaam." ".$object->objectDetails_Adres_Huisnummer;
                 $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
-                $post_data['post_type'] = 'bog';
                 break;
             case 'nieuwbouw':
-                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam.' '.$object->objectDetails_Adres_NL_Huisnummer;
-                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
-                $post_data['post_type'] = 'nieuwbouw';
+                $post_data['post_title'] = $object->project_ProjectDetails_Projectnaam;
+                $post_data['post_content'] = $object->project_ProjectDetails_Presentatie_Aanbiedingstekst;
                 break;
             case 'alv':
-                $post_data['post_type'] = 'alv';
+                $post_data['post_title'] = '';
+                $post_data['post_content'] = '';
                 break;
         }
 
         // ======== Start of Function ========
         $postID = wp_insert_post($post_data);
 
-        # Adding the meta data
-        foreach ($object as $key => $value) {
-            add_post_meta($postID, $key, $value);
-        }
-        # Adding the meta data for the images
-
-        # Publishing the post
-        wp_update_post(array('ID' => $postID, 'post_status' => 'publish'));
-    }
-
-    function overwritePost($typeObjects, $object, $postID) {
-        // ======== Declaring Variables ========
-        $post_data = [
-            'ID' => $postID,
-            'post_title' => '',
-            'post_content' => ''
-        ];
-
-        switch ($typeObjects) {
-            case 'wonen':
-                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam.' '.$object->objectDetails_Adres_NL_Huisnummer;
-                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
-                break;
-            case 'bog':
-                $post_data['post_title'] = $object->objectDetails_Adres_Straatnaam.' '.$object->objectDetails_Adres_Huisnummer;
-                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
-                break;
-            case 'nieuwbouw':
-
-                break;
-            case 'alv':
-
-                break;
-        }
-
-        // ======== Start of Function ========
-        # Overwriting the post data
-        wp_update_post(array(
-            'post_title' => $object->objectDetails_Adres_NL_Straatnaam.' '.$object->objectDetails_Adres_NL_Huisnummer,
-            'post_content' => $object->objectDetails_Aanbiedingstekst
-        ));
-
-        # Overwriting the meta data
+        # Adding the post meta
         foreach ($object as $key => $value) {
             update_post_meta($postID, $key, $value);
         }
+
+        # Adding meta data for images
+
+        # Publishing the post
+        wp_publish_post($postID);
     }
 
-    function checkPosts($objects, $typeObjects) {
+    function checkPosts($objects, $postTypeName) {
+        // ======== Start of Function ========
         foreach ($objects as $object) {
             // ==== Declaring Variables ====
             # Classes
-            // WP Query with metadata
-            $postData = new WP_Query(array(
-                'post_type' => $typeObjects,
+            $postData = new WP_Query([
+                'post_type' => $postTypeName,
                 'meta_key' => 'object_ObjectTiaraID',
                 'meta_value' => $object->object_ObjectTiaraID
-            ));
+            ]);
+
             # Variables
-            // Post
+            // Posts
             $postExists = $postData->have_posts();
 
             if ($postExists) {
-                $dateUpdatedPost = $postData->posts[0]->datum_gewijzigd;
+                $dataUpdatedPost = $postData->posts[0]->datum_gewijzigd;
             }
-            // Object
+
+            // Database object
             $tiaraID = $object->object_ObjectTiaraID;
             $dateUpdatedObject = $object->datum_gewijzigd;
 
             // ==== Start of Function ====
-            // Check if the object is already in the posts
+            // Check if the object is already in the post
             if ($postExists) {
                 // Check if the object is updated
-                if ($dateUpdatedPost != $dateUpdatedObject) {
-                    // Overwrite the post
-                    $this->overwritePost($object, $postData->posts[0]->ID);
-                    adminNotice('success', 'The object with the Tiara ID: '.$tiaraID.' is now overwritten.<br/>');
+                if ($dataUpdatedPost != $dateUpdatedObject) {
+                    // Update/overwrite the post
+                    $this->updatePost($postTypeName, $postData->posts[0]->ID, $object);
                 }
-                else {
-                    adminNotice('success', 'The object with the Tiara ID: '.$tiaraID.' is already up to date.<br/>');
-                }
+            }
+            else {
+                // Create the post
+                $this->createPost($postTypeName, $object);
             }
 
-            else {
-                $this->createPost($typeObjects ,$object);
-                adminNotice('success', 'The object with the Tiara ID: '.$tiaraID.' is created.<br/>');
-            }
         }
+
     }
 
     function examinePosts() {
         // ======== Declaring Variables ========
         # Classes
         global $wpdb;
-        $settingsData = new OGSettingsData();
+        $postTypeData = new OGPostTypeData();
 
         # Variables
-        // Getting the column info from the database
-        $wonenObjects = $wpdb->get_results('SELECT * FROM `tbl_OG_wonen`');
-        $bogObjects = $wpdb->get_results('SELECT * FROM `ppOG_dataBOG`');
-        $nieuwbouwObjects = $wpdb->get_results('SELECT * FROM `ppOG_dataNieuwbouw`');
+        $postTypeData = $postTypeData->customPostTypes();
 
         // ======== Start of Function ========
-        // ======= Wonen =======
-        // Looping through them and putting them into the post type wonen
-        $this->checkPosts($wonenObjects, 'wonen');
+        foreach ($postTypeData as $postTypeName => $postTypeArray) {
+            // ==== Declaring Variables ====
+            $database_key = key($postTypeArray['database_tables']);
+            $databaseData = $postTypeArray['database_tables'];
 
-        // ======= BOG =======
-        // Looping through them and putting them into the post type wonen
-        $this->checkPosts($bogObjects, 'bog');
+            # Getting the database objects
+            $objects = $wpdb->get_results("SELECT * FROM ".$database_key."");
+
+            // ==== Start of Function ====
+            if (!empty($objects)) {
+                // Looping through the objects and putting them in the right post type
+                $this->checkPosts($objects, $postTypeName);
+            }
+        }
+
     }
 }

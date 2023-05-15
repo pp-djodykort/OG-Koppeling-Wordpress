@@ -26,7 +26,6 @@ if ($license->checkActivation()) {
     $postTypes = new OGPostTypes();
 }
 $pages = new OGPages();
-$test = new OGOffers();
 
 // ============ Start of Program ============
 add_action('admin_notices', function () {
