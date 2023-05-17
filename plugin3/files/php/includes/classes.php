@@ -834,6 +834,15 @@ class OGOffers {
             # Getting the database objects
             $objects = $wpdb->get_results("SELECT * FROM ".$databaseTableName."");
 
+            # Removing every null out of the objects so Wordpress won't get crazy
+            foreach ($objects as $key => $object) {
+                foreach ($object as $key2 => $value) {
+                    if ($value == 'null' or $value == 'NULL' or $value == null) {
+                        $objects[$key]->{$key2} = '';
+                    }
+                }
+            }
+
             // ==== Start of Loop ====
             if (!empty($objects)) {
                 // Looping through the objects and putting them in the right post type
