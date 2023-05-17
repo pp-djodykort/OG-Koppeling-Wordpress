@@ -841,14 +841,14 @@ class OGOffers {
             }
         }
 
-        // Putting in the database how much memory it ended up using maximum
-        $maxMemoryUsage = memory_get_peak_usage(true);
-        $memoryUsage = memory_get_usage(true);
+        // Putting in the database how much memory it ended up using maximum from bytes to megabytes
+        $maxMemoryUsage = (memory_get_peak_usage(true) / 1024 / 1024);
+        $memoryUsage = (memory_get_usage(true) / 1024 / 1024);
         $wpdb->insert('cronjobs', [
             'name' => 'OGOffers',
             # convert to megabytes
-            'memoryUsageMax' => round($maxMemoryUsage / 1024 / 1024, 4),
-            'memoryUsage' => round($memoryUsage / 1024 / 1024, 4),
+            'memoryUsageMax' => $maxMemoryUsage,
+            'memoryUsage' => $memoryUsage,
             'datetime' => date('Y-m-d H:i:s', $beginTime),
             'duration' => round((time() - $beginTime) / 60, 2)
         ]);
