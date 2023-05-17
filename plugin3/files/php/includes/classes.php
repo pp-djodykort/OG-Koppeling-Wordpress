@@ -718,7 +718,7 @@ class OGOffers {
     // ================ Functions ================
     function getNames($post_data, $object, $databaseKeys) {
         // ======== Declaring Variables ========
-        $postTitle = explode(';', $object->{$databaseKeys['title']});
+        $postTitle = explode(';', $databaseKeys['post_title']);
 
         // ======== Start of Function ========
         # Post Title
@@ -742,7 +742,6 @@ class OGOffers {
             'post_content' => '',
             'post_status' => 'draft'
         ];
-
         $post_data = $this->getNames($post_data, $object, $databaseKeys);
 
         // ======== Start of Function ========
@@ -850,7 +849,7 @@ class OGOffers {
             'memoryUsageMax' => $maxMemoryUsage,
             'memoryUsage' => $memoryUsage,
             'date' => date('Y-m-d H:i:s'),
-            'duration' => (time() - $beginTime) / 60
+            'duration' => round((time() - $beginTime) / 60, 2)
         ]);
     }
 }
