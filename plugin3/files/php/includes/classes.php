@@ -116,7 +116,8 @@ class OGPostTypeData {
                     'tbl_OG_wonen' => array(
                         'ID' => 'object_ObjectTiaraID',
                         'post_title' => 'objectDetails_Adres_NL_Straatnaam;objectDetails_Adres_NL_Huisnummer',
-                        'post_content' => 'objectDetails_Aanbiedingstekst'
+                        'post_content' => 'objectDetails_Aanbiedingstekst',
+                        'datum_gewijzigd' => 'datum_gewijzigd',
                     )
                 )
             ),
@@ -151,7 +152,8 @@ class OGPostTypeData {
                     'ppOG_dataBOG' => array(
                         'ID' => 'object_ObjectTiaraID',
                         'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer',
-                        'post_content' => 'objectDetails_Aanbiedingstekst'
+                        'post_content' => 'objectDetails_Aanbiedingstekst',
+                        'datum_gewijzigd' => 'datum_gewijzigd',
                     )
                 )
             ),
@@ -184,9 +186,10 @@ class OGPostTypeData {
                 ),
                 'database_tables' => array(
                     'ppOG_dataNieuwbouw' => array(
-                        'ID' => 'object_ObjectTiaraID',
+                        'ID' => 'project_ObjectTiaraID',
                         'post_title' => 'project_ProjectDetails_Projectnaam',
-                        'post_content' => 'project_ProjectDetails_Presentatie_Aanbiedingstekst'
+                        'post_content' => 'project_ProjectDetails_Presentatie_Aanbiedingstekst',
+                        'datum_gewijzigd' => 'datum_gewijzigd',
                     )
                 )
             ),
@@ -282,6 +285,11 @@ class OGSettingsData {
     public $settingPrefix = 'ppOG_'; // This is the prefix for all the settings used within the OG Plugin
     public $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
     // Arrays
+    public array $apiURLs = [
+        'license' => 'https://og-feeds2.pixelplus.nl/api/validate.php',
+        'syncTimes' => 'https://og-feeds2.pixelplus.nl/api/latest.php'
+    ];
+
     public array $cacheFiles = [
         'licenseCache' => 'licenseCache.json', // This is the cache file for the checking the Licence key
     ];
@@ -347,8 +355,8 @@ class OGLicense {
         $cacheData = null;
 
         # API
-        $url = "https://og-feeds2.pixelplus.nl/api/validate.php?";
-        $qArgs = "token=".get_option($settingData->settingPrefix.'licenseKey');
+        $url = $settingData->apiURLs['license'];
+        $qArgs = "?token=".get_option($settingData->settingPrefix.'licenseKey');
 
         // ================ Start of Function =============
         // Checking if our cache file exists AND if the modification time is less than 1 hour
@@ -571,89 +579,58 @@ class OGPages
     // OG Admin
     function HTMLOGAdminDashboard(): void {
         // ======== Declaring Variables ========
-        // Classes
+        # Classes
+        $settingData = new OGSettingsData();
         $wpColorScheme = new WPColorScheme();
-        // Colors
+
+        # Variables
+        $url = $settingData->apiURLs['syncTimes'];
+        $qArgs = "?token=".get_option($settingData->settingPrefix.'licenseKey');
+        $lastSyncTimes = wp_remote_get($url.$qArgs);
+
         $buttonColor = $wpColorScheme->returnColor();
 
         // ======== Start of Function ========
-        if (isset($_POST['buttonSync'])) {
-        }
-        if (isset($_POST['buttonSyncWonen'])) {
-        }
-        if (isset($_POST['buttonSyncBOG'])) {
-        }
-        if (isset($_POST['buttonSyncNieuwbouw'])) {
-        }
-        if (isset($_POST['buttonSyncALV'])) {
+        # Checking if the API request is successful
+        if (isset($lastSyncTimes['success']) && ($lastSyncTimes['success'] == true)) {
+            $lastSyncTimes = $lastSyncTimes['data'];
         }
 
-        htmlHeader('OG Admin Dashboard');?>
-        <div class='container-fluid'>
-            <div class='row'>
-                <div class='col' style='border-right: solid 1px black'>
-                    <!-- ==== Button to sync the tables ==== -->
-                    <form method='post'>
-                        <h2>Synchroniseer Aanbod</h2>
-                        <!-- Wordpress Big Sync Button -->
-                        <div class='divAllAanbod clearfix'>
-
-                            <button type='submit' name='buttonSync' style='background-color: <?php echo($buttonColor) ?>'>
-                                Volledig aanbod<br/>Synchroniseren
-                            </button>
-                            <!-- Last sync time -->
-                            <div class='mt-2 d-table'>
-                                <img class='float-left me-2' alt='Error: recent-logo.png' src='<?php echo(plugins_url('img/recent-logo.png', dirname(__DIR__))) ?>' width='25px'>
-                                <span class='text-center align-middle'>Laatste synchronisatie: vandaag 14.15</span>
-                            </div>
-                        </div>
-                        <!-- 4 Smaller Sync Buttons -->
-                        <h3>Synchroniseer per categorie</h3>
-                        <div class='divSmallAanbod clearfix'>
-                            <!-- Wonen -->
-                            <button type='submit' name='buttonSyncWonen' style='border-color: <?php echo($buttonColor) ?>'>
-                                <img src='<?php echo(plugins_url('img/house-icon.png', dirname(__DIR__))) ?>' width='40px' alt=''><span>Wonen</span>
-                            </button>
-                            <div class='mt-2 d-table'>
-                                <img class='float-left me-2' alt='Error: recent-logo.png' src='<?php echo(plugins_url('img/recent-logo.png', dirname(__DIR__))) ?>' width='20px'>
-                                <span class='text-center align-middle'>Laatste synchronisatie: vandaag 14.15</span>
-                            </div><br/>
-
-                            <!-- BOG -->
-                            <button type='submit' name='buttonSyncBOG' style='border-color: <?php echo($buttonColor) ?>'>
-                                <img src='<?php echo(plugins_url('img/bog-logo.png', dirname(__DIR__))) ?>' width='40px' alt=''><span>BOG</span>
-                            </button><br/>
-                            <div class='mt-2 d-table'>
-                                <img class='float-left me-2' alt='Error: recent-logo.png' src='<?php echo(plugins_url('img/recent-logo.png', dirname(__DIR__))) ?>' width='20px'>
-                                <span class='text-center align-middle'>Laatste synchronisatie: vandaag 14.15</span>
-                            </div><br/>
-
-                            <!-- Nieuwbouw -->
-                            <button type='submit' name='buttonSyncNieuwbouw' style='border-color: <?php echo($buttonColor) ?>'>
-                                <img src='<?php echo(plugins_url('img/nieuwbouw.png', dirname(__DIR__))) ?>' width='40px' alt=''><span>Nieuwbouw</span>
-                            </button><br/>
-                            <div class='mt-2 d-table'>
-                                <img class='float-left me-2' alt='Error: recent-logo.png' src='<?php echo(plugins_url('img/recent-logo.png', dirname(__DIR__))) ?>' width='20px'>
-                                <span class='text-center align-middle'>Laatste synchronisatie: vandaag 14.15</span>
-                            </div><br/>
-
-                            <!-- A&LV -->
-                            <button type='submit' name='buttonSyncALV' style='border-color: <?php echo($buttonColor) ?>'>
-                                <img src='<?php echo(plugins_url('img/ALV-logo.png', dirname(__DIR__))) ?>' width='40px' alt=''><span>A&LV</span>
-                            </button><br/>
-                            <div class='mt-2 d-table'>
-                                <img class='float-left me-2' alt='Error: recent-logo.png' src='<?php echo(plugins_url('img/recent-logo.png', dirname(__DIR__))) ?>' width='20px'>
-                                <span class='text-center align-middle'>Laatste synchronisatie: vandaag 14.15</span>
-                            </div><br/>
-                        </div>
-                    </form>
-                </div>
-                <div class='col'>
-                    <h2 class='text-center'>Statistieken</h2>
+        # HTML
+        htmlHeader('OG Admin Dashboard');
+        print_r($lastSyncTimes);
+        echo("
+            <div class='container-fluid'>
+                <div class='row'>
+                    <div class='col' style='border-right: solid 1px black'>
+    
+                    </div>
+                    <div class='col'>
+                        <h2 class='text-center'>Statistieken</h2>
+    
+                        <!-- Table to show when the last syncs have been -->
+                        <table class='table table-striped table-bordered'>
+                            <thead class='thead-dark'>
+                                <tr>
+                                    <th scope='col'>Post Type</th>
+                                    <th scope='col'>Laatste Sync</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Wonen</td>
+                                    <td>".date('d-m-Y H:i:s', $lastSyncTimes['wonen'])."</td>
+                                </tr>
+                                <tr>
+                                    <td>BOG</td>
+                                    <td>".date('d-m-Y H:i:s', $lastSyncTimes['bog'])."</td>
+                                </tr>
+                            </tbody>
+                    </div>
                 </div>
             </div>
-        </div>
-        <?php htmlFooter('OG Admin Dashboard');}
+        ");
+        htmlFooter('OG Admin Dashboard');}
     // OG Admin Settings
     function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings - Algemeen');
         $settingsData = new OGSettingsData();
@@ -739,32 +716,59 @@ class OGOffers {
     }
 
     // ================ Functions ================
-    function updatePost($postTypeName, $postID, $object) {
+    function getNames($post_data, $object, $databaseKeys) {
+        // ======== Declaring Variables ========
+        $postTitle = explode(';', $object->{$databaseKeys['title']});
+
+        // ======== Start of Function ========
+        # Post Title
+        foreach ($postTitle as $title) {
+            $post_data['post_title'] .= $object->{$title}.' ';
+        }
+        // Removing the last space
+        $post_data['post_title'] = rtrim($post_data['post_title']);
+
+        # Post Content
+        $post_data['post_content'] = $object->{$databaseKeys['post_content']};
+
+        return $post_data;
+    }
+
+    function createPost($postTypeName, $object, $databaseKeys) {
+        // ======== Declaring Variables ========
+        $post_data = [
+            'post_type' => $postTypeName,
+            'post_title' => '',
+            'post_content' => '',
+            'post_status' => 'draft'
+        ];
+
+        $post_data = $this->getNames($post_data, $object, $databaseKeys);
+
+        // ======== Start of Function ========
+        # Creating the post
+        $postID = wp_insert_post($post_data);
+
+        # Adding the post meta
+        foreach ($object as $key => $value) {
+            add_post_meta($postID, $key, $value);
+        }
+
+        # Adding meta data for images
+
+        # Publishing the post
+        wp_publish_post($postID);
+    }
+
+    function updatePost($postID, $object, $databaseKeys) {
         // ======== Declaring Variables ========
         $post_data = [
             'ID' => $postID,
             'post_title' => '',
-            'post_content' => '',
+            'post_content' => ''
         ];
 
-        switch ($postTypeName) {
-            case 'wonen':
-                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam." ".$object->objectDetails_Adres_NL_Huisnummer;
-                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
-                break;
-            case 'bog':
-                $post_data['post_title'] = $object->objectDetails_Adres_Straatnaam." ".$object->objectDetails_Adres_Huisnummer;
-                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
-                break;
-            case 'nieuwbouw':
-                $post_data['post_title'] = $object->project_ProjectDetails_Projectnaam;
-                $post_data['post_content'] = $object->project_ProjectDetails_Presentatie_Aanbiedingstekst;
-                break;
-            case 'alv':
-                $post_data['post_title'] = '';
-                $post_data['post_content'] = '';
-                break;
-        }
+        $post_data = $this->getNames($post_data, $object, $databaseKeys);
 
         // ======== Start of Function ========
         # Overwriting the post
@@ -776,87 +780,40 @@ class OGOffers {
         }
     }
 
-    function createPost($postTypeName, $object) {
-        // ======== Declaring Variables ========
-        $post_data = [
-            'post_type' => $postTypeName,
-            'post_title' => '',
-            'post_content' => '',
-            'post_status' => 'draft',
-        ];
-
-        switch ($postTypeName) {
-            case 'wonen':
-                $post_data['post_title'] = $object->objectDetails_Adres_NL_Straatnaam." ".$object->objectDetails_Adres_NL_Huisnummer;
-                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
-                break;
-            case 'bog':
-                $post_data['post_title'] = $object->objectDetails_Adres_Straatnaam." ".$object->objectDetails_Adres_Huisnummer;
-                $post_data['post_content'] = $object->objectDetails_Aanbiedingstekst;
-                break;
-            case 'nieuwbouw':
-                $post_data['post_title'] = $object->project_ProjectDetails_Projectnaam;
-                $post_data['post_content'] = $object->project_ProjectDetails_Presentatie_Aanbiedingstekst;
-                break;
-            case 'alv':
-                $post_data['post_title'] = '';
-                $post_data['post_content'] = '';
-                break;
-        }
-
-        // ======== Start of Function ========
-        $postID = wp_insert_post($post_data);
-
-        # Adding the post meta
-        foreach ($object as $key => $value) {
-            update_post_meta($postID, $key, $value);
-        }
-
-        # Adding meta data for images
-
-        # Publishing the post
-        wp_publish_post($postID);
-    }
-
-    function checkPosts($objects, $postTypeName) {
+    function checkPosts($objects, $databaseKeys, $postTypeName) {
         // ======== Start of Function ========
         foreach ($objects as $object) {
             // ==== Declaring Variables ====
             # Classes
-            $postData = new WP_Query([
+            $postData = new WP_Query(([
                 'post_type' => $postTypeName,
-                'meta_key' => 'object_ObjectTiaraID',
-                'meta_value' => $object->object_ObjectTiaraID
-            ]);
+                'meta_key' => $databaseKeys['ID'],
+                'meta_value' => $object->{$databaseKeys['ID']},
+            ]));
 
             # Variables
-            // Posts
             $postExists = $postData->have_posts();
 
             if ($postExists) {
-                $dataUpdatedPost = $postData->posts[0]->datum_gewijzigd;
+                $dataUpdatedPost = $postData->posts[0]->{$databaseKeys['datum_gewijzigd']};
             }
 
             // Database object
-            $tiaraID = $object->object_ObjectTiaraID;
-            $dateUpdatedObject = $object->datum_gewijzigd;
+            $tiaraID = $object->{$databaseKeys['ID']};
+            $dataUpdatedObject = $object->{$databaseKeys['datum_gewijzigd']};
 
             // ==== Start of Function ====
-            // Check if the object is already in the post
             if ($postExists) {
-                // Check if the object is updated
-                if ($dataUpdatedPost != $dateUpdatedObject) {
-                    // Update/overwrite the post
-                    $this->updatePost($postTypeName, $postData->posts[0]->ID, $object);
+                // Checking if the post is updated
+                if ($dataUpdatedPost != $dataUpdatedObject) {
+                    // Updating/overwriting the post
+                    $this->updatePost($postData->posts[0]->ID, $object, $databaseKeys);
                 }
+            } else {
+                // Creating the post
+                $this->createPost($postTypeName, $object, $databaseKeys);
             }
-            else {
-                // Create the post
-                $this->createPost($postTypeName, $object);
-            }
-
         }
-
     }
 
     function examinePosts() {
@@ -866,23 +823,34 @@ class OGOffers {
         $postTypeData = new OGPostTypeData();
 
         # Variables
+        $beginTime = time();
         $postTypeData = $postTypeData->customPostTypes();
 
-        // ======== Start of Function ========
+        // ======== Start of Function ========s
         foreach ($postTypeData as $postTypeName => $postTypeArray) {
             // ==== Declaring Variables ====
-            $database_key = key($postTypeArray['database_tables']);
-            $databaseData = $postTypeArray['database_tables'];
+            $databaseTableName = key($postTypeArray['database_tables']);
+            $databaseKeys = $postTypeArray['database_tables'][$databaseTableName];
 
             # Getting the database objects
-            $objects = $wpdb->get_results("SELECT * FROM ".$database_key."");
+            $objects = $wpdb->get_results("SELECT * FROM ".$databaseTableName."");
 
-            // ==== Start of Function ====
+            // ==== Start of Loop ====
             if (!empty($objects)) {
                 // Looping through the objects and putting them in the right post type
-                $this->checkPosts($objects, $postTypeName);
+                $this->checkPosts($objects, $databaseKeys, $postTypeName);
             }
         }
 
+        // Putting in the database how much memory it ended up using maximum
+        $maxMemoryUsage = memory_get_peak_usage(true);
+        $memoryUsage = memory_get_usage(true);
+        $wpdb->insert('cronjobs', [
+            'name' => 'OGOffers',
+            'memoryUsageMax' => $maxMemoryUsage,
+            'memoryUsage' => $memoryUsage,
+            'date' => date('Y-m-d H:i:s'),
+            'duration' => (time() - $beginTime) / 60
+        ]);
     }
 }
