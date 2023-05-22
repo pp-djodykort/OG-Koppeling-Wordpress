@@ -581,24 +581,30 @@ class OGPages
         // ======== Declaring Variables ========
         # Classes
         $settingData = new OGSettingsData();
+        $postTypeData = new OGPostTypeData();
         $wpColorScheme = new WPColorScheme();
 
         # Variables
+        $postTypeData = $postTypeData->customPostTypes();
+
         $url = $settingData->apiURLs['syncTimes'];
         $qArgs = "?token=".get_option($settingData->settingPrefix.'licenseKey');
-        $lastSyncTimes = wp_remote_get($url.$qArgs);
+        $lastSyncTimes = json_decode(wp_remote_get($url.$qArgs)['body'], true);
 
         $buttonColor = $wpColorScheme->returnColor();
 
         // ======== Start of Function ========
         # Checking if the API request is successful
-        if (isset($lastSyncTimes['success']) && ($lastSyncTimes['success'] == true)) {
+        if (isset($lastSyncTimes['success']) && $lastSyncTimes['success'] == true) {
+            adminNotice('success', 'De laatste syncs zijn succesvol opgehaald.');
             $lastSyncTimes = $lastSyncTimes['data'];
+        }
+        else {
+            $lastSyncTimes = false;
         }
 
         # HTML
         htmlHeader('OG Admin Dashboard');
-        print_r($lastSyncTimes);
         echo("
             <div class='container-fluid'>
                 <div class='row'>
@@ -616,16 +622,16 @@ class OGPages
                                     <th scope='col'>Laatste Sync</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Wonen</td>
-                                    <td>".date('d-m-Y H:i:s', $lastSyncTimes['wonen'])."</td>
-                                </tr>
-                                <tr>
-                                    <td>BOG</td>
-                                    <td>".date('d-m-Y H:i:s', $lastSyncTimes['bog'])."</td>
-                                </tr>
-                            </tbody>
+                            <tbody>");
+                                foreach ($postTypeData as $postType => $postTypeArray) {
+                                    echo(
+                                        "<tr>
+                                            <td>".$postTypeArray['post_type_args']['labels']['menu_name']."</td>
+                                            <td>".($lastSyncTimes[$postType] ?? 'Nog niet gesynchroniseerd')."</td>
+                                        </tr>"
+                                    );
+                                }
+                      echo("</tbody>
                     </div>
                 </div>
             </div>
