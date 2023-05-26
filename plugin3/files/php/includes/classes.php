@@ -115,7 +115,7 @@ class OGPostTypeData {
                 'database_tables' => array(
                     'tbl_OG_wonen' => array(
                         'ID' => 'object_ObjectTiaraID',
-                        'post_title' => 'objectDetails_Adres_NL_Straatnaam;objectDetails_Adres_NL_Huisnummer',
+                        'post_title' => 'objectDetails_Adres_NL_Straatnaam;objectDetails_Adres_NL_Huisnummer;objectDetails_Adres_NL_Woonplaats',
                         'post_content' => 'objectDetails_Aanbiedingstekst',
                         'datum_gewijzigd' => 'datum_gewijzigd',
                     )
@@ -151,7 +151,7 @@ class OGPostTypeData {
                 'database_tables' => array(
                     'ppOG_dataBOG' => array(
                         'ID' => 'object_ObjectTiaraID',
-                        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer',
+                        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer;objectDetails_Adres_Woonplaats',
                         'post_content' => 'objectDetails_Aanbiedingstekst',
                         'datum_gewijzigd' => 'datum_gewijzigd',
                     )
