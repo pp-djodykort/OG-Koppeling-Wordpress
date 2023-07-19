@@ -871,45 +871,98 @@ class OGLicense {
         $qArgs = "?token=".get_option($settingData->settingPrefix.'licenseKey');
 
         // ================ Start of Function =============
-        // Checking if our cache file exists AND if the modification time is less than 1 hour
-        if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < 3600) {
-            // Getting the data from the cache file
-            $cacheData = json_decode(file_get_contents($cacheFile), true);
-
-            // Checking if the data['success'] == True. If so then return otherwise check the API if anything changed by any chance
-            if (isset($cacheData['success']) && ($cacheData['success'] == true)) {
-                return $cacheData;
-            }
-            else {
-                // Getting the data from API
-                $cacheData = getJSONFromAPI($url.$qArgs);
-                // Saving the data to the cache file
-                file_put_contents($cacheFile, json_encode($cacheData));
-
-                // Checking if the data['success'] == True. If so then return otherwise return the data
-                if (isset($cacheData['success']) && ($cacheData['success'] == true)) {
-                    $string = "";
-                    foreach ($cacheData['data']['types'] as $value) {
-                        $string .= $value.';';
-                    }
-                }
-                return $cacheData;
-            }
-        }
-        else {
-            // Getting the data from API
+        // If cache file doesn't exist then create it
+	    if (!file_exists($cacheFile)) {
+			// ==== Declaring Variables ====
+			# Getting the JSON from the API for the first time
             $cacheData = getJSONFromAPI($url.$qArgs);
 
-            // Checking and updating the og types
-            if (isset($cacheData['success']) && ($cacheData['success'] == true)) {
-                $string = "";
-                foreach ($cacheData['data']['types'] as $value) {
-                    $string .= $value.';';
-                }
+			// ==== Start of IF ====
+		    if (is_wp_error($cacheData)) {
+			    # Giving the message
+			    adminNotice('error', "#OG-WP Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
+		    }
+		    elseif (isset($cacheData['success']) and $cacheData['success']) {
+			    # Saving the data to the cache file
+			    file_put_contents($cacheFile, json_encode($cacheData));
+		    }
+            elseif (isset($cacheData['success']) and !$cacheData['success']) {
+				# Telling the user that the license is invalid
+				adminNotice('error', "De licentie is ongeldig. Neem contact op met PixelPlus.");
+			}
+			else {
+				adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
+			}
+
+		    # Returning the error
+		    return $cacheData;
+	    }
+
+		// ==== If it hasn't been an hour yet then pull data from file ====
+        if ((time() - filemtime($cacheFile)) < 3600) {
+			// ==== Declaring Variables ====
+	        # Getting the data from the cache file
+	        $cacheData = json_decode(file_get_contents($cacheFile), true);
+
+	        // ==== Start of IF ====
+	        # Checking if the data['success'] == True. If so then return otherwise check the API if anything changed by any chance
+	        if (!isset($cacheData['success']) || !$cacheData['success']) {
+		        // ==== Declaring Variables ====
+		        # Getting the JSON from the API
+		        $cacheData = getJSONFromAPI( $url . $qArgs );
+
+		        // ==== Start of IF ====
+		        if (is_wp_error($cacheData)) {
+			        # Giving the message
+			        adminNotice( 'error', "#OG-WP Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus." );
+		        }
+				elseif (isset($cacheData['success']) and $cacheData['success'] ) {
+			        # Saving the data to the cache file
+			        file_put_contents( $cacheFile, json_encode( $cacheData ) );
+		        }
+				elseif (isset( $cacheData['success']) and !$cacheData['success']) {
+			        # Telling the user that the license is invalid
+			        adminNotice( 'error', "De licentie is ongeldig. Neem contact op met PixelPlus." );
+
+			        # Saving the data to the cache file
+			        file_put_contents( $cacheFile, json_encode( $cacheData ) );
+		        }
+				else {
+			        adminNotice( 'error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus." );
+		        }
+	        }
+
+			# Returning the data/error
+	        return $cacheData;
+        }
+        else {
+			// ==== Declaring Variables ====
+	        # Getting the JSON from the API
+	        $cacheData = getJSONFromAPI($url . $qArgs);
+
+	        // ==== Start of IF ====
+	        # Checking if the data['success'] == True. If so then return otherwise check the API if anything changed by any chance
+	        if (is_wp_error($cacheData)) {
+				# Giving the message
+		        adminNotice('error', "#OG-WP Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
+	        }
+	        elseif (isset($cacheData['success']) and $cacheData['success']) {
+	            # Saving the data to the cache file
+	            file_put_contents($cacheFile, json_encode($cacheData));
             }
-            // Saving the data to the cache file
-            file_put_contents($cacheFile, json_encode($cacheData));
-            return $cacheData;
+			elseif (isset($cacheData['success']) and !$cacheData['success']) {
+				# Telling the user that the license is invalid
+				adminNotice('error', "De licentie is ongeldig. Neem contact op met PixelPlus.");
+
+				# Saving the data to the cache file
+				file_put_contents($cacheFile, json_encode($cacheData));
+			}
+			else {
+	            adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
+			}
+
+	        # Returning the data/error
+	        return $cacheData;
         }
 
     }
@@ -920,8 +973,12 @@ class OGLicense {
         $jsonData = $this->checkLicense();
 
         // ======== Start of Function ========
-        // Checking if the license is valid
-        if (isset($jsonData['success']) && $jsonData['success'] == true) {
+        # Checking if the license is valid
+	    if (is_wp_error($jsonData)) {
+		    adminNotice('error', "De licentie is niet actief!");
+			return False;
+	    }
+	    elseif (isset($jsonData['success']) and $jsonData['success']) {
             return True;
         }
         else {
@@ -970,10 +1027,13 @@ class OGPages
         // Classes
         $license = new OGLicense();
         $postTypeData = new OGPostTypeData();
-        $postTypeData = $postTypeData->customPostTypes();
-        // Vars
+
+		# Vars
         $boolPluginActivated = $license->checkActivation();
-        $objectAccess = $license->checkPostTypeAccess();
+		if ($boolPluginActivated) {
+			$postTypeData = $postTypeData->customPostTypes();
+			$objectAccess = $license->checkPostTypeAccess();
+		}
 
         // Making the Global Settings Page
         add_menu_page(
@@ -1107,7 +1167,7 @@ class OGPages
 
         // ======== Start of Function ========
         # Checking if the API request is successful
-        if (isset($lastSyncTimes['success']) && $lastSyncTimes['success'] == true) {
+        if (isset($lastSyncTimes['success']) and $lastSyncTimes['success'] == true) {
             adminNotice('success', 'De laatste syncs zijn succesvol opgehaald.');
             $lastSyncTimes = $lastSyncTimes['data'];
         }

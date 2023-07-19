@@ -132,10 +132,21 @@ function hidePasswordByName($name): void {
 function getJSONFromAPI($url, $args=null) {
 	// ======== Start of Function ========
 	// Get data from API
-	$data = json_decode(wp_remote_get($url, $args)['body'], true);
+	$response = wp_remote_get($url, $args);
 
-	// Return data
-	return $data;
+	if (is_wp_error($response)) {
+		$error_message = $response->get_error_message();
+		$response_code = wp_remote_retrieve_response_code($response);
+		$response_body = wp_remote_retrieve_body($response);
+		// Log or display the error information for debugging
+		error_log("WP_Error: $error_message, Response Code: $response_code, Response Body: $response_body");
+
+		// Return data
+		return $response;
+	}
+	else {
+		return json_decode($response['body'], true);
+	}
 }
 function getLoadTime(): string {
 	// tell me how much time this took
