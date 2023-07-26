@@ -187,7 +187,7 @@ class OGPostTypeData {
 				        # TableName
 				        'tableName' => 'tbl_OG_bog',
 				        # Normal fields
-				        'ID' => '_id',
+				        'ID' => 'object_ObjectTiaraID',
 				        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer;objectDetails_Adres_HuisnummerToevoeging;objectDetails_Adres_Woonplaats', // Mapped value
 				        'post_name' => 'objectDetails_Adres_Straatnaam-objectDetails_Adres_Huisnummer-objectDetails_Adres_HuisnummerToevoeging-objectDetails_Adres_Woonplaats',  // Mapped value
 				        'post_content' => 'objectDetails_Aanbiedingstekst',       // Mapped value
@@ -294,7 +294,7 @@ class OGPostTypeData {
 				        # TableName
 				        'tableName' => 'tbl_OG_nieuwbouw_bouwTypes',
 				        # Normal fields
-				        'ID' => '_id',                                                              // Mapped value
+				        'ID' => 'bouwType_ObjectTiaraID',                                           // Mapped value
 				        'id_projecten' => 'id_OG_nieuwbouw_projecten',                              // Mapped value
 				        'post_title' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',        // Mapped value if needed | is for seperating values (OR statement)
 				        'post_name' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',         // Mapped value
@@ -334,7 +334,7 @@ class OGPostTypeData {
 				        # TableName
 				        'tableName' => 'tbl_OG_nieuwbouw_bouwNummers',
 				        # Normal fields
-				        'ID' => 'bouwNummer_ObjectTiaraID',                                                                          // Mapped value
+				        'ID' => 'bouwNummer_ObjectTiaraID',                                                     // Mapped value
 				        'id_bouwtypes' => 'id_OG_nieuwbouw_bouwTypes',                                          // Mapped value
 				        'post_title' => 'Adres_Straatnaam;Adres_Huisnummer;Adres_Postcode;Adres_Woonplaats;Adres_HuisnummerToevoeging;bouwNummer_ObjectCode',    // Mapped value if needed | is for seperating values (OR statement)
 				        'post_name' => 'Adres_Straatnaam-Adres_Huisnummer-Adres_Postcode-Adres_Woonplaats-Adres_HuisnummerToevoeging-bouwNummer_ObjectCode',  // Mapped value
@@ -514,11 +514,13 @@ class OGSettingsData {
     ];
 
     public array $settings = [
-        /* Setting Name */'licenseKey' => /* Default Value */       '',     // License Key
+        /* Setting Name */'licenseKey' => /* Default Value */   '',                                                    // License Key
+        /* Setting Name */'wonenPrijs' => /* Default Value */        'Vraagprijs:1f;VraagprijsPerM2:0',                     // Prijs
+        /* Setting Name */'wonenBouw' => /* Default Value */         'Bouwjaar:1f;Soorthuis:1;Soortbouw:1;Soortdak:1',     // Bouw
     ];
     public array $adminSettings = [
         // Settings 1
-        /* Option Group= */ 'ppOG_AdminOptions' => [
+        /* Option Group= */ 'ppOG_adminOptions' => [
             // General information
             'settingPageSlug' => 'pixelplus-og-plugin-settings',
             // Sections
@@ -535,12 +537,62 @@ class OGSettingsData {
                             'fieldCallback' => 'htmlLicenceKeyField',
                         ]
                     ]
-                ]
+                ],
+            ]
+        ],
+        // Settings 2
+        /* Option Group= */ 'ppOG_wonenOptions' => [
+            // General information
+            'settingPageSlug' => 'pixelplus-og-plugin-settings-wonen',
+            // Sections
+            'sections' => [
+                // Section 1 - Prijs section
+                /* Section Title= */'Prijs' => [
+                    'sectionID' => 'ppOG_wonenSectionPrijs',
+                    'sectionCallback' => 'htmlWonenPrijsSection',
+                    // Fields
+                    'fields' => [
+                        // Field 1 - Prijs
+                        /* Setting Field Title= */'Prijs' => [
+                            'fieldID' => 'ppOG_wonenPrijs',
+                            'fieldCallback' => 'htmlWonenPrijsField',
+                        ]
+                    ]
+                ],
+                // Section 2 - Bouw section
+                /* Section Title= */'Bouw' => [
+                    'sectionID' => 'ppOG_wonenSectionBouw',
+                    'sectionCallback' => 'htmlWonenBouwSection',
+                    // Fields
+                    'fields' => [
+                        // Field 1 - Bouw
+                        /* Setting Field Title= */'Bouw' => [
+                            'fieldID' => 'ppOG_wonenBouw',
+                            'fieldCallback' => 'htmlWonenBouwField',
+                        ]
+                    ]
+                ],
             ]
         ]
     ];
+    // ============ PHP Functions ============
+    public function sanitize_checkboxes($input) {
+        $output = '';
+
+        if (is_array($input) && !empty($input)) {
+            foreach ($input as $key => $value) {
+                $output .= $value.':1;';
+            }
+
+            // Remove the trailing semicolon
+            $output = rtrim($output, ';');
+        }
+
+        return $output;
+    }
 
     // ============ HTML Functions ============
+    // ======== Admin Options ========
     // Sections
     function htmlLicenceSection(): void { ?>
         <p>De licentiesleutel die de plugin activeert</p>
@@ -557,8 +609,73 @@ class OGSettingsData {
             // Display a message
             echo('De licentiesleutel is nog niet ingevuld.');
         }
-        echo(" <input type='text' name='".$this->settingPrefix."licenseKey' value='".esc_attr($licenseKey)."' ");
+        echo("<input type='text' name='".$this->settingPrefix."licenseKey' value='".esc_attr($licenseKey)."'");
     }
+
+    // ======== Wonen Options ========
+    // Sections
+    function htmlWonenPrijsSection(): void { ?>
+    <?php }
+    function htmlWonenBouwSection(): void { ?>
+    <?php }
+    // Fields
+    function htmlWonenPrijsField(): void {
+        // ======== Declaring Variables =========
+        // Vars
+        $prijs = get_option($this->settingPrefix.'wonenPrijs');
+        $explodedPrijs = explode(';', $prijs);
+
+        // ======== Start of Function ========
+        // Check if licenseKey is empty
+        if ($prijs == '') {
+            // Display a message
+            echo('De prijs is nog niet ingevuld.');
+        }
+        if (!empty($explodedPrijs)) {
+            foreach($explodedPrijs as $value) {
+                $explodedValue = explode(':', $value);
+                if (!empty($explodedValue)) {
+                    // ==== Declaring Variables ====
+                    # Vars
+                    # Label is going to be the value but with every capital letter a space is added
+                    $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
+
+                    if ($explodedValue[1] == '1') {
+                        $checked = 'checked';
+                    } elseif ($explodedValue[1] == '0') {
+                        $checked = '';
+                    } elseif ($explodedValue[1] == '1f') {
+                        $checked = 'checked disabled';
+                    } elseif ($explodedValue[1] == '0f') {
+                        $checked = 'disabled';
+                    } else {
+                        $checked = '';
+                    }
+
+                    echo("
+                    <input type='checkbox' name='".$this->settingPrefix."wonenPrijs[]' value='".esc_attr($explodedValue[0])."' ".$checked."/>
+                    <label for='".$this->settingPrefix."wonenPrijs[]'>".esc_attr($label)."</label><br>
+                    ");
+                }
+            }
+        }
+
+    }
+    function htmlWonenBouwField(): void {
+        // ===== Declaring Variables =====
+        // Vars
+        $bouw = get_option($this->settingPrefix.'wonenBouw');
+        $explodedBouw = explode(';', $bouw);
+
+        // ===== Start of Function =====
+        // Check if licenseKey is empty
+        if ($bouw == '') {
+            // Display a message
+            echo('De bouw is nog niet ingevuld.');
+        }
+        echo("<input type='text' name='".$this->settingPrefix."wonenBouw' value='".esc_attr($bouw)."'");
+    }
+
 }
 class OGMapping {
 	// ================ Constructor ================
@@ -578,280 +695,278 @@ class OGMapping {
         # Return the cleaned up OBJECT
         return $OGTableRecord;
     }
-	function mapMetaData($OGTableRecord, $databaseKeysMapping, $locationCodes=[], $databaseKeys=[]) {
-		if (!empty($databaseKeysMapping)) {
-			// ======== Declaring Variables ========
-			# Classes
-			global $wpdb;
+    function mapMetaData($OGTableRecord, $databaseKeysMapping, $locationCodes=[], $databaseKeys=[]) {
+        if (!empty($databaseKeysMapping)) {
+            // ======== Declaring Variables ========
+            # Classes
+            global $wpdb;
 
-			# Vars
-			$mappingTable = $wpdb->get_results("SELECT * FROM `{$databaseKeysMapping['tableName']}`", ARRAY_A);
-			// ========================= Start of Function =========================
-			// ================ Cleaning the Tables/Records ================
-			# Getting rid of all the useless and empty values in the OBJECT
-			$OGTableRecord = $this->cleanupObjects($OGTableRecord);
-			# Getting rid of all the useless and empty values in the MAPPING TABLE
-			foreach ($mappingTable as $mappingKey => $mappingTableValue) {
-				# Check if the value is empty and if so remove the whole key from the OBJECT
-				if (is_null($mappingTableValue['pixelplus']) or empty($mappingTableValue['pixelplus'])) {
-					unset($mappingTable[$mappingKey]);
-				}
-			}
+            # Vars
+            $mappingTable = $wpdb->get_results("SELECT * FROM `{$databaseKeysMapping['tableName']}`", ARRAY_A);
+            // ========================= Start of Function =========================
+            // ================ Cleaning the Tables/Records ================
+            # Getting rid of all the useless and empty values in the OBJECT
+            $OGTableRecord = $this->cleanupObjects($OGTableRecord);
+            # Getting rid of all the useless and empty values in the MAPPING TABLE
+            foreach ($mappingTable as $mappingKey => $mappingTableValue) {
+                # Check if the value is empty and if so remove the whole key from the OBJECT
+                if (is_null($mappingTableValue['pixelplus']) or empty($mappingTableValue['pixelplus'])) {
+                    unset($mappingTable[$mappingKey]);
+                }
+            }
 
-			// ================ Mapping the Data ================
-			foreach ($mappingTable as $mappingKey => $mappingValue) {
-				// ==== Checking conditional ====
-				if (str_starts_with($mappingValue['pixelplus'], '(') and str_ends_with($mappingValue['pixelplus'], ')')) {
-					// ==== Declaring Variables ====
-					$strTrimmedKey = trim($mappingValue['pixelplus'], '()');
-					$arrExplodedKey = explode('|', $strTrimmedKey);
-					$boolResult = false;
+            // ================ Mapping the Data ================
+            foreach ($mappingTable as $mappingKey => $mappingValue) {
+                // ==== Checking conditional ====
+                if (str_starts_with($mappingValue['pixelplus'], '(') and str_ends_with($mappingValue['pixelplus'], ')')) {
+                    // ==== Declaring Variables ====
+                    $strTrimmedKey = trim($mappingValue['pixelplus'], '()');
+                    $arrExplodedKey = explode('|', $strTrimmedKey);
+                    $boolResult = false;
 
-					// ==== Start of Function ====
-					# Step 1: Looping through all the keys
-					foreach ($arrExplodedKey as $arrExplodedKeyValue) {
-						# Step 2: Check if the key even isset or empty in OG Record
-						if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-							# Step 3: Change the mapping table's value to just one key instead of making the the key an array/conditional
-							$mappingTable[$mappingKey]['pixelplus'] = $arrExplodedKeyValue;
-							$boolResult = true;
-						}
-					}
-					# Step 4: Check if the result is false and if so unset the whole key from the mapping table
-					if (!$boolResult) {
-						unset($mappingTable[$mappingKey]);
-					}
-				}
-				// ==== Checking concatinations ====
-				if (str_starts_with($mappingValue['pixelplus'], '{') and str_ends_with($mappingValue['pixelplus'], '}')) {
-					// ==== Declaring Variables ====
-					# Vars
-					$strTrimmedKey = trim($mappingValue['pixelplus'], '{}');
-					$arrExplodedKey = explode('+', $strTrimmedKey);
-					$arrExplodedKeyMinus = explode('-', $strTrimmedKey);
-					$strResult = '';
+                    // ==== Start of Function ====
+                    # Step 1: Looping through all the keys
+                    foreach ($arrExplodedKey as $arrExplodedKeyValue) {
+                        # Step 2: Check if the key even isset or empty in OG Record
+                        if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+                            # Step 3: Change the mapping table's value to just one key instead of making the the key an array/conditional
+                            $mappingTable[$mappingKey]['pixelplus'] = $arrExplodedKeyValue;
+                            $boolResult = true;
+                        }
+                    }
+                    # Step 4: Check if the result is false and if so unset the whole key from the mapping table
+                    if (!$boolResult) {
+                        unset($mappingTable[$mappingKey]);
+                    }
+                }
+                // ==== Checking concatinations ====
+                if (str_starts_with($mappingValue['pixelplus'], '{') and str_ends_with($mappingValue['pixelplus'], '}')) {
+                    // ==== Declaring Variables ====
+                    # Vars
+                    $strTrimmedKey = trim($mappingValue['pixelplus'], '{}');
+                    $arrExplodedKey = explode('+', $strTrimmedKey);
+                    $arrExplodedKeyMinus = explode('-', $strTrimmedKey);
+                    $strResult = '';
 
-					// ==== Start of Function ====
-					# Step 1: Looping through all the keys
-					foreach($arrExplodedKey as $arrExplodedKeyValue) {
-						# Step 2: Check if the key even isset or empty in OG Record
-						if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-							# Step 3: Add the value to the result string
-							$strResult .= $OGTableRecord->{$arrExplodedKeyValue}.' ';
-						}
-					}
-					foreach($arrExplodedKeyMinus as $arrExplodedKeyValue) {
-						# Step 2: Check if the key even isset or empty in OG Record
-						if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-							# Step 3: Add the value to the result string
-							$strResult .= $OGTableRecord->{$arrExplodedKeyValue}.'-';
-						}
-					}
-					# Step 5: Putting it in the mapping table as a default value
-					$mappingTable[$mappingKey]['pixelplus'] = "'".rtrim($strResult, ' -')."'";
-				}
+                    // ==== Start of Function ====
+                    # Step 1: Looping through all the keys
+                    foreach($arrExplodedKey as $arrExplodedKeyValue) {
+                        # Step 2: Check if the key even isset or empty in OG Record
+                        if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+                            # Step 3: Add the value to the result string
+                            $strResult .= $OGTableRecord->{$arrExplodedKeyValue}.' ';
+                        }
+                    }
+                    foreach($arrExplodedKeyMinus as $arrExplodedKeyValue) {
+                        # Step 2: Check if the key even isset or empty in OG Record
+                        if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+                            # Step 3: Add the value to the result string
+                            $strResult .= $OGTableRecord->{$arrExplodedKeyValue}.'-';
+                        }
+                    }
+                    # Step 5: Putting it in the mapping table as a default value
+                    $mappingTable[$mappingKey]['pixelplus'] = "'".rtrim($strResult, ' -')."'";
+                }
 
-				// ==== Checking the statuses ====
-				if (str_starts_with($mappingValue['pixelplus'], '$') and str_ends_with($mappingValue['pixelplus'], '$')) {
-					// ==== Declaring Variables ====
-					# Vars
-					$strTrimmedKey = trim($mappingValue['pixelplus'], '$');
-					$arrExplodedKey = explode('|', $strTrimmedKey);
+                // ==== Checking the statuses ====
+                if (str_starts_with($mappingValue['pixelplus'], '$') and str_ends_with($mappingValue['pixelplus'], '$')) {
+                    // ==== Declaring Variables ====
+                    # Vars
+                    $strTrimmedKey = trim($mappingValue['pixelplus'], '$');
+                    $arrExplodedKey = explode('|', $strTrimmedKey);
 
-					// ==== Start of Function ====
-					// if has more than 1 key
-					if (count($arrExplodedKey) > 1) {
-						# Step 1: Checking the value
-						if (isset($OGTableRecord->{$arrExplodedKey[0]}) and !empty($OGTableRecord->{$arrExplodedKey[0]})) {
-							switch (strtolower(end($arrExplodedKey))) {
-								case 'sold': {
-									// ==== Start of Function ====
-									# If the value is verkocht then put it to 1
-									if (strtolower($OGTableRecord->{$arrExplodedKey[0]}) == 'verkocht') {
-										$mappingTable[$mappingKey]['pixelplus'] = '1';
-									}
-									else {
-										# Ignore the value
-										unset($mappingTable[$mappingKey]);
-									}
-								}
-								case 'ObjectKoop': {
-									if (strtolower($OGTableRecord->{$arrExplodedKey[0]}) == 'vrij op naam') {
-										$mappingTable[$mappingKey]['pixelplus'] = '1';
-									}
-									else {
-										# Put the value back in
-										$mappingTable[$mappingKey]['pixelplus'] = $OGTableRecord->{$arrExplodedKey[0]};
-									}
-								}
-							}
-						}
-					}
+                    // ==== Start of Function ====
+                    // if has more than 1 key
+                    if (count($arrExplodedKey) > 1) {
+                        # Step 1: Checking the value
+                        if (isset($OGTableRecord->{$arrExplodedKey[0]}) and !empty($OGTableRecord->{$arrExplodedKey[0]})) {
+                            switch (strtolower(end($arrExplodedKey))) {
+                                case 'sold': {
+                                    // ==== Start of Function ====
+                                    # If the value is verkocht then put it to 1
+                                    $mappingTable[$mappingKey]['pixelplus'] = (strtolower($OGTableRecord->{$arrExplodedKey[0]} == 'verkocht') ? "'1'" : "'0'");
+                                    break;
+                                }
+                                case 'prijs': {
+                                    // ==== Start of Function ====
+                                    $mappingTable[$mappingKey]['pixelplus'] = ($OGTableRecord->{$arrExplodedKey[0]} > 0) ? "'1'" : "'0'";
+                                    break;
+                                }
+                                case 'onderhoudswaardering': {
+                                    # Remove all weird characters, change to space then to lowercase and then UpperCase the first letter
+                                    $mappingTable[$mappingKey]['pixelplus'] = "'".ucfirst(strtolower(preg_replace('/[^A-Za-z0-9\-]/', ' ', $OGTableRecord->{$arrExplodedKey[0]})))."'";
 
-				}
+                                    # Removing the old record
+                                    unset($OGTableRecord->{$arrExplodedKey[0]});
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
 
-				// ==== Checking arrays ====
-				if (str_starts_with($mappingValue['pixelplus'], '[') and str_ends_with($mappingValue['pixelplus'], ']')) {
-					// ==== Declaring Variables ====
-					# Vars
-					$strTrimmedKey = trim($mappingValue['pixelplus'], '[]');
-					$arrExplodedKey = explode(',', $strTrimmedKey);
-					$strResult = '';
+                // ==== Checking arrays ====
+                if (str_starts_with($mappingValue['pixelplus'], '[') and str_ends_with($mappingValue['pixelplus'], ']')) {
+                    // ==== Declaring Variables ====
+                    # Vars
+                    $strTrimmedKey = trim($mappingValue['pixelplus'], '[]');
+                    $arrExplodedKey = explode(',', $strTrimmedKey);
+                    $strResult = '';
 
-					// ==== Start of Function ====
-					if (!empty($arrExplodedKey)) {
-						# Step 1: Looping through all the keys
-						foreach($arrExplodedKey as $arrExplodedKeyValue) {
-							# Step 2: Check if the key even isset or empty in OG Record
-							if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-								# Getting all the value's from that record
-								$explodedRecord = explode(',', $OGTableRecord->{$arrExplodedKeyValue});
+                    // ==== Start of Function ====
+                    if (!empty($arrExplodedKey)) {
+                        # Step 1: Looping through all the keys
+                        foreach($arrExplodedKey as $arrExplodedKeyValue) {
+                            # Step 2: Check if the key even isset or empty in OG Record
+                            if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+                                # Getting all the value's from that record
+                                $explodedRecord = explode(',', $OGTableRecord->{$arrExplodedKeyValue});
 
-								# Step 3: Looping through all the values
-								foreach ($explodedRecord as $explodedRecordValue) {
-									# Step 4: Removing the brackets from the value
-									$explodedRecordValue = trim($explodedRecordValue, '[]');
-									$strResult .= $explodedRecordValue.', ';
-								}
-								# Step 5: Removing the old key
-								if ($strResult != '') {
-									unset($OGTableRecord->{$arrExplodedKeyValue});
-								}
-							}
-						}
-						# Step 6: Putting it in the mapping table as a default value
-						$mappingTable[$mappingKey]['pixelplus'] = "'".ucfirst(strtolower(rtrim($strResult, ', ')."'"));
+                                # Step 3: Looping through all the values
+                                foreach ($explodedRecord as $explodedRecordValue) {
+                                    # Step 4: Removing the brackets from the value
+                                    $explodedRecordValue = trim($explodedRecordValue, '[]');
+                                    $strResult .= $explodedRecordValue.', ';
+                                }
+                                # Step 5: Removing the old key
+                                if ($strResult != '') {
+                                    unset($OGTableRecord->{$arrExplodedKeyValue});
+                                }
+                            }
+                        }
+                        # Step 6: Putting it in the mapping table as a default value
+                        $mappingTable[$mappingKey]['pixelplus'] = "'".ucfirst(strtolower(rtrim($strResult, ', ')."'"));
 
-					}
-				}
+                    }
+                }
 
-				// ==== Checking location codes ====
-				if (str_starts_with($mappingValue['pixelplus'], '<') and str_ends_with($mappingValue['pixelplus'], '>')) {
-					// ==== Declaring Variables ====
-					# Vars
-					$strTrimmedKey = trim($mappingValue['pixelplus'], '<>');
+                // ==== Checking location codes ====
+                if (str_starts_with($mappingValue['pixelplus'], '<') and str_ends_with($mappingValue['pixelplus'], '>')) {
+                    // ==== Declaring Variables ====
+                    # Vars
+                    $strTrimmedKey = trim($mappingValue['pixelplus'], '<>');
 
-					// ==== Start of Function ====
-					if (!empty($strTrimmedKey)) {
-						# Step 1: Getting the value from the OG Record
+                    // ==== Start of Function ====
+                    if (!empty($strTrimmedKey)) {
+                        # Step 1: Getting the value from the OG Record
 
-						# Step 2: Checking if the value is empty
-						if (isset($OGTableRecord->{$strTrimmedKey}) and !empty($OGTableRecord->{$strTrimmedKey})) {
-							# Step 3: Check if it's a number or a string
-							if (is_numeric($OGTableRecord->{$strTrimmedKey})) {
-								# Step 4: Checking if the value is in the locationCodes array
-								$key = array_search($OGTableRecord->{$strTrimmedKey}, $locationCodes[0]);
-								if ($key !== false) {
-									# Step 5: setting the key as the value
-									$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $locationCodes[1][$key];
-								}
-							}
-							else {
-								# Step 4: Checking if the value is can be converted to a datetime
-								$datetime = strtotime($OGTableRecord->{$strTrimmedKey});
-								if ($datetime !== false) {
-									# Step 5: Adding it to the OG Record
-									$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $datetime;
-								}
-							}
-						}
-					}
-				}
+                        # Step 2: Checking if the value is empty
+                        if (isset($OGTableRecord->{$strTrimmedKey}) and !empty($OGTableRecord->{$strTrimmedKey})) {
+                            # Step 3: Check if it's a number or a string
+                            if (is_numeric($OGTableRecord->{$strTrimmedKey})) {
+                                # Step 4: Checking if the value is in the locationCodes array
+                                $key = array_search($OGTableRecord->{$strTrimmedKey}, $locationCodes[0]);
+                                if ($key !== false) {
+                                    # Step 5: setting the key as the value
+                                    $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $locationCodes[1][$key];
+                                }
+                            }
+                            else {
+                                # Step 4: Checking if the value is can be converted to a datetime
+                                $datetime = strtotime($OGTableRecord->{$strTrimmedKey});
+                                if ($datetime !== false) {
+                                    # Step 5: Adding it to the OG Record
+                                    $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $datetime;
+                                }
+                            }
+                        }
+                    }
+                }
 
-				// ==== Checking the total buildnumbers/buildtypes ====
-				if (str_starts_with($mappingValue['pixelplus'], '^') and str_ends_with($mappingValue['pixelplus'], '^')) {
-					// ==== Declaring Variables ====
-					# Vars
-					$strTrimmedKey = trim($mappingValue['pixelplus'], '^');
+                // ==== Checking the total buildnumbers/buildtypes ====
+                if (str_starts_with($mappingValue['pixelplus'], '^') and str_ends_with($mappingValue['pixelplus'], '^')) {
+                    // ==== Declaring Variables ====
+                    # Vars
+                    $strTrimmedKey = trim($mappingValue['pixelplus'], '^');
 
-					// ==== Start of Function ====
-					if (!empty($strTrimmedKey)) {
-						// ==== Declaring Variables ====
-						# Vars
-						$projectID = $OGTableRecord->{$databaseKeys[0]['media']['search_id']} ?? $OGTableRecord->id ?? '0';
+                    // ==== Start of Function ====
+                    if (!empty($strTrimmedKey)) {
+                        // ==== Declaring Variables ====
+                        # Vars
+                        $projectID = $OGTableRecord->{$databaseKeys[0]['media']['search_id']} ?? $OGTableRecord->id ?? '0';
 
-						// ==== Start of Function ====
-						if ($strTrimmedKey == 'bouwtypes') {
-							# Step 1: Getting the count of bouwtypes in the database
-							$count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[1]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = {$projectID}");
+                        // ==== Start of Function ====
+                        if ($strTrimmedKey == 'bouwtypes') {
+                            # Step 1: Getting the count of bouwtypes in the database
+                            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[1]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = {$projectID}");
 
-							# Step 2: Adding the count to the OG Record
-							$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
-						}
-						if ($strTrimmedKey == 'bouwnummers') {
-							# Step 1: Getting the count of bouwnummers in the database
-							$count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[2]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = {$projectID}");
+                            # Step 2: Adding the count to the OG Record
+                            $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
+                        }
+                        if ($strTrimmedKey == 'bouwnummers') {
+                            # Step 1: Getting the count of bouwnummers in the database
+                            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[2]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = {$projectID}");
 
-							# Step 2: Adding the count to the OG Record
-							$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
-						}
-					}
-				}
+                            # Step 2: Adding the count to the OG Record
+                            $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
+                        }
+                    }
+                }
 
-				// ==== Checking the objecttype ====
-				if (str_starts_with($mappingValue['pixelplus'], '*') and str_ends_with($mappingValue['pixelplus'], '*')) {
-					// ==== Declaring Variables ====
-					# Vars
-					$strTrimmedKey = trim($mappingValue['pixelplus'], '*');
-					$arrExplodedKey = explode('|', $strTrimmedKey);
+                // ==== Checking the objecttype ====
+                if (str_starts_with($mappingValue['pixelplus'], '*') and str_ends_with($mappingValue['pixelplus'], '*')) {
+                    // ==== Declaring Variables ====
+                    # Vars
+                    $strTrimmedKey = trim($mappingValue['pixelplus'], '*');
+                    $arrExplodedKey = explode('|', $strTrimmedKey);
 
-					// ==== Start of Function ====
-					if (!empty($arrExplodedKey)) {
-						# Step 1: Checking if the key isset in the OG Record
-						if (isset($OGTableRecord->{$arrExplodedKey[0]}) and !empty($OGTableRecord->{$arrExplodedKey[0]})) {
-							# Step 2: Set it as the value
-							$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $arrExplodedKey[1];
+                    // ==== Start of Function ====
+                    if (!empty($arrExplodedKey)) {
+                        # Step 1: Checking if the key isset in the OG Record
+                        if (isset($OGTableRecord->{$arrExplodedKey[0]}) and !empty($OGTableRecord->{$arrExplodedKey[0]})) {
+                            # Step 2: Set it as the value
+                            $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $arrExplodedKey[1];
 
-							# Step 3: Removing the old key
-							unset($OGTableRecord->{$arrExplodedKey[0]});
-						}
-						else {
-							# Setting the value to the second key
-							$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = end($arrExplodedKey);
-						}
-					}
-				}
-			}
-			# Looping through the mapping table with the updated values
-			foreach ($mappingTable as $mappingValue) {
-				// ======== Checking default values ========
-				if (str_starts_with($mappingValue['pixelplus'], "'") and str_ends_with($mappingValue['pixelplus'], "'")) {
-					// ==== Declaring Variables ====
-					# Vars
-					$strTrimmedKey = trim($mappingValue['pixelplus'], "'");
+                            # Step 3: Removing the old key
+                            unset($OGTableRecord->{$arrExplodedKey[0]});
+                        }
+                        else {
+                            # Setting the value to the second key
+                            $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = end($arrExplodedKey);
+                        }
+                    }
+                }
+            }
+            # Looping through the mapping table with the updated values
+            foreach ($mappingTable as $mappingValue) {
+                // ======== Checking default values ========
+                if (str_starts_with($mappingValue['pixelplus'], "'") and str_ends_with($mappingValue['pixelplus'], "'")) {
+                    // ==== Declaring Variables ====
+                    # Vars
+                    $strTrimmedKey = trim($mappingValue['pixelplus'], "'");
 
-					// ==== Start of Function ====
-					# Step 1: Making a new key with the value of the old key
-					$OGTableRecord->{$mappingValue['vanherk']} = $strTrimmedKey;
-					# Step 2: Removing the old key
-					unset($OGTableRecord->{$mappingValue['pixelplus']});
-				}
-			}
+                    // ==== Start of Function ====
+                    # Step 1: Making a new key with the value of the old key
+                    $OGTableRecord->{$mappingValue['vanherk']} = $strTrimmedKey;
+                    # Step 2: Removing the old key
+                    unset($OGTableRecord->{$mappingValue['pixelplus']});
+                }
+            }
 
 
-			# Direct matches
-			foreach ($OGTableRecord as $OGTableRecordKey => $OGTableRecordValue) {
-				foreach ($mappingTable as $mappingValue) {
-					// ==== Checking direct match ====
-					if ($OGTableRecordKey == $mappingValue['pixelplus']) {
-						# Making a new key with the value of the old key
-						$OGTableRecord->{$mappingValue['vanherk']} = $OGTableRecordValue;
-						# Removing the old key
-						unset($OGTableRecord->{$OGTableRecordKey});
-					}
-				}
-			}
-		}
+            # Direct matches
+            foreach ($OGTableRecord as $OGTableRecordKey => $OGTableRecordValue) {
+                foreach ($mappingTable as $mappingValue) {
+                    // ==== Checking direct match ====
+                    if ($OGTableRecordKey == $mappingValue['pixelplus']) {
+                        # Making a new key with the value of the old key
+                        $OGTableRecord->{$mappingValue['vanherk']} = $OGTableRecordValue;
+                        # Removing the old key
+                        unset($OGTableRecord->{$OGTableRecordKey});
+                    }
+                }
+            }
+        }
         else {
-	        // ================ Cleaning the Tables/Records ================
-	        # Getting rid of all the useless and empty values in the OBJECT
-	        $OGTableRecord = $this->cleanupObjects($OGTableRecord);
+            // ================ Cleaning the Tables/Records ================
+            # Getting rid of all the useless and empty values in the OBJECT
+            $OGTableRecord = $this->cleanupObjects($OGTableRecord);
         }
 
-		// ================ Returning the Object ================
-		# Return the object
-		return $OGTableRecord;
-	}
+        // ================ Returning the Object ================
+        # Return the object
+        return $OGTableRecord;
+    }
 }
 
 // ========== Inactivated state of Plugin ==========
@@ -868,7 +983,7 @@ class OGLicense {
 
         # API
         $url = $settingData->apiURLs['license'];
-        $qArgs = "?token=".get_option($settingData->settingPrefix.'licenseKey');
+        $qArgs = !empty(get_option($settingData->settingPrefix.'licenseKey')) ? "?token=".get_option($settingData->settingPrefix.'licenseKey') : '';
 
         // ================ Start of Function =============
         // If cache file doesn't exist then create it
@@ -890,6 +1005,9 @@ class OGLicense {
 				# Telling the user that the license is invalid
 				adminNotice('error', "De licentie is ongeldig. Neem contact op met PixelPlus.");
 			}
+            elseif (isset($cacheData['message']) and $cacheData['message'] == 'Authentication token is not set!') {
+                # Do absolutely nothing
+            }
 			else {
 				adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
 			}
@@ -927,6 +1045,9 @@ class OGLicense {
 			        # Saving the data to the cache file
 			        file_put_contents( $cacheFile, json_encode( $cacheData ) );
 		        }
+                elseif (isset($cacheData['message']) and $cacheData['message'] == 'Authentication token is not set!') {
+                    # Do absolutely nothing
+                }
 				else {
 			        adminNotice( 'error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus." );
 		        }
@@ -957,6 +1078,9 @@ class OGLicense {
 				# Saving the data to the cache file
 				file_put_contents($cacheFile, json_encode($cacheData));
 			}
+            elseif (isset($cacheData['message']) and $cacheData['message'] == 'Authentication token is not set!') {
+                # Do absolutely nothing
+            }
 			else {
 	            adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
 			}
@@ -964,7 +1088,6 @@ class OGLicense {
 	        # Returning the data/error
 	        return $cacheData;
         }
-
     }
 
     // A function for registering base settings of the unactivated plugin as activation hook.
@@ -1141,7 +1264,7 @@ class OGPages
                         $sectionArray['sectionID'],
                     );
                     // Registering the Field
-                    register_setting($optionGroup, $fieldArray['fieldID']);
+                    register_setting($optionGroup, $fieldArray['fieldID'], $fieldArray['sanitizeCallback'] ?? '');
                 }
             }
         }
@@ -1211,19 +1334,27 @@ class OGPages
         htmlFooter('OG Admin Dashboard');}
     // OG Admin Settings
     function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings - Algemeen');
-        $settingsData = new OGSettingsData();
-        ?>
-        <form method="post" action="options.php">
-            <?php settings_fields($settingsData->settingPrefix.'AdminOptions');
+        $settingsData = new OGSettingsData(); ?>
+                <form method="post" action="options.php">
+            <?php settings_fields($settingsData->settingPrefix.'adminOptions');
             do_settings_sections('pixelplus-og-plugin-settings');
             hidePasswordByName($settingsData->settingPrefix.'licenseKey');
             submit_button('Opslaan', 'primary', 'submit_license');
             ?>
         </form>
-        <?php htmlFooter('OG Admin Settings - Licentie');}
-    function HTMLOGAdminSettingsWonen() { htmlHeader('OG Admin Settings - Wonen'); ?>
+    <?php htmlFooter('OG Admin Settings - Licentie');}
+    function HTMLOGAdminSettingsWonen() { htmlHeader('OG Admin Settings - Wonen');
+        // ======== Declaring Variables ========
 
-        <?php htmlFooter('OG Admin Settings - Wonen');}
+        // ======== Start of Function ========
+        $settingsData = new OGSettingsData(); ?>
+        <form method="post" action="options.php">
+            <?php settings_fields($settingsData->settingPrefix.'WonenOptions');
+            do_settings_sections('pixelplus-og-plugin-settings-wonen');
+            submit_button('Opslaan', 'primary', 'submit_wonen');
+            ?>
+        </form>
+    <?php htmlFooter('OG Admin Settings - Wonen');}
     function HTMLOGAdminSettingsBOG() { htmlHeader('OG Admin Settings - BOG'); ?>
 
         <?php htmlFooter('OG Admin Settings - BOG');}
@@ -1233,10 +1364,16 @@ class OGPages
     function HTMLOGAdminSettingsALV() { htmlHeader('OG Admin Settings - A&LV'); ?>
 
         <?php htmlFooter('OG Admin Settings - A&LV');}
+
     // OG Aanbod
     function HTMLOGAanbodDashboard(): void { htmlHeader('OG Aanbod Dashboard'); ?>
         <p>dingdong bishass</p>
         <?php htmlFooter('OG Aanbod Dashboard');}
+
+    // OG Detailpage
+    function HTMLOGDetailPageWonen() { ?>
+
+    <?php }
 }
 
 // ========== Fully activated state of the plugin ==========
@@ -1411,105 +1548,106 @@ class OGOffers {
 		return [$arrAfdelingcodes, $arrAfdelingNames];
 	}
 
-	function updateMedia($postID, $postTypeName, $OGobject, $databaseKey): void {
-		// ============ Declaring Variables ============
-		# Classes
-		global $wpdb;
-		$OGMapping = new OGMapping();
+    function updateMedia($postID, $postTypeName, $OGobject, $databaseKey): void {
+        // ============ Declaring Variables ============
+        # Classes
+        global $wpdb;
+        $OGMapping = new OGMapping();
 
-		# Variables
-		$databaseKeysMedia = $databaseKey['media'];
-		$postTypeName = !empty($databaseKeysMedia['folderRedirect']) ? $databaseKeysMedia['folderRedirect'] : $postTypeName;
-		$mime_type_map = [
-			'jpg' => 'image/jpeg',
-			'png' => 'image/png',
-			'pdf' => 'application/pdf',
-		];
-		$mime_type_map2 = [
-			'Video' => 'video/mp4',
-			'Connected_partner' => 'application/unknown',
-		];
-		$guid_url = get_site_url();
+        # Variables
+        $databaseKeysMedia = $databaseKey['media'];
+        $postTypeName = !empty($databaseKeysMedia['folderRedirect']) ? $databaseKeysMedia['folderRedirect'] : $postTypeName;
+        $mime_type_map = [
+            'jpg' => 'image/jpeg',
+            'png' => 'image/png',
+            'pdf' => 'application/pdf',
+            'mp4' => 'video/mp4',
+        ];
+        $mime_type_map2 = [
+            'Video' => 'video/mp4',
+        ];
+        $guid_url = get_site_url();
 
-		$mediaObjects = $wpdb->get_results("SELECT * FROM `{$databaseKeysMedia['tableName']}` WHERE `{$databaseKeysMedia['search_id']}` = $OGobject->id");
+        $mediaObjects = $wpdb->get_results("SELECT * FROM `{$databaseKeysMedia['tableName']}` WHERE `{$databaseKeysMedia['search_id']}` = $OGobject->id");
 
-		// ============ Start of Function ============
-		foreach ($mediaObjects as $mediaObject) {
-			// ======== Declaring Variables ========
-			# Mapping the data
-			$mediaObject = $OGMapping->mapMetaData($mediaObject, ($databaseKeysMedia['mapping'] ?? []));
-			$mediaQuery = new WP_Query([
-				'post_type' => 'attachment',
-				'meta_key' => $databaseKeysMedia['mediaName'],
-				'meta_value' => $mediaObject->{$databaseKeysMedia['mediaName']},
-				'posts_per_page' => -1,
-				'post_status' => 'any',
-			]);
-			$mediaExists = $mediaQuery->have_posts();
+        // ============ Start of Function ============
+        foreach ($mediaObjects as $mediaObject) {
+            // ======== Declaring Variables ========
+            # Mapping the data
+            $mediaObject = $OGMapping->mapMetaData($mediaObject, ($databaseKeysMedia['mapping'] ?? []));
+            $mediaQuery = new WP_Query([
+                'post_type' => 'attachment',
+                'meta_key' => $databaseKeysMedia['mediaName'],
+                'meta_value' => $mediaObject->{$databaseKeysMedia['mediaName']},
+                'posts_per_page' => -1,
+                'post_status' => 'any',
+            ]);
+            $mediaExists = $mediaQuery->have_posts();
 
-			// Object last updated
-			$objectLastUpdated = $OGobject->{$databaseKey['datum_gewijzigd']} ?? $OGobject->{$databaseKey['datum_toegevoegd']};
+            // Object last updated
+            $objectLastUpdated = $OGobject->{$databaseKey['datum_gewijzigd']} ?? $OGobject->{$databaseKey['datum_toegevoegd']};
 
-			# Vars
-			$post_mime_type = $mime_type_map[$mediaObject->{'bestands_extensie'}] ?? $mime_type_map2[$mediaObject->{$databaseKeysMedia['media_Groep']}] ?? 'unknown';
-			$media_url = "og_media/{$postTypeName}_{$OGobject->{$databaseKeysMedia['object_keys']['objectVestiging']}}_{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}/{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}_{$mediaObject->{$databaseKey['ID']}}.$mediaObject->bestands_extensie";
-			$post_data = [
-				'post_content' => '',
-				'post_title' => "{$mediaObject->{$databaseKey['ID']}}-{$mediaObject->bestandsnaam}",
-				'post_excerpt' => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
-				'post_status' => 'inherit',
-				'comment_status' => 'open',
-				'ping_status' => 'closed',
-				'post_name' => "{$mediaObject->{$databaseKey['ID']}}-{$mediaObject->bestandsnaam}",
-				'post_parent' => $postID,
-				'guid' => "{$guid_url}/$media_url",
-				'menu_order' => $mediaObject->{'media_volgorde'},
-				'post_type' => 'attachment',
-				'post_mime_type' => $post_mime_type,
-			];
-			$post_meta = [
-				'_wp_attached_file' => $media_url,
-				'file_url' => $media_url,
-				'_wp_attachment_metadata' => '',
-				'ObjectCode' => $OGobject->{$databaseKey['objectCode']},
-				'MediaType' => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
-				'MediaName' => $mediaObject->{$databaseKeysMedia['mediaName']},
-				'MediaUpdated' => $mediaObject->{$databaseKeysMedia['datum_gewijzigd']},
-				'_wp_attachment_image_alt' => '',
-				'_id' => $mediaObject->{$databaseKey['ID']},
-			];
-			// ======== Start of Function ========
-			# Checking if the media exists
-			if ($mediaExists) {
-				// ==== Declaring Variables ====
-				# Getting post meta
-				$postLastUpdated = $mediaQuery->post->MediaUpdated;
+            # Vars
+            $boolIsConnectedPartner = $mediaObject->{$databaseKeysMedia['media_Groep']} == 'Connected_partner';
+            $post_mime_type = $mime_type_map[$mediaObject->{'bestands_extensie'}] ?? $mime_type_map2[$mediaObject->{$databaseKeysMedia['media_Groep']}] ?? 'unknown';
+            $media_url = "og_media/{$postTypeName}_{$OGobject->{$databaseKeysMedia['object_keys']['objectVestiging']}}_{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}/{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}_{$mediaObject->{$databaseKey['ID']}}.$mediaObject->bestands_extensie";
+            $post_data = [
+                'post_content' => '',
+                'post_title' => "{$mediaObject->{$databaseKey['ID']}}-$mediaObject->bestandsnaam",
+                'post_excerpt' => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
+                'post_status' => 'inherit',
+                'comment_status' => 'open',
+                'ping_status' => 'closed',
+                'post_name' => "{$mediaObject->{$databaseKey['ID']}}-$mediaObject->bestandsnaam",
+                'post_parent' => $postID,
+                'guid' => $boolIsConnectedPartner ? $mediaObject->media_URL : "$guid_url/$media_url",
+                'menu_order' => $mediaObject->{'media_volgorde'},
+                'post_type' => 'attachment',
+                'post_mime_type' => $post_mime_type,
+            ];
+            $post_meta = [
+                '_wp_attached_file' => $boolIsConnectedPartner ? $mediaObject->media_URL : $media_url,
+                'file_url' => $boolIsConnectedPartner ? $mediaObject->media_URL : $media_url,
+                '_wp_attachment_metadata' => '',
+                'ObjectCode' => $OGobject->{$databaseKey['objectCode']},
+                'MediaType' => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
+                'MediaName' => $mediaObject->{$databaseKeysMedia['mediaName']},
+                'MediaUpdated' => $mediaObject->{$databaseKeysMedia['datum_gewijzigd']},
+                '_wp_attachment_image_alt' => '',
+                '_id' => $mediaObject->{$databaseKey['ID']},
+            ];
+            // ======== Start of Function ========
+            # Checking if the media exists
+            if ($mediaExists) {
+                // ==== Declaring Variables ====
+                # Getting post meta
+                $postLastUpdated = $mediaQuery->post->MediaUpdated;
 
-				// ==== Start of Function ====
-				if ($postLastUpdated != $objectLastUpdated) {
-					// Updating the media
-					$post_data['ID'] = $mediaQuery->post->ID;
-					wp_update_post($post_data);
+                // ==== Start of Function ====
+                if ($postLastUpdated != $objectLastUpdated) {
+                    // Updating the media
+                    $post_data['ID'] = $mediaQuery->post->ID;
+                    wp_update_post($post_data);
 
-					// Updating the meta data
-					foreach ($post_meta as $key => $value) {
-						update_post_meta($mediaQuery->post->ID, $key, $value);
-						wp_set_object_terms($mediaQuery->post->ID, $value, $key);
-					}
-				}
-			}
-			else {
-				// Creating the media
-				$mediaID = wp_insert_post($post_data);
+                    // Updating the meta data
+                    foreach ($post_meta as $key => $value) {
+                        update_post_meta($mediaQuery->post->ID, $key, $value);
+                        wp_set_object_terms($mediaQuery->post->ID, $value, $key);
+                    }
+                }
+            }
+            else {
+                // Creating the media
+                $mediaID = wp_insert_post($post_data);
 
-				// Adding the meta data
-				foreach ($post_meta as $key => $value) {
-					add_post_meta($mediaID, $key, $value);
-					wp_set_object_terms($mediaID, $value, $key);
-				}
-			}
-		}
-	}
+                // Adding the meta data
+                foreach ($post_meta as $key => $value) {
+                    add_post_meta($mediaID, $key, $value);
+                    wp_set_object_terms($mediaID, $value, $key);
+                }
+            }
+        }
+    }
 
 	function createPost($postTypeName, $OGobject, $databaseKey, $parentPostID='') {
 		// ============ Declaring Variables ===========
