@@ -541,7 +541,7 @@ class OGSettingsData {
             ]
         ],
         // Settings 2
-        /* Option Group= */ 'ppOG_wonenOptions' => [
+        /* Option Group= */ 'ppOG_WonenOptions' => [
             // General information
             'settingPageSlug' => 'pixelplus-og-plugin-settings-wonen',
             // Sections
@@ -556,6 +556,7 @@ class OGSettingsData {
                         /* Setting Field Title= */'Prijs' => [
                             'fieldID' => 'ppOG_wonenPrijs',
                             'fieldCallback' => 'htmlWonenPrijsField',
+                            'sanitizeCallback' => 'sanitize_checkboxes'
                         ]
                     ]
                 ],
@@ -573,22 +574,17 @@ class OGSettingsData {
                     ]
                 ],
             ]
-        ]
+        ],
     ];
     // ============ PHP Functions ============
     public function sanitize_checkboxes($input) {
-        $output = '';
-
-        if (is_array($input) && !empty($input)) {
-            foreach ($input as $key => $value) {
-                $output .= $value.':1;';
-            }
-
-            // Remove the trailing semicolon
-            $output = rtrim($output, ';');
+        // ======== Declaring Variables ========
+        foreach ($input as $key => $value) {
+            $input[$key] = sanitize_text_field($value);
         }
 
-        return $output;
+        // ======== Start of Function ========
+
     }
 
     // ============ HTML Functions ============
@@ -615,67 +611,56 @@ class OGSettingsData {
     // ======== Wonen Options ========
     // Sections
     function htmlWonenPrijsSection(): void { ?>
+        <p>De prijs van de woning</p>
     <?php }
     function htmlWonenBouwSection(): void { ?>
+        <p>De bouw van de woning</p>
     <?php }
+
     // Fields
     function htmlWonenPrijsField(): void {
-        // ======== Declaring Variables =========
+        // ======== Declaring Variables ========
         // Vars
-        $prijs = get_option($this->settingPrefix.'wonenPrijs');
-        $explodedPrijs = explode(';', $prijs);
+        $wonenPrijs = get_option($this->settingPrefix.'wonenPrijs');
+        $explodedPrijs = explode(';', $wonenPrijs);
 
         // ======== Start of Function ========
-        // Check if licenseKey is empty
-        if ($prijs == '') {
+        # Check if licenseKey is empty
+        if ($wonenPrijs == '') {
             // Display a message
             echo('De prijs is nog niet ingevuld.');
         }
+
+        # Loop through the exploded array
         if (!empty($explodedPrijs)) {
-            foreach($explodedPrijs as $value) {
+            foreach ($explodedPrijs as $value) {
+                // ==== Declaring Variables ====
+                # Vars
                 $explodedValue = explode(':', $value);
-                if (!empty($explodedValue)) {
-                    // ==== Declaring Variables ====
-                    # Vars
-                    # Label is going to be the value but with every capital letter a space is added
-                    $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
+                if (empty($explodedValue)) continue;
 
-                    if ($explodedValue[1] == '1') {
-                        $checked = 'checked';
-                    } elseif ($explodedValue[1] == '0') {
-                        $checked = '';
-                    } elseif ($explodedValue[1] == '1f') {
-                        $checked = 'checked disabled';
-                    } elseif ($explodedValue[1] == '0f') {
-                        $checked = 'disabled';
-                    } else {
-                        $checked = '';
-                    }
+                # Checkboxes
+                $checkBoxName = $this->settingPrefix.'wonenPrijs[]'; // Append index to the checkbox name
+                $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
 
-                    echo("
-                    <input type='checkbox' name='".$this->settingPrefix."wonenPrijs[]' value='".esc_attr($explodedValue[0])."' ".$checked."/>
-                    <label for='".$this->settingPrefix."wonenPrijs[]'>".esc_attr($label)."</label><br>
-                    ");
-                }
+                // ==== Start of Loop ====
+                createCheckboxes($explodedValue, $checkBoxName, $label);
             }
         }
-
     }
     function htmlWonenBouwField(): void {
         // ===== Declaring Variables =====
         // Vars
-        $bouw = get_option($this->settingPrefix.'wonenBouw');
-        $explodedBouw = explode(';', $bouw);
+        $wonenBouw = get_option($this->settingPrefix.'wonenBouw');
 
         // ===== Start of Function =====
         // Check if licenseKey is empty
-        if ($bouw == '') {
+        if ($wonenBouw == '') {
             // Display a message
             echo('De bouw is nog niet ingevuld.');
         }
-        echo("<input type='text' name='".$this->settingPrefix."wonenBouw' value='".esc_attr($bouw)."'");
+        echo("<input type='text' name='".$this->settingPrefix."wonenBouw' value='".esc_attr($wonenBouw)."'");
     }
-
 }
 class OGMapping {
 	// ================ Constructor ================
@@ -1264,7 +1249,8 @@ class OGPages
                         $sectionArray['sectionID'],
                     );
                     // Registering the Field
-                    register_setting($optionGroup, $fieldArray['fieldID'], $fieldArray['sanitizeCallback'] ?? '');
+                    adminNotice('info', $fieldArray['sanitizeCallback'] ?? '');
+                    register_setting($optionGroup, $fieldArray['fieldID'], !empty($fieldArray['sanitizeCallback']) ? array($settings, $fieldArray['sanitizeCallback']) : '');
                 }
             }
         }
@@ -1335,7 +1321,7 @@ class OGPages
     // OG Admin Settings
     function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings - Algemeen');
         $settingsData = new OGSettingsData(); ?>
-                <form method="post" action="options.php">
+        <form method="post" action="options.php">
             <?php settings_fields($settingsData->settingPrefix.'adminOptions');
             do_settings_sections('pixelplus-og-plugin-settings');
             hidePasswordByName($settingsData->settingPrefix.'licenseKey');
