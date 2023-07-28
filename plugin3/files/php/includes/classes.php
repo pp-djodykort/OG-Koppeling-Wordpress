@@ -570,6 +570,7 @@ class OGSettingsData {
                         /* Setting Field Title= */'Bouw' => [
                             'fieldID' => 'ppOG_wonenBouw',
                             'fieldCallback' => 'htmlWonenBouwField',
+                            'sanitizeCallback' => 'sanitize_checkboxes'
                         ]
                     ]
                 ],
@@ -579,12 +580,19 @@ class OGSettingsData {
     // ============ PHP Functions ============
     public function sanitize_checkboxes($input) {
         // ======== Declaring Variables ========
+        # Classes
+        global $wpdb;
+
+        # Vars
+        $strOutput = '';
         foreach ($input as $key => $value) {
-            $input[$key] = sanitize_text_field($value);
+            $strOutput .= "$key:$value;";
         }
+        # Removing the last character
+        $strOutput = substr($strOutput, 0, -1);
 
         // ======== Start of Function ========
-
+        return $strOutput;
     }
 
     // ============ HTML Functions ============
@@ -611,10 +619,8 @@ class OGSettingsData {
     // ======== Wonen Options ========
     // Sections
     function htmlWonenPrijsSection(): void { ?>
-        <p>De prijs van de woning</p>
     <?php }
     function htmlWonenBouwSection(): void { ?>
-        <p>De bouw van de woning</p>
     <?php }
 
     // Fields
@@ -640,7 +646,7 @@ class OGSettingsData {
                 if (empty($explodedValue)) continue;
 
                 # Checkboxes
-                $checkBoxName = $this->settingPrefix.'wonenPrijs[]'; // Append index to the checkbox name
+                $checkBoxName = $this->settingPrefix."wonenPrijs[$explodedValue[0]]"; // Append index to the checkbox name
                 $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
 
                 // ==== Start of Loop ====
@@ -649,17 +655,34 @@ class OGSettingsData {
         }
     }
     function htmlWonenBouwField(): void {
-        // ===== Declaring Variables =====
+        // ======== Declaring Variables ========
         // Vars
         $wonenBouw = get_option($this->settingPrefix.'wonenBouw');
+        $explodedBouw = explode(';', $wonenBouw);
 
-        // ===== Start of Function =====
-        // Check if licenseKey is empty
+        // ======== Start of Function ========
+        # Check if licenseKey is empty
         if ($wonenBouw == '') {
             // Display a message
             echo('De bouw is nog niet ingevuld.');
         }
-        echo("<input type='text' name='".$this->settingPrefix."wonenBouw' value='".esc_attr($wonenBouw)."'");
+
+        # Loop through the exploded array
+        if (!empty($explodedBouw)) {
+            foreach ($explodedBouw as $value) {
+                // ==== Declaring Variables ====
+                # Vars
+                $explodedValue = explode(':', $value);
+                if (empty($explodedValue)) continue;
+
+                # Checkboxes
+                $checkBoxName = $this->settingPrefix."wonenBouw[$explodedValue[0]]"; // Append index to the checkbox name
+                $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
+
+                // ==== Start of Loop ====
+                createCheckboxes($explodedValue, $checkBoxName, $label);
+            }
+        }
     }
 }
 class OGMapping {
@@ -1249,7 +1272,6 @@ class OGPages
                         $sectionArray['sectionID'],
                     );
                     // Registering the Field
-                    adminNotice('info', $fieldArray['sanitizeCallback'] ?? '');
                     register_setting($optionGroup, $fieldArray['fieldID'], !empty($fieldArray['sanitizeCallback']) ? array($settings, $fieldArray['sanitizeCallback']) : '');
                 }
             }

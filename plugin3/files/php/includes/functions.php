@@ -24,20 +24,20 @@ function OGUninstallPlugin() {
 // ============ HTML Functions ============
 function createCheckboxes($input, $checkBoxName, $label) {
     if ($input[1] == '0') {
-        echo("<input type='hidden' name='{$checkBoxName}' value='{$input[0]}:0' checked>");
-        echo("<input type='checkbox' name='{$checkBoxName}' value='{$input[0]}:1'>{$label}<br>");
+        echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
+        echo("<input type='checkbox' name='{$checkBoxName}' value='1'>{$label}<br>");
     }
     elseif ($input[1] == '0f') {
-        echo("<input type='hidden' name='{$checkBoxName}' value='{$input[0]}:0f' checked>");
-        echo("<input type='checkbox' name='{$checkBoxName}' value='{$input[0]}:0f' disabled>{$label}<br>");
+        echo("<input type='hidden' name='{$checkBoxName}' value='0f' checked>");
+        echo("<input type='checkbox' name='{$checkBoxName}' value='0f' disabled>{$label}<br>");
     }
     elseif ($input[1] == '1f') {
-        echo("<input type='hidden' name='{$checkBoxName}' value='{$input[0]}:1f' checked>");
-        echo("<input type='checkbox' name='{$checkBoxName}' value='{$input[0]}:1f' checked disabled>{$label}<br>");
+        echo("<input type='hidden' name='{$checkBoxName}' value='1f' checked>");
+        echo("<input type='checkbox' name='{$checkBoxName}' value='1f' checked disabled>{$label}<br>");
     }
     else {
-        echo("<input type='hidden' name='{$checkBoxName}' value='{$input[0]}:0' checked>");
-        echo("<input type='checkbox' name='{$checkBoxName}' value='{$input[0]}:1' checked>{$label}<br>");
+        echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
+        echo("<input type='checkbox' name='{$checkBoxName}' value='1' checked>{$label}<br>");
     }
 }
 function pre($input): void {
