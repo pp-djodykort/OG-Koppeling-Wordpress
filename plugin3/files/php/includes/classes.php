@@ -152,7 +152,13 @@ class OGPostTypeData {
 				        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array( /* TableName */ 'tableName' => 'og_mappingwonen')
 			        ),
-		        )
+		        ),
+                'templates' => array(
+                    'detailPage' => array(
+                        'templateName' => 'Wonen Detail Pagina',
+                        'templateFile' => 'single-wonen.php'
+                    ),
+                )
 	        ),
 	        // Post Type 2
 	        /* post_type */'bog' => array(
@@ -219,6 +225,12 @@ class OGPostTypeData {
 				        ),
 				        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array(/* TableName */ 'tableName' => 'og_mappingbedrijven')
+			        ),
+		        ),
+		        'templates' => array(
+			        'detailPage' => array(
+				        'templateName' => 'og-bog-detail',
+                        'templateFile' => 'og-bog-detail.php'
 			        ),
 		        )
 	        ),
@@ -370,7 +382,8 @@ class OGPostTypeData {
 				        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array(/* TableName */ 'tableName' => 'og_mappingnieuwbouwbouwnummers')
 			        ),
-		        )
+		        ),
+
 	        ),
             // Post Type 4
             /* post_type */'alv' => array(
@@ -428,7 +441,6 @@ class OGPostTypeData {
 				                'objectTiara' => '_id',
 				                'objectVestiging' => 'ObjectVerstigingsNummer',
 			                ),
-
 			                # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
 			                'mapping' => array(
 				                # TableName
@@ -515,9 +527,15 @@ class OGSettingsData {
 
     public array $settings = [
         /* Setting Name */'licenseKey' => /* Default Value */   '',                                                    // License Key
-        /* Setting Name */'wonenPrijs' => /* Default Value */        'Vraagprijs:1f;VraagprijsPerM2:0',                     // Prijs
-        /* Setting Name */'wonenBouw' => /* Default Value */         'Bouwjaar:1f;Soorthuis:1;Soortbouw:1;Soortdak:1',     // Bouw
-    ];
+        /* Setting Name */'wonenDetailpaginaBasiskenmerken' => /* Default Value */      'Status:1f;Bouwjaar:1;Prijs:1f;PrijsPerM2:0;Woonoppervlakte:1;OverigeInpandigeOppervlakte:1;Inhoud:0;AantalSlaapkamers:1;AantalKamers:0',
+        /* Setting Name */'wonenDetailpaginaOverdracht' => /* Default Value */          'Aanvaarding:1f',
+	    /* Setting Name */'wonenDetailpaginaBouwOnderhoud' => /* Default Value */       'Bouwjaar:1f;Ligging:1f;SoortBouw:1f;Bouwvorm:1;DakType:1f;DakMateriaal:1f;BouwgrondOppervlakte:1',
+        /* Setting Name */'wonenDetailpaginaParkeergelegenheid' => /* Default Value */  'Parkeerfaciliteiten:1f;GarageSoorten:1f',
+	    /* Setting Name */'wonenDetailpaginaOppervlakteInhoud' => /* Default Value */   'Perceeloppervlakte:1f;Woonoppervlakte:1f;Gebruiksoppervlakte:1f;Inhoud:1f;OverigeInpandigeOppervlakte:1f;GebouwgebondenBuitenruimte:1f',
+	    /* Setting Name */'wonenDetailpaginaBergruimte' => /* Default Value */          'Bergruimte:1f;SchuurBergingSoort:1f;SchuurBergingVoorzieningen:1f;SchuurBergingIsolatie:1f;SchuurBergingTotaalAantal:1f',
+	    /* Setting Name */'wonenDetailpaginaIndeling' => /* Default Value */            'AantalWoonlagen:1f;AantalKamers:1f;AantalSlaapkamers:1f;AantalBadkamers:1',
+	    /* Setting Name */'wonenDetailpaginaEnergieInstallatie' => /* Default Value */  'EnergieLabel:1f;Isolatie:1f;Verwarming:1f;WarmWater:1f;CvKetelType:1f;CvKetelBouwjaar:1f;CvKetelEigendom:1;CvKetelBrandstof:0;EnergieEinddatum:1f',
+        ];
     public array $adminSettings = [
         // Settings 1
         /* Option Group= */ 'ppOG_adminOptions' => [
@@ -546,32 +564,60 @@ class OGSettingsData {
             'settingPageSlug' => 'pixelplus-og-plugin-settings-wonen',
             // Sections
             'sections' => [
-                // Section 1 - Prijs section
-                /* Section Title= */'Prijs' => [
-                    'sectionID' => 'ppOG_wonenSectionPrijs',
-                    'sectionCallback' => 'htmlWonenPrijsSection',
+                // Section 1 - Detailpagina section
+                /* Section Title= */'Detailpagina' => [
+                    'sectionID' => 'ppOG_wonenDetailpagina',
+                    'sectionCallback' => '',
                     // Fields
                     'fields' => [
-                        // Field 1 - Prijs
-                        /* Setting Field Title= */'Prijs' => [
-                            'fieldID' => 'ppOG_wonenPrijs',
-                            'fieldCallback' => 'htmlWonenPrijsField',
+                        // Field 1 - Basiskenmerken
+                        /* Setting Field Title= */'Basiskenmerken' => [
+                            'fieldID' => 'ppOG_wonenDetailpaginaBasiskenmerken',
+                            'fieldCallback' => '',
                             'sanitizeCallback' => 'sanitize_checkboxes'
-                        ]
-                    ]
-                ],
-                // Section 2 - Bouw section
-                /* Section Title= */'Bouw' => [
-                    'sectionID' => 'ppOG_wonenSectionBouw',
-                    'sectionCallback' => 'htmlWonenBouwSection',
-                    // Fields
-                    'fields' => [
-                        // Field 1 - Bouw
-                        /* Setting Field Title= */'Bouw' => [
-                            'fieldID' => 'ppOG_wonenBouw',
-                            'fieldCallback' => 'htmlWonenBouwField',
+                        ],
+                        // Field 2 - Overdracht
+                        /* Setting Field Title= */'Overdracht' => [
+                            'fieldID' => 'ppOG_wonenDetailpaginaOverdracht',
+                            'fieldCallback' => '',
                             'sanitizeCallback' => 'sanitize_checkboxes'
-                        ]
+                        ],
+                        // Field 3 - Bouw en onderhoud
+                        /* Setting Field Title= */'Bouw en onderhoud' => [
+                            'fieldID' => 'ppOG_wonenDetailpaginaBouwOnderhoud',
+                            'fieldCallback' => '',
+                            'sanitizeCallback' => 'sanitize_checkboxes'
+                        ],
+                        // Field 4 - Parkeergelegenheid
+                        /* Setting Field Title= */'Parkeergelegenheid' => [
+                            'fieldID' => 'ppOG_wonenDetailpaginaParkeergelegenheid',
+                            'fieldCallback' => '',
+                            'sanitizeCallback' => 'sanitize_checkboxes'
+                        ],
+                        // Field 5 - Oppervlakte en inhoud
+                        /* Setting Field Title= */'Oppervlakte en inhoud' => [
+                            'fieldID' => 'ppOG_wonenDetailpaginaOppervlakteInhoud',
+                            'fieldCallback' => '',
+                            'sanitizeCallback' => 'sanitize_checkboxes'
+                        ],
+                        // Field 6 - Bergruimte
+/* Setting Field Title= */'Bergruimte' => [
+                            'fieldID' => 'ppOG_wonenDetailpaginaBergruimte',
+                            'fieldCallback' => '',
+                            'sanitizeCallback' => 'sanitize_checkboxes'
+                        ],
+                        // Field 7 - Indeling
+                        /* Setting Field Title= */'Indeling' => [
+                            'fieldID' => 'ppOG_wonenDetailpaginaIndeling',
+                            'fieldCallback' => '',
+                            'sanitizeCallback' => 'sanitize_checkboxes'
+                        ],
+                        // Field 8 - Energie en installatie
+                        /* Setting Field Title= */'Energie en installatie' => [
+                            'fieldID' => 'ppOG_wonenDetailpaginaEnergieInstallatie',
+                            'fieldCallback' => '',
+                            'sanitizeCallback' => 'sanitize_checkboxes'
+                        ],
                     ]
                 ],
             ]
@@ -614,75 +660,6 @@ class OGSettingsData {
             echo('De licentiesleutel is nog niet ingevuld.');
         }
         echo("<input type='text' name='".$this->settingPrefix."licenseKey' value='".esc_attr($licenseKey)."'");
-    }
-
-    // ======== Wonen Options ========
-    // Sections
-    function htmlWonenPrijsSection(): void { ?>
-    <?php }
-    function htmlWonenBouwSection(): void { ?>
-    <?php }
-
-    // Fields
-    function htmlWonenPrijsField(): void {
-        // ======== Declaring Variables ========
-        // Vars
-        $wonenPrijs = get_option($this->settingPrefix.'wonenPrijs');
-        $explodedPrijs = explode(';', $wonenPrijs);
-
-        // ======== Start of Function ========
-        # Check if licenseKey is empty
-        if ($wonenPrijs == '') {
-            // Display a message
-            echo('De prijs is nog niet ingevuld.');
-        }
-
-        # Loop through the exploded array
-        if (!empty($explodedPrijs)) {
-            foreach ($explodedPrijs as $value) {
-                // ==== Declaring Variables ====
-                # Vars
-                $explodedValue = explode(':', $value);
-                if (empty($explodedValue)) continue;
-
-                # Checkboxes
-                $checkBoxName = $this->settingPrefix."wonenPrijs[$explodedValue[0]]"; // Append index to the checkbox name
-                $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
-
-                // ==== Start of Loop ====
-                createCheckboxes($explodedValue, $checkBoxName, $label);
-            }
-        }
-    }
-    function htmlWonenBouwField(): void {
-        // ======== Declaring Variables ========
-        // Vars
-        $wonenBouw = get_option($this->settingPrefix.'wonenBouw');
-        $explodedBouw = explode(';', $wonenBouw);
-
-        // ======== Start of Function ========
-        # Check if licenseKey is empty
-        if ($wonenBouw == '') {
-            // Display a message
-            echo('De bouw is nog niet ingevuld.');
-        }
-
-        # Loop through the exploded array
-        if (!empty($explodedBouw)) {
-            foreach ($explodedBouw as $value) {
-                // ==== Declaring Variables ====
-                # Vars
-                $explodedValue = explode(':', $value);
-                if (empty($explodedValue)) continue;
-
-                # Checkboxes
-                $checkBoxName = $this->settingPrefix."wonenBouw[$explodedValue[0]]"; // Append index to the checkbox name
-                $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
-
-                // ==== Start of Loop ====
-                createCheckboxes($explodedValue, $checkBoxName, $label);
-            }
-        }
     }
 }
 class OGMapping {
@@ -1259,7 +1236,9 @@ class OGPages
                 add_settings_section(
                     $sectionArray['sectionID'],
                     $sectionTitle,
-                    array($settings, $sectionArray['sectionCallback']),
+                    !empty($sectionArray['sectionCallback']) ? array($settings, $sectionArray['sectionCallback']) : function () {
+
+                    },
                     $optionArray['settingPageSlug'],
                 );
                 foreach ($sectionArray['fields'] as $fieldTitle => $fieldArray) {
@@ -1267,7 +1246,36 @@ class OGPages
                     add_settings_field(
                         $fieldArray['fieldID'],
                         $fieldTitle,
-                        array($settings, $fieldArray['fieldCallback']),
+                        !empty($fieldArray['fieldCallback']) ? array($settings, $fieldArray['fieldCallback']) : function () use ($fieldArray) {
+	                        // ======== Declaring Variables ========
+	                        // Vars
+	                        $strOption = get_option($fieldArray['fieldID']);
+	                        $arrExplodedOption = explode(';', $strOption);
+
+	                        // ======== Start of Function ========
+	                        # Check if licenseKey is empty
+	                        if ($strOption == '') {
+		                        // Display a message
+		                        echo('Het veld is nog niet ingevuld.');
+	                        }
+
+	                        # Loop through the exploded array
+	                        if (!empty($arrExplodedOption)) {
+		                        foreach ($arrExplodedOption as $value) {
+			                        // ==== Declaring Variables ====
+			                        # Vars
+			                        $explodedValue = explode(':', $value);
+			                        if (empty($explodedValue)) continue;
+
+			                        # Checkboxes
+			                        $checkBoxName = "{$fieldArray['fieldID']}[$explodedValue[0]]"; // Append index to the checkbox name
+			                        $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
+
+			                        // ==== Start of Loop ====
+			                        createCheckboxes($explodedValue, $checkBoxName, $label);
+		                        }
+	                        }
+                        },
                         $optionArray['settingPageSlug'],
                         $sectionArray['sectionID'],
                     );
@@ -1307,7 +1315,7 @@ class OGPages
         }
 
         # HTML
-        htmlHeader('OG Admin Dashboard');
+        htmlAdminHeader('OG Admin Dashboard');
         echo("
             <div class='container-fluid'>
                 <div class='row'>
@@ -1339,9 +1347,9 @@ class OGPages
                 </div>
             </div>
         ");
-        htmlFooter('OG Admin Dashboard');}
+        htmlAdminFooter('OG Admin Dashboard');}
     // OG Admin Settings
-    function HTMLOGAdminSettings(): void { htmlHeader('OG Admin Settings - Algemeen');
+    function HTMLOGAdminSettings(): void { htmlAdminHeader('OG Admin Settings - Algemeen');
         $settingsData = new OGSettingsData(); ?>
         <form method="post" action="options.php">
             <?php settings_fields($settingsData->settingPrefix.'adminOptions');
@@ -1350,8 +1358,8 @@ class OGPages
             submit_button('Opslaan', 'primary', 'submit_license');
             ?>
         </form>
-    <?php htmlFooter('OG Admin Settings - Licentie');}
-    function HTMLOGAdminSettingsWonen() { htmlHeader('OG Admin Settings - Wonen');
+    <?php htmlAdminFooter('OG Admin Settings - Licentie');}
+    function HTMLOGAdminSettingsWonen() { htmlAdminHeader('OG Admin Settings - Wonen');
         // ======== Declaring Variables ========
 
         // ======== Start of Function ========
@@ -1362,21 +1370,21 @@ class OGPages
             submit_button('Opslaan', 'primary', 'submit_wonen');
             ?>
         </form>
-    <?php htmlFooter('OG Admin Settings - Wonen');}
-    function HTMLOGAdminSettingsBOG() { htmlHeader('OG Admin Settings - BOG'); ?>
+    <?php htmlAdminFooter('OG Admin Settings - Wonen');}
+    function HTMLOGAdminSettingsBOG() { htmlAdminHeader('OG Admin Settings - BOG'); ?>
 
-        <?php htmlFooter('OG Admin Settings - BOG');}
-    function HTMLOGAdminSettingsNieuwbouw() { htmlHeader('OG Admin Settings - Nieuwbouw'); ?>
+        <?php htmlAdminFooter('OG Admin Settings - BOG');}
+    function HTMLOGAdminSettingsNieuwbouw() { htmlAdminHeader('OG Admin Settings - Nieuwbouw'); ?>
 
-        <?php htmlFooter('OG Admin Settings - Nieuwbouw');}
-    function HTMLOGAdminSettingsALV() { htmlHeader('OG Admin Settings - A&LV'); ?>
+        <?php htmlAdminFooter('OG Admin Settings - Nieuwbouw');}
+    function HTMLOGAdminSettingsALV() { htmlAdminHeader('OG Admin Settings - A&LV'); ?>
 
-        <?php htmlFooter('OG Admin Settings - A&LV');}
+        <?php htmlAdminFooter('OG Admin Settings - A&LV');}
 
     // OG Aanbod
-    function HTMLOGAanbodDashboard(): void { htmlHeader('OG Aanbod Dashboard'); ?>
+    function HTMLOGAanbodDashboard(): void { htmlAdminHeader('OG Aanbod Dashboard'); ?>
         <p>dingdong bishass</p>
-        <?php htmlFooter('OG Aanbod Dashboard');}
+        <?php htmlAdminFooter('OG Aanbod Dashboard');}
 
     // OG Detailpage
     function HTMLOGDetailPageWonen() { ?>
@@ -1386,9 +1394,9 @@ class OGPages
 
 // ========== Fully activated state of the plugin ==========
 class OGPostTypes {
-	// ==== Declaring Variables ====
+	// ======== Declaring Variables ========
 
-	// ==== Start of Class ====
+	// ======== Start of Class ========
 	function __construct() {
 		# Creating the post types
 		add_action('init', array($this, 'createPostTypes'));
@@ -1399,16 +1407,43 @@ class OGPostTypes {
 
 	// =========== Functions ===========
 	function createPostTypes(): void {
-		// ==== Declaring Variables ====
-		// Classes
+		// ======== Declaring Variables ========
+		# Classes
 		$postTypeData = new OGPostTypeData();
 		$postTypeData = $postTypeData->customPostTypes();
+        # Vars
+        $templateFolder = plugin_dir_path(dirname(__DIR__, 1)).'php/templates/';
 
-		// ==== Start of Function ====
+		// ======== Start of Function ========
 
 		// Create the OG Custom Post Types (if the user has access to it)
 		foreach($postTypeData as $postType => $postTypeArray) {
 			register_post_type($postType, $postTypeArray['post_type_args']);
+
+            // Linking the template of the post type
+            if (isset($postTypeArray['templates'])) {
+                foreach ($postTypeArray['templates'] as $template) {
+                    // ==== Declaring Variables ====
+                    $templateName = $template['templateName'];
+                    $templateFile = $templateFolder.$template['templateFile'];
+
+                    // ==== Start of Loop ====
+                    if (file_exists($templateFile)) {
+                        // Single template
+                        add_filter("single_template", function ($single_template) use ($postType, $templateFile) {
+                            // ==== Declaring Variables ====
+
+                            // ==== Start of Function ====
+                            # Return the template
+                            if (get_post_type() == $postType) {
+                                return $templateFile;
+                            }
+                            return $single_template;
+                        });
+                    }
+                }
+            }
+
 		}
 	}
 	# This function is for checking if the post types are migrated to different tables / metadata tables

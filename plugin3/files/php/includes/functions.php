@@ -46,7 +46,30 @@ function pre($input): void {
 function br(): void {
 	echo("<br/>");
 }
-function htmlHeader($title): void {
+
+function htmlDetailHeader(): void {
+	echo("
+	<head>
+		<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
+		<link rel='stylesheet' href='".plugins_url('css/style.css', dirname(__DIR__))."'>
+	</head>
+	
+	<!--==== Navigation ====-->
+	<nav>
+	
+	</nav>
+	");
+}
+function htmlDetailFooter(): void {
+	echo("
+	<!-- Bootstrap -->
+	<script src='".plugins_url('js/bootstrap.min.js', dirname(__DIR__))."'></script>
+	<!-- JQuery -->
+	<script src='".plugins_url('js/jquery-3.7.0.min.js', dirname(__DIR__))."'></script>
+	");
+}
+
+function htmlAdminHeader($title): void {
 	echo("
 	<head>
 		<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
@@ -66,12 +89,15 @@ function htmlHeader($title): void {
 	<hr/>
 	");
 }
-function htmlFooter($title): void {
+function htmlAdminFooter($title): void {
 	echo("
 	<!-- Bootstrap -->
 	<script src='".plugins_url('js/bootstrap.min.js', dirname(__DIR__))."'></script>
+	<!-- JQuery -->
+	<script src='".plugins_url('js/jquery-3.7.0.min.js', dirname(__DIR__))."'></script>
 	");
 }
+
 function welcomeMessage(): string {
 	$welcomeMessage = "Welkom";
 	$wpUser = _wp_get_current_user();
