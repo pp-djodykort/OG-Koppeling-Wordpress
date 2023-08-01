@@ -526,7 +526,23 @@ class OGSettingsData {
     ];
 
     public array $settings = [
-        /* Setting Name */'licenseKey' => /* Default Value */   '',                                                    // License Key
+        # ======== OG Admin Settings ========
+	    # ==== Algemeen ====
+        /* Setting Name */'siteName' => /* Default Value */     '',
+
+        # ==== Licentie ====
+        /* Setting Name */'licenseKey' => /* Default Value */   '', // License Key
+
+        # ======== Uiterlijk Settings ========
+        # ==== Logo ====
+	    /* Setting Name */'siteLogo' => /* Default Value */     '',
+	    /* Setting Name */'siteLogoWidth' => /* Default Value */     '',
+	    /* Setting Name */'siteLogoHeight' => /* Default Value */     '',
+
+        # ==== Favicon ====
+	    /* Setting Name */'siteFavicon' => /* Default Value */     '',
+
+        # ======== Wonen Settings ========
         /* Setting Name */'wonenDetailpaginaBasiskenmerken' => /* Default Value */      'Status:1f;Bouwjaar:1;Prijs:1f;PrijsPerM2:0;Woonoppervlakte:1;OverigeInpandigeOppervlakte:1;Inhoud:0;AantalSlaapkamers:1;AantalKamers:0',
         /* Setting Name */'wonenDetailpaginaOverdracht' => /* Default Value */          'Aanvaarding:1f',
 	    /* Setting Name */'wonenDetailpaginaBouwOnderhoud' => /* Default Value */       'Bouwjaar:1f;Ligging:1f;SoortBouw:1f;Bouwvorm:1;DakType:1f;DakMateriaal:1f;BouwgrondOppervlakte:1',
@@ -543,7 +559,20 @@ class OGSettingsData {
             'settingPageSlug' => 'pixelplus-og-plugin-settings',
             // Sections
             'sections' => [
-                // Section 1 - Licentie section
+	            // Section 1 - Algemeen section
+	            /* Section Title= */'Algemeen' => [
+		            'sectionID' => 'ppOG_SectionGeneral',
+		            'sectionCallback' => '',
+		            // Fields
+		            'fields' => [
+			            // Field 1 - Site Naam
+			            /* Setting Field Title= */'Site Naam' => [
+				            'fieldID' => 'ppOG_siteName',
+				            'fieldCallback' => '',
+			            ],
+		            ]
+	            ],
+                // Section 2 - Licentie section
                 /* Section Title= */'Licentie' => [
                     'sectionID' => 'ppOG_SectionLicence',
                     'sectionCallback' => 'htmlLicenceSection',
@@ -601,7 +630,7 @@ class OGSettingsData {
                             'sanitizeCallback' => 'sanitize_checkboxes'
                         ],
                         // Field 6 - Bergruimte
-/* Setting Field Title= */'Bergruimte' => [
+                        /* Setting Field Title= */'Bergruimte' => [
                             'fieldID' => 'ppOG_wonenDetailpaginaBergruimte',
                             'fieldCallback' => '',
                             'sanitizeCallback' => 'sanitize_checkboxes'
@@ -622,8 +651,53 @@ class OGSettingsData {
                 ],
             ]
         ],
+        // Settings 3
+        /* Option Group= */ 'ppOG_uiterlijkOptions' => [
+            // General information
+            'settingPageSlug' => 'pixelplus-og-plugin-settings-uiterlijk',
+            // Sections
+            'sections' => [
+                // Section 1 - Logo's section
+                /* Section Title= */'Logo\'s' => [
+                    'sectionID' => 'ppOG_uiterlijkLogos',
+                    'sectionCallback' => '',
+                    // Fields
+                    'fields' => [
+                        // Field 1 - Site logo
+                        /* Setting Field Title= */'Site logo' => [
+                            'fieldID' => 'ppOG_siteLogo',
+                            'fieldCallback' => 'imageField',
+                        ],
+                        // Field 2 - Site logo width
+                        /* Setting Field Title= */'Site logo width' => [
+                            'fieldID' => 'ppOG_siteLogoWidth',
+                            'fieldCallback' => '',
+                        ],
+                        // Field 3 - Site logo height
+                        /* Setting Field Title= */'Site logo height' => [
+                            'fieldID' => 'ppOG_siteLogoHeight',
+                            'fieldCallback' => '',
+                        ],
+                    ]
+                ],
+                // Section 2 - Favicon section
+                /* Section Title= */'Favicon' => [
+                    'sectionID' => 'ppOG_uiterlijkFavicon',
+                    'sectionCallback' => 'imageField',
+                    // Fields
+                    'fields' => [
+                        // Field 1 - Favicon
+                        /* Setting Field Title= */'Site favicon' => [
+                            'fieldID' => 'ppOG_siteFavicon',
+                            'fieldCallback' => '',
+                        ],
+                    ]
+                ],
+            ]
+        ]
     ];
     // ============ PHP Functions ============
+        // ==== Sanitize Functions ====
     public function sanitize_checkboxes($input) {
         // ======== Declaring Variables ========
         # Classes
@@ -655,11 +729,11 @@ class OGSettingsData {
 
         // ===== Start of Function =====
         // Check if licenseKey is empty
-        if ($licenseKey == '') {
-            // Display a message
-            echo('De licentiesleutel is nog niet ingevuld.');
-        }
         echo("<input type='text' name='".$this->settingPrefix."licenseKey' value='".esc_attr($licenseKey)."'");
+	    if ($licenseKey == '') {
+		    // Display a message
+		    echo('Het veld is nog niet ingevuld.');
+	    }
     }
 }
 class OGMapping {
@@ -1164,6 +1238,17 @@ class OGPages
 
         // ======= When Plugin is activated =======
         if ($boolPluginActivated) {
+            // ======== Uiterlijk ========
+            add_submenu_page(
+                'pixelplus-og-plugin-settings',
+                'Uiterlijk',
+                'Uiterlijk',
+                'manage_options',
+                'pixelplus-og-plugin-settings-uiterlijk',
+                array($this, 'HTMLOGUiterlijkSettings')
+            );
+
+            // ======== Post Types ========
             // ==== OG Settings ====
             // Submenu Items based on the OG Post Types for in the OG Settings
             foreach ($postTypeData as $postType => $postTypeArray) {
@@ -1222,6 +1307,62 @@ class OGPages
             );
         }
     }
+	// ==== Option functions ====
+	function createCheckboxes($input, $checkBoxName, $label) {
+		if ($input[1] == '0') {
+			echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
+			echo("<input type='checkbox' name='{$checkBoxName}' value='1'>{$label}<br>");
+		}
+        elseif ($input[1] == '0f') {
+			echo("<input type='hidden' name='{$checkBoxName}' value='0f' checked>");
+			echo("<input type='checkbox' name='{$checkBoxName}' value='0f' disabled>{$label}<br>");
+		}
+        elseif ($input[1] == '1f') {
+			echo("<input type='hidden' name='{$checkBoxName}' value='1f' checked>");
+			echo("<input type='checkbox' name='{$checkBoxName}' value='1f' checked disabled>{$label}<br>");
+		}
+		else {
+			echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
+			echo("<input type='checkbox' name='{$checkBoxName}' value='1' checked>{$label}<br>");
+		}
+	}
+    function createCheckboxField($fieldArray, $strOption): void {
+        // ===== Declaring Variables ====
+	    $arrExplodedOption = explode(';', $strOption);
+
+	    // ===== Start of Function =====
+	    # Loop through the exploded array
+	    if (!empty($arrExplodedOption)) {
+		    foreach ($arrExplodedOption as $value) {
+			    // ==== Declaring Variables ====
+			    # Vars
+			    $explodedValue = explode(':', $value);
+			    if (empty($explodedValue)) continue;
+
+			    # Checkboxes
+			    $checkBoxName = "{$fieldArray['fieldID']}[$explodedValue[0]]"; // Append index to the checkbox name
+			    $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
+
+			    // ==== Start of Loop ====
+			    $this->createCheckboxes($explodedValue, $checkBoxName, $label);
+		    }
+	    }
+    }
+    function createTextField($fieldID, $strOption): void {
+	    // ===== Declaring Variables ====
+        $value = esc_attr($strOption);
+
+	    // ===== Start of Function =====
+	    // Check if licenseKey is empty
+	    echo("<input type='text' name='$fieldID' value='$value'");
+    }
+    function createImageField(): void {
+        // ===== Declaring Variables ====
+
+        // ===== Start of Function =====
+        
+    }
+
     // ==== Register Settings ====
     function registerSettings(): void {
         // ==== Vars ====
@@ -1250,31 +1391,29 @@ class OGPages
 	                        // ======== Declaring Variables ========
 	                        // Vars
 	                        $strOption = get_option($fieldArray['fieldID']);
-	                        $arrExplodedOption = explode(';', $strOption);
 
 	                        // ======== Start of Function ========
-	                        # Check if licenseKey is empty
-	                        if ($strOption == '') {
+	                        # Check if strOption is empty
+	                        if (empty($strOption)) {
 		                        // Display a message
-		                        echo('Het veld is nog niet ingevuld.');
+		                        echo('Het veld is niet ingevuld.');
 	                        }
-
-	                        # Loop through the exploded array
-	                        if (!empty($arrExplodedOption)) {
-		                        foreach ($arrExplodedOption as $value) {
-			                        // ==== Declaring Variables ====
-			                        # Vars
-			                        $explodedValue = explode(':', $value);
-			                        if (empty($explodedValue)) continue;
-
-			                        # Checkboxes
-			                        $checkBoxName = "{$fieldArray['fieldID']}[$explodedValue[0]]"; // Append index to the checkbox name
-			                        $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
-
-			                        // ==== Start of Loop ====
-			                        createCheckboxes($explodedValue, $checkBoxName, $label);
-		                        }
-	                        }
+	                        # Checking if this needs to be a checkbox or textfield
+                            if (!empty($fieldArray['sanitizeCallback'])) {
+                                switch ($fieldArray['sanitizeCallback']) {
+                                    case 'sanitize_checkboxes':
+                                        $this->createCheckboxField($fieldArray, $strOption);
+                                        break;
+                                    case 'imageField':
+                                        $this->createImageField($fieldArray['fieldID'], $strOption);
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                            else {
+                                $this->createTextField($fieldArray['fieldID'], $strOption);
+                            }
                         },
                         $optionArray['settingPageSlug'],
                         $sectionArray['sectionID'],
@@ -1359,6 +1498,16 @@ class OGPages
             ?>
         </form>
     <?php htmlAdminFooter('OG Admin Settings - Licentie');}
+    function HTMLOGUiterlijkSettings(): void { htmlAdminHeader('OG Admin Settings - Uiterlijk');
+	    // ======== Declaring Variables ========
+	    $settingsData = new OGSettingsData(); ?>
+        <form method="post" action="options.php">
+		    <?php settings_fields($settingsData->settingPrefix.'uiterlijkOptions');
+		    do_settings_sections('pixelplus-og-plugin-settings-uiterlijk');
+		    submit_button('Opslaan', 'primary', 'submit_uiterlijk');
+		    ?>
+        </form>
+    <?php htmlAdminFooter('OG Admin Settings - Uiterlijk');}
     function HTMLOGAdminSettingsWonen() { htmlAdminHeader('OG Admin Settings - Wonen');
         // ======== Declaring Variables ========
 

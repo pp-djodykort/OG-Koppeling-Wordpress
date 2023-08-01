@@ -22,24 +22,6 @@ function OGUninstallPlugin() {
 }
 
 // ============ HTML Functions ============
-function createCheckboxes($input, $checkBoxName, $label) {
-    if ($input[1] == '0') {
-        echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
-        echo("<input type='checkbox' name='{$checkBoxName}' value='1'>{$label}<br>");
-    }
-    elseif ($input[1] == '0f') {
-        echo("<input type='hidden' name='{$checkBoxName}' value='0f' checked>");
-        echo("<input type='checkbox' name='{$checkBoxName}' value='0f' disabled>{$label}<br>");
-    }
-    elseif ($input[1] == '1f') {
-        echo("<input type='hidden' name='{$checkBoxName}' value='1f' checked>");
-        echo("<input type='checkbox' name='{$checkBoxName}' value='1f' checked disabled>{$label}<br>");
-    }
-    else {
-        echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
-        echo("<input type='checkbox' name='{$checkBoxName}' value='1' checked>{$label}<br>");
-    }
-}
 function pre($input): void {
 	echo('<pre>'); print_r($input); echo('</pre>');
 }
@@ -48,22 +30,34 @@ function br(): void {
 }
 
 function htmlDetailHeader(): void {
+	// ============ Declaring Variables ============
+	# Classes
+	$OGSettingsData = new OGSettingsData;
+
+	# Variables
+	$strNavbarTitle = get_option($OGSettingsData->settingPrefix.'siteName');
+
+	// ================ Start of Function ================
 	echo("
 	<head>
 		<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
-		<link rel='stylesheet' href='".plugins_url('css/style.css', dirname(__DIR__))."'>
 	</head>
 	
 	<!--==== Navigation ====-->
-	<nav>
-	
+	<!-- Making a navigation bar that works across the whole site -->
+	<nav class='navbar navbar-expand-lg navbar-light bg-light'>
+		<div class='container-fluid'>
+	  		<!-- Having the logo and title next to each other -->
+            <img src='".plugins_url('img/pixelplus-logo.jpg', dirname(__DIR__))."' alt='Pixelplus Logo' width='60px'>
+            <p><b>$strNavbarTitle</b></p>
+        </div>
 	</nav>
 	");
 }
 function htmlDetailFooter(): void {
 	echo("
 	<!-- Bootstrap -->
-	<script src='".plugins_url('js/bootstrap.min.js', dirname(__DIR__))."'></script>
+	<script src='".plugins_url('js/bootstrap.bundle.min.js', dirname(__DIR__))."'></script>
 	<!-- JQuery -->
 	<script src='".plugins_url('js/jquery-3.7.0.min.js', dirname(__DIR__))."'></script>
 	");
@@ -92,7 +86,7 @@ function htmlAdminHeader($title): void {
 function htmlAdminFooter($title): void {
 	echo("
 	<!-- Bootstrap -->
-	<script src='".plugins_url('js/bootstrap.min.js', dirname(__DIR__))."'></script>
+	<script src='".plugins_url('js/bootstrap.bundle.min.js', dirname(__DIR__))."'></script>
 	<!-- JQuery -->
 	<script src='".plugins_url('js/jquery-3.7.0.min.js', dirname(__DIR__))."'></script>
 	");
