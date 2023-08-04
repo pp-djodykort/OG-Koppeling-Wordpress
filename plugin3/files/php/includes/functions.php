@@ -35,7 +35,7 @@ function htmlDetailHeader(): void {
 	$OGSettingsData = new OGSettingsData;
 
 	# Variables
-	$strNavbarTitle = get_option($OGSettingsData->settingPrefix.'siteName');
+	$strNavbarTitle = get_option($OGSettingsData::$settingPrefix.'siteName');
 
 	// ================ Start of Function ================
 	echo("
