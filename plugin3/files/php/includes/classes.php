@@ -1407,9 +1407,9 @@ class OGPages
                 </th>
                 
                 <td>
-                    <input type='hidden' id='{$fieldArray['fieldID']}_URL' name='{$fieldArray['fieldID']}' value='$strOption' />
-                    <input type='button' id='{$fieldArray['fieldID']}_upload' class='button button-primary' value='Selecteer Logo' />
-                    <input type='button' id='{$fieldArray['fieldID']}_remove' class='button button-secondary' value='Verwijder Logo' />
+                    <input type='hidden' id='{$fieldArray['fieldID']}_URL' name='{$fieldArray['fieldID']}' value='$strOption'/>
+                    <input type='button' id='{$fieldArray['fieldID']}_upload' class='button button-primary' value='Selecteer Logo'/>
+                    <input type='button' id='{$fieldArray['fieldID']}_remove' class='button button-secondary' value='Verwijder Logo'/>
                 </td>
             </tr>
         </table>
@@ -1427,15 +1427,14 @@ class OGPages
                 const logoText = $('#{$fieldArray['fieldID']}_Text');
                 
                 // CSS
-                const logoBorder = '1px solid rgba(0, 0, 0, 0.1)';
+                const logoPadding = '1px';
+                const logoBorder = '1px solid rgba(0, 0, 0, 0.2)';
                 
                 // ======== Functions ========
                 // Check if the source is found or not
-                if (logoPreview.attr('src') === '') {
+                if (logoURL.val() === '' || logoURL.val() === undefined) {
                     // Border
                     logoPreview.css('border', 'none');
-                    // Width
-                    logoPreview.attr('width', 'auto');
                 }
                 
                 // ==== Select Button ====
@@ -1457,7 +1456,7 @@ class OGPages
                         // Attachement URL
                         logoPreview.attr('src', attachment.url);
                         // CSS
-                        logoPreview.css('padding', '0px');
+                        logoPreview.css('padding', logoPadding);
                         logoPreview.css('border', logoBorder);
                         
                         // ==== Updating the logo URL ====
@@ -1476,7 +1475,7 @@ class OGPages
                     // Attachement URL
                     logoPreview.attr('src', '');
                     // CSS
-                    logoPreview.css('padding', '2px');
+                    logoPreview.css('padding', logoPadding);
                     logoPreview.css('border', 'none');
                     // Text
                     logoText.text('');
