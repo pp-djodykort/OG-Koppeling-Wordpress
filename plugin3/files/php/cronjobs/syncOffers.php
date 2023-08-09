@@ -65,4 +65,3 @@ $ogOffers = new OGOffers();
 if ($boolLockFileSystemEnabled) {
     unlink($lockFile);
 }
-?>

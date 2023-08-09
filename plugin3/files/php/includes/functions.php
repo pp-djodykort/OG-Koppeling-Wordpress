@@ -31,25 +31,50 @@ function br(): void {
 
 function htmlDetailHeader(): void {
 	// ============ Declaring Variables ============
-	# Classes
+	# ======== Classes ========
 	$OGSettingsData = new OGSettingsData;
 
-	# Variables
+	# ======== Variables ========
+	# General
+	$linkToSite = get_site_url();
+
+	# Site Name
 	$strNavbarTitle = get_option($OGSettingsData::$settingPrefix.'siteName');
+
+	# Site Logo
+	$strNavbarImg = get_option($OGSettingsData::$settingPrefix.'siteLogo');
+	$strNavbarImgWidth = get_option($OGSettingsData::$settingPrefix.'siteLogoWidth');
+	$strNavbarImgHeight = get_option($OGSettingsData::$settingPrefix.'siteLogoHeight');
 
 	// ================ Start of Function ================
 	echo("
 	<head>
+		<!-- Links -->
 		<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
+		<link rel='stylesheet' href='".plugins_url('css/site-style.css', dirname(__DIR__))."'>
+		<!-- Normal -->
+		<title></title>
 	</head>
 	
 	<!--==== Navigation ====-->
 	<!-- Making a navigation bar that works across the whole site -->
 	<nav class='navbar navbar-expand-lg navbar-light bg-light'>
 		<div class='container-fluid'>
-	  		<!-- Having the logo and title next to each other -->
-            <img src='".plugins_url('img/pixelplus-logo.jpg', dirname(__DIR__))."' alt='Pixelplus Logo' width='60px'>
-            <p><b>$strNavbarTitle</b></p>
+            <!-- Site Name/Logo -->
+            <a href='$linkToSite'><img id='idNavbarImg' src='$strNavbarImg' width='$strNavbarImgWidth' height='$strNavbarImgHeight' alt='Error: Image niet gevonden.'></a>
+            
+            <!-- Menu Items -->
+            <div class='collapse navbar-collapse' id='navbarSupportedContent'>
+				<ul class='navbar-nav me-auto mb-2 mb-lg-0'>
+					<li class='nav-item'>
+						<a class='nav-link active' aria-current='page' href='$linkToSite'>Home</a>
+					</li>
+					<li class='nav-item dropdown'>
+						
+					</li>
+					
+				</ul>
+			</div>
         </div>
 	</nav>
 	");
@@ -83,7 +108,7 @@ function htmlAdminHeader($title): void {
 	<hr/>
 	");
 }
-function htmlAdminFooter($title): void {
+function htmlAdminFooter($title=''): void {
 	echo("
 	<!-- Bootstrap -->
 	<script src='".plugins_url('js/bootstrap.bundle.min.js', dirname(__DIR__))."'></script>
@@ -212,5 +237,93 @@ function isConditional($dbString): bool {
 	}
 	else {
 		return false;
+	}
+}
+// A function that creates the pages needed for the plugin within the Wordpress pages system
+function createWordpressPages(): void {
+	// ======== Declaring Variables ========
+	# Classes
+	$settingsData = new OGSettingsData();
+
+	# Variables
+	$arrWordpressPages = $settingsData::arrPages();
+
+	// ======== Start of Function ========
+	echo("<h1>Creating Pages</h1>");
+	// Creating the pages
+	foreach ($arrWordpressPages as $wordpressPageKey => $wordpressPage) {
+		// ==== Declaring Variables ====
+		# Variables
+		$pageQuery = new WP_Query([
+			'post_type' => 'page',
+			'post_status' => ['any', 'trash'],
+			'meta_key' => 'pageID',
+			'meta_value' => $wordpressPage['pageID'],
+		]);
+		$pageExists = $pageQuery->have_posts();
+
+		// ==== Start of Function ====
+		# IF the page exists then continue
+		if ($pageExists) {
+			// Don't need to do anything
+			continue;
+		}
+
+		// Creating the page
+		$pageID = wp_insert_post([
+			'post_title' => $wordpressPage['pageTitle'],
+			'post_content' => $wordpressPage['pageContent'],
+			'post_status' => 'publish',
+			'post_type' => 'page',
+			'post_slug' => $wordpressPage['pageSlug'],
+			'page_template' => $wordpressPage['templateFile'],
+			'meta_input' => [
+				'pageID' => $wordpressPage['pageID'],
+			],
+		]);
+
+		// Checking if the page was created
+		if ($pageID == 0) {
+			// Page was not created
+			adminNotice('info', '<h1>Page was not created</h1>');
+			continue;
+		}
+
+		// Checking the child pages
+		if (isset($wordpressPage['childPages'])) {
+			// Creating the child pages
+			foreach ($wordpressPage['childPages'] as $childPageKey => $childPage) {
+				// Creating the child page
+				$childPageID = wp_insert_post([
+					'post_title' => $childPage['pageTitle'],
+					'post_content' => $childPage['pageContent'],
+					'post_status' => 'publish',
+					'post_type' => 'page',
+					'post_slug' => $childPage['pageSlug'],
+					'page_template' => $childPage['templateFile'],
+					'post_parent' => $pageID,
+					'meta_input' => [
+						'pageID' => $childPage['pageID'],
+					],
+				]);
+
+				// Checking if the page was created
+				if ($childPageID == 0) {
+					// Page was not created
+					adminNotice('info', '<h1>Child Page was not created</h1>');
+					continue;
+				}
+			}
+		}
+
+
+		// Checking if the page is supposed to be the homepage
+		if ($wordpressPage['boolIsFrontPage']) {
+			// Setting the page as the homepage
+			update_option('page_on_front', $pageID);
+			update_option('show_on_front', 'page');
+
+			adminNotice('info', '<h1>Page is created</h1>');
+		}
 	}
 }

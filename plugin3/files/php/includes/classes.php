@@ -8,6 +8,7 @@ class OGActivationAndDeactivation {
     function activate() {
         $this->registerSettings();
         $this->createCacheFiles();
+	    createWordpressPages();
     }
 
     // ======== Deactivation ========
@@ -29,6 +30,7 @@ class OGActivationAndDeactivation {
         }
     }
 
+    // A function for creating the cache files as activation hook.
     function createCacheFiles() {
         // ==== Declaring Variables ====
         # Classes
@@ -511,192 +513,294 @@ class WPColorScheme {
     }
 }
 class OGSettingsData {
-    // ============ Declare Variables ============
-    // Strings
-    public static $settingPrefix = 'ppOG_'; // This is the prefix for all the settings used within the OG Plugin
-    public static $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
-    // Arrays
-    public static array $apiURLs = [
-        'license' => 'https://og-feeds2.pixelplus.nl/api/validate.php',
-        'syncTimes' => 'https://og-feeds2.pixelplus.nl/api/latest.php'
-    ];
-    public static array $cacheFiles = [
-        'licenseCache' => 'licenseCache.json', // This is the cache file for the checking the Licence key
-    ];
+	// ============ Declare Variables ============
+	// Strings
+	public static $settingPrefix = 'ppOG_'; // This is the prefix for all the settings used within the OG Plugin
+	public static $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
+	public static $templateFolder = 'php/templates'; // This is the folder where all the template files are stored within the server/ftp
 
-    public static array $arrOptions = [
-        # ======== OG Admin Settings ========
-	    # ==== Algemeen ====
-        /* Setting Name */'siteName' => /* Default Value */     '',
+	// Arrays
+	public static array $apiURLs = [
+		'license' => 'https://og-feeds2.pixelplus.nl/api/validate.php',
+		'syncTimes' => 'https://og-feeds2.pixelplus.nl/api/latest.php'
+	];
+	public static array $cacheFiles = [
+		'licenseCache' => 'licenseCache.json', // This is the cache file for the checking the Licence key
+	];
 
-        # ==== Licentie ====
-        /* Setting Name */'licenseKey' => /* Default Value */   '', // License Key
+	public static array $arrOptions = [
+		# ======== OG Admin Settings ========
+		# ==== Algemeen ====
+		/* Setting Name */'siteName' => /* Default Value */     '',
 
-        # ======== Uiterlijk Settings ========
-        # ==== Logo ====
-	    /* Setting Name */'siteLogo' => /* Default Value */     '',
-	    /* Setting Name */'siteLogoWidth' => /* Default Value */     '',
-	    /* Setting Name */'siteLogoHeight' => /* Default Value */     '',
+		# ==== Licentie ====
+		/* Setting Name */'licenseKey' => /* Default Value */   '', // License Key
 
-        # ==== Favicon ====
-	    /* Setting Name */'siteFavicon' => /* Default Value */     '',
+		# ======== Uiterlijk Settings ========
+		# ==== Logo ====
+		/* Setting Name */'siteLogo' => /* Default Value */     '',
+		/* Setting Name */'siteLogoWidth' => /* Default Value */     '',
+		/* Setting Name */'siteLogoHeight' => /* Default Value */     '',
 
-        # ======== Wonen Settings ========
-        /* Setting Name */'wonenDetailpaginaBasiskenmerken' => /* Default Value */      'Status:1f;Bouwjaar:1;Prijs:1f;PrijsPerM2:0;Woonoppervlakte:1;OverigeInpandigeOppervlakte:1;Inhoud:0;AantalSlaapkamers:1;AantalKamers:0',
-        /* Setting Name */'wonenDetailpaginaOverdracht' => /* Default Value */          'Aanvaarding:1f',
-	    /* Setting Name */'wonenDetailpaginaBouwOnderhoud' => /* Default Value */       'Bouwjaar:1f;Ligging:1f;SoortBouw:1f;Bouwvorm:1;DakType:1f;DakMateriaal:1f;BouwgrondOppervlakte:1',
-        /* Setting Name */'wonenDetailpaginaParkeergelegenheid' => /* Default Value */  'Parkeerfaciliteiten:1f;GarageSoorten:1f',
-	    /* Setting Name */'wonenDetailpaginaOppervlakteInhoud' => /* Default Value */   'Perceeloppervlakte:1f;Woonoppervlakte:1f;Gebruiksoppervlakte:1f;Inhoud:1f;OverigeInpandigeOppervlakte:1f;GebouwgebondenBuitenruimte:1f',
-	    /* Setting Name */'wonenDetailpaginaBergruimte' => /* Default Value */          'Bergruimte:1f;SchuurBergingSoort:1f;SchuurBergingVoorzieningen:1f;SchuurBergingIsolatie:1f;SchuurBergingTotaalAantal:1f',
-	    /* Setting Name */'wonenDetailpaginaIndeling' => /* Default Value */            'AantalWoonlagen:1f;AantalKamers:1f;AantalSlaapkamers:1f;AantalBadkamers:1',
-	    /* Setting Name */'wonenDetailpaginaEnergieInstallatie' => /* Default Value */  'EnergieLabel:1f;Isolatie:1f;Verwarming:1f;WarmWater:1f;CvKetelType:1f;CvKetelBouwjaar:1f;CvKetelEigendom:1;CvKetelBrandstof:0;EnergieEinddatum:1f',
-        ];
-    public static array $adminSettings = [
-        // Settings 1
-        /* Option Group= */ 'ppOG_adminOptions' => [
-            // General information
-            'settingPageSlug' => 'pixelplus-og-plugin-settings',
-            // Sections
-            'sections' => [
-	            // Section 1 - Algemeen section
-	            /* Section Title= */'Algemeen' => [
-		            'sectionID' => 'ppOG_SectionGeneral',
-		            'sectionCallback' => '',
-		            // Fields
-		            'fields' => [
-			            // Field 1 - Site Naam
-			            /* Setting Field Title= */'Site Naam' => [
-				            'fieldID' => 'ppOG_siteName',
-				            'fieldCallback' => '',
-			            ],
-		            ]
-	            ],
-                // Section 2 - Licentie section
-                /* Section Title= */'Licentie' => [
-                    'sectionID' => 'ppOG_SectionLicence',
-                    'sectionCallback' => 'htmlLicenceSection',
-                    // Fields
-                    'fields' => [
-                        // Field 1 - Licentie sleutel
-                        /* Setting Field Title= */'Licentie Sleutel' => [
-                            'fieldID' => 'ppOG_licenseKey',
-                            'fieldCallback' => 'htmlLicenceKeyField',
-                        ]
-                    ]
-                ],
-            ]
-        ],
-        // Settings 2
-        /* Option Group= */ 'ppOG_WonenOptions' => [
-            // General information
-            'settingPageSlug' => 'pixelplus-og-plugin-settings-wonen',
-            // Sections
-            'sections' => [
-                // Section 1 - Detailpagina section
-                /* Section Title= */'Detailpagina' => [
-                    'sectionID' => 'ppOG_wonenDetailpagina',
-                    'sectionCallback' => '',
-                    // Fields
-                    'fields' => [
-                        // Field 1 - Basiskenmerken
-                        /* Setting Field Title= */'Basiskenmerken' => [
-                            'fieldID' => 'ppOG_wonenDetailpaginaBasiskenmerken',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_checkboxes'
-                        ],
-                        // Field 2 - Overdracht
-                        /* Setting Field Title= */'Overdracht' => [
-                            'fieldID' => 'ppOG_wonenDetailpaginaOverdracht',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_checkboxes'
-                        ],
-                        // Field 3 - Bouw en onderhoud
-                        /* Setting Field Title= */'Bouw en onderhoud' => [
-                            'fieldID' => 'ppOG_wonenDetailpaginaBouwOnderhoud',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_checkboxes'
-                        ],
-                        // Field 4 - Parkeergelegenheid
-                        /* Setting Field Title= */'Parkeergelegenheid' => [
-                            'fieldID' => 'ppOG_wonenDetailpaginaParkeergelegenheid',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_checkboxes'
-                        ],
-                        // Field 5 - Oppervlakte en inhoud
-                        /* Setting Field Title= */'Oppervlakte en inhoud' => [
-                            'fieldID' => 'ppOG_wonenDetailpaginaOppervlakteInhoud',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_checkboxes'
-                        ],
-                        // Field 6 - Bergruimte
-                        /* Setting Field Title= */'Bergruimte' => [
-                            'fieldID' => 'ppOG_wonenDetailpaginaBergruimte',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_checkboxes'
-                        ],
-                        // Field 7 - Indeling
-                        /* Setting Field Title= */'Indeling' => [
-                            'fieldID' => 'ppOG_wonenDetailpaginaIndeling',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_checkboxes'
-                        ],
-                        // Field 8 - Energie en installatie
-                        /* Setting Field Title= */'Energie en installatie' => [
-                            'fieldID' => 'ppOG_wonenDetailpaginaEnergieInstallatie',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_checkboxes'
-                        ],
-                    ]
-                ],
-            ]
-        ],
-        // Settings 3
-        /* Option Group= */ 'ppOG_uiterlijkOptions' => [
-            // General information
-            'settingPageSlug' => 'pixelplus-og-plugin-settings-uiterlijk',
-            // Sections
-            'sections' => [
-                // Section 1 - Logo's section
-                /* Section Title= */'Logo\'s' => [
-                    'sectionID' => 'ppOG_uiterlijkLogos',
-                    'sectionCallback' => '',
-                    // Fields
-                    'fields' => [
-                        // Field 1 - Site logo
-                        /* Setting Field Title= */'Site logo' => [
-                            'fieldID' => 'ppOG_siteLogo',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_imageField'
-                        ],
-                        // Field 2 - Site logo width
-                        /* Setting Field Title= */'Site logo width' => [
-                            'fieldID' => 'ppOG_siteLogoWidth',
-                            'fieldCallback' => '',
-                        ],
-                        // Field 3 - Site logo height
-                        /* Setting Field Title= */'Site logo height' => [
-                            'fieldID' => 'ppOG_siteLogoHeight',
-                            'fieldCallback' => '',
-                        ],
-                    ]
-                ],
-                // Section 2 - Favicon section
-                /* Section Title= */'Favicon' => [
-                    'sectionID' => 'ppOG_uiterlijkFavicon',
-                    'sectionCallback' => '',
-                    // Fields
-                    'fields' => [
-                        // Field 1 - Favicon
-                        /* Setting Field Title= */'Site favicon' => [
-                            'fieldID' => 'ppOG_siteFavicon',
-                            'fieldCallback' => '',
-                            'sanitizeCallback' => 'sanitize_imageField'
-                        ],
-                    ]
-                ],
-            ]
-        ]
-    ];
+		# ==== Favicon ====
+		/* Setting Name */'siteFavicon' => /* Default Value */     '',
+
+		# ======== Wonen Settings ========
+		/* Setting Name */'wonenDetailpaginaBasiskenmerken' => /* Default Value */      'Status:1f;Bouwjaar:1;Prijs:1f;PrijsPerM2:0;Woonoppervlakte:1;OverigeInpandigeOppervlakte:1;Inhoud:0;AantalSlaapkamers:1;AantalKamers:0',
+		/* Setting Name */'wonenDetailpaginaOverdracht' => /* Default Value */          'Aanvaarding:1f',
+		/* Setting Name */'wonenDetailpaginaBouwOnderhoud' => /* Default Value */       'Bouwjaar:1f;Ligging:1f;SoortBouw:1f;Bouwvorm:1;DakType:1f;DakMateriaal:1f;BouwgrondOppervlakte:1',
+		/* Setting Name */'wonenDetailpaginaParkeergelegenheid' => /* Default Value */  'Parkeerfaciliteiten:1f;GarageSoorten:1f',
+		/* Setting Name */'wonenDetailpaginaOppervlakteInhoud' => /* Default Value */   'Perceeloppervlakte:1f;Woonoppervlakte:1f;Gebruiksoppervlakte:1f;Inhoud:1f;OverigeInpandigeOppervlakte:1f;GebouwgebondenBuitenruimte:1f',
+		/* Setting Name */'wonenDetailpaginaBergruimte' => /* Default Value */          'Bergruimte:1f;SchuurBergingSoort:1f;SchuurBergingVoorzieningen:1f;SchuurBergingIsolatie:1f;SchuurBergingTotaalAantal:1f',
+		/* Setting Name */'wonenDetailpaginaIndeling' => /* Default Value */            'AantalWoonlagen:1f;AantalKamers:1f;AantalSlaapkamers:1f;AantalBadkamers:1',
+		/* Setting Name */'wonenDetailpaginaEnergieInstallatie' => /* Default Value */  'EnergieLabel:1f;Isolatie:1f;Verwarming:1f;WarmWater:1f;CvKetelType:1f;CvKetelBouwjaar:1f;CvKetelEigendom:1;CvKetelBrandstof:0;EnergieEinddatum:1f',
+	];
+	public static array $arrPages = [
+		// Page 1 - Homepage
+		/* Page Title= */'Homepagina' => [
+			# Main Information
+			'pageID' => 'ppOG_homepage',
+			'templateFile' => 'page-homepage.php',
+
+			# Page Information
+			'pageTitle' => 'Homepagina',
+			'pageContent' => '',
+			'pageSlug' => '',
+			# Page Settings
+			'boolIsFrontPage' => True,
+
+			# Child Pages
+			'childPages' => array()
+		],
+		// Page 2 - Diensten
+		/* Page Title= */'Diensten' => [
+			# Main Information
+			'pageID' => 'ppOG_diensten',
+			'templateFile' => 'page-diensten.php',
+
+			# Page Information
+			'pageTitle' => 'Diensten',
+			'pageContent' => '',
+			'pageSlug' => 'diensten',
+			# Page Settings
+			'boolIsFrontPage' => False,
+
+			# Child Pages
+			'childPages' => array(
+				// Child Page 1 - Verkoop
+				/* Page Title= */'Verkoop' => [
+					# Main Information
+					'pageID' => 'ppOG_dienstenVerkoop',
+					'templateFile' => 'page-dienstenVerkoop.php',
+
+					# Page Information
+					'pageTitle' => 'Verkoop',
+					'pageContent' => '',
+					'pageSlug' => 'verkoop',
+					# Page Settings
+					'boolIsFrontPage' => False,
+				],
+				// Child Page 2 - Aankoop
+				/* Page Title= */'Aankoop' => [
+					# Main Information
+					'pageID' => 'ppOG_dienstenAankoop',
+					'templateFile' => 'page-dienstenAankoop.php',
+
+					# Page Information
+					'pageTitle' => 'Aankoop',
+					'pageContent' => '',
+					'pageSlug' => 'aankoop',
+					# Page Settings
+					'boolIsFrontPage' => False,
+				],
+				// Child Page 3 - Taxatie
+				/* Page Title= */'Taxatie' => [
+					# Main Information
+					'pageID' => 'ppOG_dienstenTaxatie',
+					'templateFile' => 'page-dienstenTaxatie.php',
+
+					# Page Information
+					'pageTitle' => 'Taxatie',
+					'pageContent' => '',
+					'pageSlug' => 'taxatie',
+					# Page Settings
+					'boolIsFrontPage' => False,
+				],
+				// Child Page 4 - Zoekprofiel
+				/* Page Title= */'Zoekprofiel' => [
+					# Main Information
+					'pageID' => 'ppOG_dienstenZoekprofiel',
+					'templateFile' => 'page-dienstenZoekprofiel.php',
+
+					# Page Information
+					'pageTitle' => 'Zoekprofiel',
+					'pageContent' => '',
+					'pageSlug' => 'zoekprofiel',
+					# Page Settings
+					'boolIsFrontPage' => False,
+				],
+				// Child Page 5 - Hypotheek advies
+				/* Page Title= */'Hypotheek advies' => [
+					# Main Information
+					'pageID' => 'ppOG_dienstenHypotheekAdvies',
+					'templateFile' => 'page-dienstenHypotheekAdvies.php',
+
+					# Page Information
+					'pageTitle' => 'Hypotheek advies',
+					'pageContent' => '',
+					'pageSlug' => 'hypotheek-advies',
+					# Page Settings
+					'boolIsFrontPage' => False,
+				],
+			)
+		],
+	];
+	public static array $adminSettings = [
+		// Settings 1
+		/* Option Group= */ 'ppOG_adminOptions' => [
+			// General information
+			'settingPageSlug' => 'pixelplus-og-plugin-settings',
+			// Sections
+			'sections' => [
+				// Section 1 - Algemeen section
+				/* Section Title= */'Algemeen' => [
+					'sectionID' => 'ppOG_SectionGeneral',
+					'sectionCallback' => '',
+					// Fields
+					'fields' => [
+						// Field 1 - Site Naam
+						/* Setting Field Title= */'Site Naam' => [
+							'fieldID' => 'ppOG_siteName',
+							'fieldCallback' => '',
+						],
+					]
+				],
+				// Section 2 - Licentie section
+				/* Section Title= */'Licentie' => [
+					'sectionID' => 'ppOG_SectionLicence',
+					'sectionCallback' => 'htmlLicenceSection',
+					// Fields
+					'fields' => [
+						// Field 1 - Licentie sleutel
+						/* Setting Field Title= */'Licentie Sleutel' => [
+							'fieldID' => 'ppOG_licenseKey',
+							'fieldCallback' => 'htmlLicenceKeyField',
+						]
+					]
+				],
+			]
+		],
+		// Settings 2
+		/* Option Group= */ 'ppOG_WonenOptions' => [
+			// General information
+			'settingPageSlug' => 'pixelplus-og-plugin-settings-wonen',
+			// Sections
+			'sections' => [
+				// Section 1 - Detailpagina section
+				/* Section Title= */'Detailpagina' => [
+					'sectionID' => 'ppOG_wonenDetailpagina',
+					'sectionCallback' => '',
+					// Fields
+					'fields' => [
+						// Field 1 - Basiskenmerken
+						/* Setting Field Title= */'Basiskenmerken' => [
+							'fieldID' => 'ppOG_wonenDetailpaginaBasiskenmerken',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_checkboxes'
+						],
+						// Field 2 - Overdracht
+						/* Setting Field Title= */'Overdracht' => [
+							'fieldID' => 'ppOG_wonenDetailpaginaOverdracht',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_checkboxes'
+						],
+						// Field 3 - Bouw en onderhoud
+						/* Setting Field Title= */'Bouw en onderhoud' => [
+							'fieldID' => 'ppOG_wonenDetailpaginaBouwOnderhoud',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_checkboxes'
+						],
+						// Field 4 - Parkeergelegenheid
+						/* Setting Field Title= */'Parkeergelegenheid' => [
+							'fieldID' => 'ppOG_wonenDetailpaginaParkeergelegenheid',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_checkboxes'
+						],
+						// Field 5 - Oppervlakte en inhoud
+						/* Setting Field Title= */'Oppervlakte en inhoud' => [
+							'fieldID' => 'ppOG_wonenDetailpaginaOppervlakteInhoud',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_checkboxes'
+						],
+						// Field 6 - Bergruimte
+						/* Setting Field Title= */'Bergruimte' => [
+							'fieldID' => 'ppOG_wonenDetailpaginaBergruimte',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_checkboxes'
+						],
+						// Field 7 - Indeling
+						/* Setting Field Title= */'Indeling' => [
+							'fieldID' => 'ppOG_wonenDetailpaginaIndeling',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_checkboxes'
+						],
+						// Field 8 - Energie en installatie
+						/* Setting Field Title= */'Energie en installatie' => [
+							'fieldID' => 'ppOG_wonenDetailpaginaEnergieInstallatie',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_checkboxes'
+						],
+					]
+				],
+			]
+		],
+		// Settings 3
+		/* Option Group= */ 'ppOG_uiterlijkOptions' => [
+			// General information
+			'settingPageSlug' => 'pixelplus-og-plugin-settings-uiterlijk',
+			// Sections
+			'sections' => [
+				// Section 1 - Logo's section
+				/* Section Title= */'Logo\'s' => [
+					'sectionID' => 'ppOG_uiterlijkLogos',
+					'sectionCallback' => '',
+					// Fields
+					'fields' => [
+						// Field 1 - Site logo
+						/* Setting Field Title= */'Site logo' => [
+							'fieldID' => 'ppOG_siteLogo',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_imageField'
+						],
+						// Field 2 - Site logo width
+						/* Setting Field Title= */'Site logo width' => [
+							'fieldID' => 'ppOG_siteLogoWidth',
+							'fieldCallback' => '',
+						],
+						// Field 3 - Site logo height
+						/* Setting Field Title= */'Site logo height' => [
+							'fieldID' => 'ppOG_siteLogoHeight',
+							'fieldCallback' => '',
+						],
+					]
+				],
+				// Section 2 - Favicon section
+				/* Section Title= */'Favicon' => [
+					'sectionID' => 'ppOG_uiterlijkFavicon',
+					'sectionCallback' => '',
+					// Fields
+					'fields' => [
+						// Field 1 - Favicon
+						/* Setting Field Title= */'Site favicon' => [
+							'fieldID' => 'ppOG_siteFavicon',
+							'fieldCallback' => '',
+							'sanitizeCallback' => 'sanitize_imageField'
+						],
+					]
+				],
+			]
+		]
+	];
 
 	// ============ Getters ============
 	public static function apiURLs(): array {
@@ -708,28 +812,31 @@ class OGSettingsData {
 	public static function arrOptions(): array {
 		return self::$arrOptions;
 	}
+	public static function arrPages(): array {
+		return self::$arrPages;
+	}
 	public static function adminSettings(): array {
 		return self::$adminSettings;
 	}
-    
-    // ============ PHP Functions ============
-    // ==== Sanitize Functions ====
-    public function sanitize_checkboxes($input) {
-        // ======== Declaring Variables ========
-        # Classes
-        global $wpdb;
 
-        # Vars
-        $strOutput = '';
-        foreach ($input as $key => $value) {
-            $strOutput .= "$key:$value;";
-        }
-        # Removing the last character
-        $strOutput = substr($strOutput, 0, -1);
+	// ============ PHP Functions ============
+	// ==== Sanitize Functions ====
+	public function sanitize_checkboxes($input) {
+		// ======== Declaring Variables ========
+		# Classes
+		global $wpdb;
 
-        // ======== Start of Function ========
-        return $strOutput;
-    }
+		# Vars
+		$strOutput = '';
+		foreach ($input as $key => $value) {
+			$strOutput .= "$key:$value;";
+		}
+		# Removing the last character
+		$strOutput = substr($strOutput, 0, -1);
+
+		// ======== Start of Function ========
+		return $strOutput;
+	}
 	public function sanitize_imageField($input) {
 		// ======== Declaring Variables ========
 		# Classes
@@ -740,26 +847,26 @@ class OGSettingsData {
 		return $input;
 	}
 
-    // ============ HTML Functions ============
-    // ======== Admin Options ========
-    // Sections
-    function htmlLicenceSection(): void { ?>
+	// ============ HTML Functions ============
+	// ======== Admin Options ========
+	// Sections
+	function htmlLicenceSection(): void { ?>
         <p>De licentiesleutel die de plugin activeert</p>
-    <?php }
-    // Fields
-    function htmlLicenceKeyField(): void {
-        // ===== Declaring Variables =====
-        // Vars
-        $licenseKey = get_option($this::$settingPrefix.'licenseKey');
+	<?php }
+	// Fields
+	function htmlLicenceKeyField(): void {
+		// ===== Declaring Variables =====
+		// Vars
+		$licenseKey = get_option($this::$settingPrefix.'licenseKey');
 
-        // ===== Start of Function =====
-        // Check if licenseKey is empty
-        echo("<input type='text' name='".$this::$settingPrefix."licenseKey' value='".esc_attr($licenseKey)."'");
-	    if ($licenseKey == '') {
-		    // Display a message
-		    echo('Het veld is nog niet ingevuld.');
-	    }
-    }
+		// ===== Start of Function =====
+		// Check if licenseKey is empty
+		echo("<input type='text' name='".$this::$settingPrefix."licenseKey' value='".esc_attr($licenseKey)."'");
+		if ($licenseKey == '') {
+			// Display a message
+			echo('Het veld is nog niet ingevuld.');
+		}
+	}
 }
 class OGMapping {
 	// ================ Constructor ================
