@@ -2,26 +2,40 @@
 // ========== Imports =========
 include_once 'functions.php';
 
-// ==== Activation and Deactivation (Uninstallation is in the functions.php because it needs to be a static function) ====
-class OGActivationAndDeactivation {
-    // ======== Activation ========
-    function activate() {
-        $this->registerSettings();
-        $this->createCacheFiles();
-	    createWordpressPages();
+// ============ Activation and Deactivation ============
+class OGSyncActivationAndDeactivation {
+    // ==== Activation ====
+    static function activate(): void {
+        self::registerSettings();
+        self::createCacheFiles();
     }
-
-    // ======== Deactivation ========
-    function deactivate()
-    {
+    // ==== Deactivation ====
+    static function deactivate(): void {
 
     }
+	// ==== Uninstall ====
+	static function uninstall(): void {
+		// ================ Start of Function ================
+		// ======== Deleting Settings/Options ========
+		// Check which settings are registered
+		$OGoptions = wp_load_alloptions();
 
-    // ============ Functions ============
+		// only get settings that start with ppOGSync_
+		$OGoptions = array_filter($OGoptions, function($key) {
+			return strpos($key, 'ppOGSync_') === 0;
+		}, ARRAY_FILTER_USE_KEY);
+
+		// Deleting all settings in database
+		foreach ($OGoptions as $option => $value) {
+			delete_option($option);
+		}
+	}
+
+    // ==== Functions ====
     // A function for registering base settings of the unactivated plugin as activation hook.
-    function registerSettings() {
+    static function registerSettings(): void {
         // ==== Declaring Variables ====
-        $settingData = new OGSettingsData();
+        $settingData = new OGSyncSettingsData();
 
         // ==== Start of Function ====
         // Registering settings
@@ -29,12 +43,11 @@ class OGActivationAndDeactivation {
             add_option($settingData::$settingPrefix.$settingName, $settingValue);
         }
     }
-
     // A function for creating the cache files as activation hook.
-    function createCacheFiles() {
+    static function createCacheFiles(): void {
         // ==== Declaring Variables ====
         # Classes
-        $settingsData = new OGSettingsData();
+        $settingsData = new OGSyncSettingsData();
 
         # Variables
         $cacheFolder = plugin_dir_path(dirname(__DIR__, 1)).$settingsData::$cacheFolder;
@@ -57,336 +70,336 @@ class OGActivationAndDeactivation {
     }
 }
 
-// ==== Data Classes ====
-class OGPostTypeData {
+// ============ Data Classes ============
+class OGSyncPostTypeData {
     // ============ Begin of Class ============
-    function customPostTypes() {
+    function customPostTypes(): array {
         // ===== Declaring Variables =====
         # Classes
-        $license = new OGLicense();
+        $license = new OGSyncLicense();
 
         # Variables
         $objectAccess = $license->checkPostTypeAccess();
         $customPostTypes = array(
             // Post Type 1
-	        // Post Type 1
-	        /* post_type */'wonen' => array(
-		        'post_type_args' => array(
-			        'labels' => array(
-				        'name' => 'OG Wonen Objecten',
-				        'singular_name' => 'OG Wonen Object',
-				        'add_new' => 'Nieuwe toevoegen',
-				        'add_new_item' => 'Nieuw OG Wonen Object toevoegen',
-				        'edit_item' => 'OG Wonen Object bewerken',
-				        'new_item' => 'Nieuw OG Wonen Object',
-				        'view_item' => 'Bekijk OG Wonen Object',
-				        'search_items' => 'Zoek naar OG Wonen Objecten',
-				        'not_found' => 'Geen OG Wonen Objecten gevonden',
-				        'not_found_in_trash' => 'Geen OG Wonen Objecten gevonden in de prullenbak',
-				        'parent_item_colon' => '',
-				        'menu_name' => 'Wonen'
-			        ),
-			        'post_type_meta' => array(
-				        'meta_box_title' => 'OG Wonen Object',
-				        'meta_box_id' => 'og-wonen-object',
-				        'meta_box_context' => 'normal',
-				        'meta_box_priority' => 'high',
-				        'meta_box_fields' => array(
-					        'OG Wonen Object' => array(
-						        'type' => 'text',
-						        'id' => 'og-wonen-object',
-						        'name' => 'og-wonen-object',
-						        'label' => 'OG Wonen Object',
-						        'placeholder' => 'OG Wonen Object',
-						        'description' => 'OG Wonen Object',
-						        'value' => '',
-						        'required' => true
-					        )
-				        )
-			        ),
-			        'rewrite' => false,             // Mapped value
-			        'public' => true,
-			        'seperate_table' => true,
-			        'has_archive' => true,
-			        'publicly_queryable' => true,
-			        'query_var' => true,
-			        'capability_type' => 'post',
-			        'hierarchical' => false,
-			        'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-			        'show_in_menu' => 'pixelplus-og-plugin-aanbod',
-			        'taxonomies' => array('category', 'post_tag')
-		        ),
-		        'database_tables' => array(
-			        'object' => array(
-				        # TableName
-				        'tableName' => 'tbl_OG_wonen',
-				        # Normal fields
+            // Post Type 1
+            /* post_type */'wonen' => array(
+                'post_type_args' => array(
+                    'labels' => array(
+                        'name' => 'OG Wonen Objecten',
+                        'singular_name' => 'OG Wonen Object',
+                        'add_new' => 'Nieuwe toevoegen',
+                        'add_new_item' => 'Nieuw OG Wonen Object toevoegen',
+                        'edit_item' => 'OG Wonen Object bewerken',
+                        'new_item' => 'Nieuw OG Wonen Object',
+                        'view_item' => 'Bekijk OG Wonen Object',
+                        'search_items' => 'Zoek naar OG Wonen Objecten',
+                        'not_found' => 'Geen OG Wonen Objecten gevonden',
+                        'not_found_in_trash' => 'Geen OG Wonen Objecten gevonden in de prullenbak',
+                        'parent_item_colon' => '',
+                        'menu_name' => 'Wonen'
+                    ),
+                    'post_type_meta' => array(
+                        'meta_box_title' => 'OG Wonen Object',
+                        'meta_box_id' => 'og-wonen-object',
+                        'meta_box_context' => 'normal',
+                        'meta_box_priority' => 'high',
+                        'meta_box_fields' => array(
+                            'OG Wonen Object' => array(
+                                'type' => 'text',
+                                'id' => 'og-wonen-object',
+                                'name' => 'og-wonen-object',
+                                'label' => 'OG Wonen Object',
+                                'placeholder' => 'OG Wonen Object',
+                                'description' => 'OG Wonen Object',
+                                'value' => '',
+                                'required' => true
+                            )
+                        )
+                    ),
+                    'rewrite' => false,             // Mapped value
+                    'public' => true,
+                    'seperate_table' => true,
+                    'has_archive' => true,
+                    'publicly_queryable' => true,
+                    'query_var' => true,
+                    'capability_type' => 'post',
+                    'hierarchical' => false,
+                    'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'taxonomies' => array('category', 'post_tag')
+                ),
+                'database_tables' => array(
+                    'object' => array(
+                        # TableName
+                        'tableName' => 'tbl_OG_wonen',
+                        # Normal fields
                         'ID' => 'object_ObjectTiaraID',                              // Mapped value
-				        'post_title' => 'objectDetails_Adres_NL_Straatnaam;objectDetails_Adres_NL_Huisnummer;objectDetails_Adres_NL_HuisnummerToevoeging;objectDetails_Adres_NL_Woonplaats', // Mapped value
-				        'post_name' => 'objectDetails_Adres_NL_Straatnaam-objectDetails_Adres_NL_Huisnummer-objectDetails_Adres_NL_HuisnummerToevoeging-objectDetails_Adres_NL_Woonplaats',  // Mapped value
-				        'post_content' => 'objectDetails_Aanbiedingstekst',       // Mapped value
-				        'datum_gewijzigd' => 'datum_gewijzigd',             // Mapped value
-				        'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value
-				        'objectCode' => 'object_ObjectCode',                // Mapped value
+                        'post_title' => 'objectDetails_Adres_NL_Straatnaam;objectDetails_Adres_NL_Huisnummer;objectDetails_Adres_NL_HuisnummerToevoeging;objectDetails_Adres_NL_Woonplaats', // Mapped value
+                        'post_name' => 'objectDetails_Adres_NL_Straatnaam-objectDetails_Adres_NL_Huisnummer-objectDetails_Adres_NL_HuisnummerToevoeging-objectDetails_Adres_NL_Woonplaats',  // Mapped value
+                        'post_content' => 'objectDetails_Aanbiedingstekst',       // Mapped value
+                        'datum_gewijzigd' => 'datum_gewijzigd',             // Mapped value
+                        'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value
+                        'objectCode' => 'object_ObjectCode',                // Mapped value
 
-				        # Post fields
-				        'media' => array(
-					        # TableName
-					        'tableName' => 'tbl_OG_media',
-					        # Normal fields
-					        'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
-					        'search_id' => 'id_OG_wonen',               // NON Mapped value
-					        'mediaID' => 'media_Id',                    // NON Mapped value
-					        'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value
-					        'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
-					        'mediaName' => 'MediaName',                 // Mapped value
-					        'media_Groep' => 'media_Groep',             // Mapped value
+                        # Post fields
+                        'media' => array(
+                            # TableName
+                            'tableName' => 'tbl_OG_media',
+                            # Normal fields
+                            'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
+                            'search_id' => 'id_OG_wonen',               // NON Mapped value
+                            'mediaID' => 'media_Id',                    // NON Mapped value
+                            'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value
+                            'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
+                            'mediaName' => 'MediaName',                 // Mapped value
+                            'media_Groep' => 'media_Groep',             // Mapped value
 
-					        # Post fields
-					        'object_keys' => array(
-						        'objectTiara' => 'object_ObjectTiaraID',
-						        'objectVestiging' => 'object_NVMVestigingNR',
-					        ),
+                            # Post fields
+                            'object_keys' => array(
+                                'objectTiara' => 'object_ObjectTiaraID',
+                                'objectVestiging' => 'object_NVMVestigingNR',
+                            ),
 
-					        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
-					        'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
-				        ),
-				        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
+                        ),
+                        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array( /* TableName */ 'tableName' => 'og_mappingwonen')
-			        ),
-		        ),
+                    ),
+                ),
                 'templates' => array(
                     'detailPage' => array(
                         'templateName' => 'Wonen Detail Pagina',
                         'templateFile' => 'single-wonen.php'
                     ),
                 )
-	        ),
-	        // Post Type 2
-	        /* post_type */'bog' => array(
-		        'post_type_args' => array(
-			        'labels' => array(
-				        'name' => 'OG BOG Objecten',
-				        'singular_name' => 'OG BOG Object',
-				        'add_new' => 'Nieuwe toevoegen',
-				        'add_new_item' => 'Nieuw OG BOG Object toevoegen',
-				        'edit_item' => 'OG BOG Object bewerken',
-				        'new_item' => 'Nieuw OG BOG Object',
-				        'view_item' => 'Bekijk OG BOG Object',
-				        'search_items' => 'Zoek naar OG BOG Objecten',
-				        'not_found' => 'Geen OG BOG Objecten gevonden',
-				        'not_found_in_trash' => 'Geen OG BOG Objecten gevonden in de prullenbak',
-				        'parent_item_colon' => '',
-				        'menu_name' => 'BOG'
-			        ),
-			        'public' => true,
-			        'rewrite' => false,             // Mapped value
-			        'has_archive' => true,
-			        'publicly_queryable' => true,
-			        'query_var' => true,
-			        'capability_type' => 'post',
-			        'hierarchical' => false,
-			        'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-			        'show_in_menu' => 'pixelplus-og-plugin-aanbod',
-			        'taxonomies' => array('category', 'post_tag')
-		        ),
-		        'database_tables' => array(
-			        'object' => array(
-				        # TableName
-				        'tableName' => 'tbl_OG_bog',
-				        # Normal fields
-				        'ID' => 'object_ObjectTiaraID',
-				        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer;objectDetails_Adres_HuisnummerToevoeging;objectDetails_Adres_Woonplaats', // Mapped value
-				        'post_name' => 'objectDetails_Adres_Straatnaam-objectDetails_Adres_Huisnummer-objectDetails_Adres_HuisnummerToevoeging-objectDetails_Adres_Woonplaats',  // Mapped value
-				        'post_content' => 'objectDetails_Aanbiedingstekst',       // Mapped value
-				        'datum_gewijzigd' => 'datum_gewijzigd',             // Mapped value
-				        'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value
-				        'objectCode' => 'object_ObjectCode',                // Mapped value
+            ),
+            // Post Type 2
+            /* post_type */'bog' => array(
+                'post_type_args' => array(
+                    'labels' => array(
+                        'name' => 'OG BOG Objecten',
+                        'singular_name' => 'OG BOG Object',
+                        'add_new' => 'Nieuwe toevoegen',
+                        'add_new_item' => 'Nieuw OG BOG Object toevoegen',
+                        'edit_item' => 'OG BOG Object bewerken',
+                        'new_item' => 'Nieuw OG BOG Object',
+                        'view_item' => 'Bekijk OG BOG Object',
+                        'search_items' => 'Zoek naar OG BOG Objecten',
+                        'not_found' => 'Geen OG BOG Objecten gevonden',
+                        'not_found_in_trash' => 'Geen OG BOG Objecten gevonden in de prullenbak',
+                        'parent_item_colon' => '',
+                        'menu_name' => 'BOG'
+                    ),
+                    'public' => true,
+                    'rewrite' => false,             // Mapped value
+                    'has_archive' => true,
+                    'publicly_queryable' => true,
+                    'query_var' => true,
+                    'capability_type' => 'post',
+                    'hierarchical' => false,
+                    'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'taxonomies' => array('category', 'post_tag')
+                ),
+                'database_tables' => array(
+                    'object' => array(
+                        # TableName
+                        'tableName' => 'tbl_OG_bog',
+                        # Normal fields
+                        'ID' => 'object_ObjectTiaraID',
+                        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer;objectDetails_Adres_HuisnummerToevoeging;objectDetails_Adres_Woonplaats', // Mapped value
+                        'post_name' => 'objectDetails_Adres_Straatnaam-objectDetails_Adres_Huisnummer-objectDetails_Adres_HuisnummerToevoeging-objectDetails_Adres_Woonplaats',  // Mapped value
+                        'post_content' => 'objectDetails_Aanbiedingstekst',       // Mapped value
+                        'datum_gewijzigd' => 'datum_gewijzigd',             // Mapped value
+                        'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value
+                        'objectCode' => 'object_ObjectCode',                // Mapped value
 
-				        # Post fields
-				        'media' => array(
-					        # TableName
-					        'tableName' => 'tbl_OG_media',
-					        # Normal fields
-					        'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
-					        'search_id' => 'id_OG_bog',                 // NON Mapped value
-					        'mediaID' => 'media_Id',                    // NON Mapped value
-					        'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
-					        'datum_gewijzigd' => 'datum_gewijzigd',        // Mapped value
-					        'mediaName' => 'MediaName',                 // Mapped value
-					        'media_Groep' => 'media_Groep',               // Mapped value
+                        # Post fields
+                        'media' => array(
+                            # TableName
+                            'tableName' => 'tbl_OG_media',
+                            # Normal fields
+                            'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
+                            'search_id' => 'id_OG_bog',                 // NON Mapped value
+                            'mediaID' => 'media_Id',                    // NON Mapped value
+                            'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
+                            'datum_gewijzigd' => 'datum_gewijzigd',        // Mapped value
+                            'mediaName' => 'MediaName',                 // Mapped value
+                            'media_Groep' => 'media_Groep',               // Mapped value
 
-					        # Post fields
-					        'object_keys' => array(
-						        'objectTiara' => 'object_ObjectTiaraID',
-						        'objectVestiging' => 'object_NVMVestigingNR',
-					        ),
+                            # Post fields
+                            'object_keys' => array(
+                                'objectTiara' => 'object_ObjectTiaraID',
+                                'objectVestiging' => 'object_NVMVestigingNR',
+                            ),
 
-					        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
-					        'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
-				        ),
-				        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
+                        ),
+                        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array(/* TableName */ 'tableName' => 'og_mappingbedrijven')
-			        ),
-		        ),
-		        'templates' => array(
-			        'detailPage' => array(
-				        'templateName' => 'og-bog-detail',
+                    ),
+                ),
+                'templates' => array(
+                    'detailPage' => array(
+                        'templateName' => 'og-bog-detail',
                         'templateFile' => 'og-bog-detail.php'
-			        ),
-		        )
-	        ),
-	        // Post Type 3
-	        /* post_type */'nieuwbouw' => array(
-		        'post_type_args' => array(
-			        'labels' => array(
-				        'name' => 'OG Nieuwbouw Objecten',
-				        'singular_name' => 'OG Nieuwbouw Object',
-				        'add_new' => 'Nieuwe toevoegen',
-				        'add_new_item' => 'Nieuw OG Nieuwbouw Object toevoegen',
-				        'edit_item' => 'OG Nieuwbouw Object bewerken',
-				        'new_item' => 'Nieuw OG Nieuwbouw Object',
-				        'view_item' => 'Bekijk OG Nieuwbouw Object',
-				        'search_items' => 'Zoek naar OG Nieuwbouw Objecten',
-				        'not_found' => 'Geen OG Nieuwbouw Objecten gevonden',
-				        'not_found_in_trash' => 'Geen OG Nieuwbouw Objecten gevonden in de prullenbak',
-				        'parent_item_colon' => '',
-				        'menu_name' => 'Nieuwbouw'
-			        ),
-			        'public' => true,
-			        'rewrite' => false,             // Mapped value
-			        'has_archive' => true,
-			        'publicly_queryable' => true,
-			        'query_var' => true,
-			        'capability_type' => 'post',
-			        'hierarchical' => false,
-			        'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-			        'show_in_menu' => 'pixelplus-og-plugin-aanbod',
-			        'taxonomies' => array('category', 'post_tag')
-		        ),
-		        'database_tables' => array(
-			        'projecten' => array(
-				        # TableName
-				        'tableName' => 'tbl_OG_nieuwbouw_projecten',
-				        # Normal fields
-				        'ID' => 'project_ObjectTiaraID',                                            // Mapped value
-				        'post_title' => 'project_ProjectDetails_Projectnaam',                       // Mapped value if needed
-				        'post_name' => 'project_ProjectDetails_Projectnaam',                        // Mapped value
-				        'post_content' => 'project_ProjectDetails_Presentatie_Aanbiedingstekst',    // Mapped value
-				        'ObjectStatus_database' => 'project_ProjectDetails_Status_ObjectStatus',    // Mapped value
-				        'datum_gewijzigd' => 'datum_gewijzigd',                                     // Mapped value
-				        'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value
-				        'objectCode' => 'project_ObjectCode',                                       // Mapped value
-				        'type' => 'project',                                                        // Standard value don't change
+                    ),
+                )
+            ),
+            // Post Type 3
+            /* post_type */'nieuwbouw' => array(
+                'post_type_args' => array(
+                    'labels' => array(
+                        'name' => 'OG Nieuwbouw Objecten',
+                        'singular_name' => 'OG Nieuwbouw Object',
+                        'add_new' => 'Nieuwe toevoegen',
+                        'add_new_item' => 'Nieuw OG Nieuwbouw Object toevoegen',
+                        'edit_item' => 'OG Nieuwbouw Object bewerken',
+                        'new_item' => 'Nieuw OG Nieuwbouw Object',
+                        'view_item' => 'Bekijk OG Nieuwbouw Object',
+                        'search_items' => 'Zoek naar OG Nieuwbouw Objecten',
+                        'not_found' => 'Geen OG Nieuwbouw Objecten gevonden',
+                        'not_found_in_trash' => 'Geen OG Nieuwbouw Objecten gevonden in de prullenbak',
+                        'parent_item_colon' => '',
+                        'menu_name' => 'Nieuwbouw'
+                    ),
+                    'public' => true,
+                    'rewrite' => false,             // Mapped value
+                    'has_archive' => true,
+                    'publicly_queryable' => true,
+                    'query_var' => true,
+                    'capability_type' => 'post',
+                    'hierarchical' => false,
+                    'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'taxonomies' => array('category', 'post_tag')
+                ),
+                'database_tables' => array(
+                    'projecten' => array(
+                        # TableName
+                        'tableName' => 'tbl_OG_nieuwbouw_projecten',
+                        # Normal fields
+                        'ID' => 'project_ObjectTiaraID',                                            // Mapped value
+                        'post_title' => 'project_ProjectDetails_Projectnaam',                       // Mapped value if needed
+                        'post_name' => 'project_ProjectDetails_Projectnaam',                        // Mapped value
+                        'post_content' => 'project_ProjectDetails_Presentatie_Aanbiedingstekst',    // Mapped value
+                        'ObjectStatus_database' => 'project_ProjectDetails_Status_ObjectStatus',    // Mapped value
+                        'datum_gewijzigd' => 'datum_gewijzigd',                                     // Mapped value
+                        'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value
+                        'objectCode' => 'project_ObjectCode',                                       // Mapped value
+                        'type' => 'project',                                                        // Standard value don't change
 
-				        # Post fields
-				        'media' => array(
-					        # TableName
-					        'tableName' => 'tbl_OG_media',
-					        # Normal fields
-					        'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
-					        'search_id' => 'id_OG_nieuwbouw_projecten',
-					        'mediaID' => 'media_Id',                // Mapped value
-					        'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value
-					        'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
-					        'mediaName' => 'MediaName',
-					        'media_Groep' => 'media_Groep',             // Mapped value
+                        # Post fields
+                        'media' => array(
+                            # TableName
+                            'tableName' => 'tbl_OG_media',
+                            # Normal fields
+                            'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
+                            'search_id' => 'id_OG_nieuwbouw_projecten',
+                            'mediaID' => 'media_Id',                // Mapped value
+                            'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value
+                            'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
+                            'mediaName' => 'MediaName',
+                            'media_Groep' => 'media_Groep',             // Mapped value
 
-					        # Post fields
-					        'object_keys' => array(
-						        'objectTiara' => 'project_ObjectTiaraID',
-						        'objectVestiging' => 'project_NVMVestigingNR',
-					        ),
+                            # Post fields
+                            'object_keys' => array(
+                                'objectTiara' => 'project_ObjectTiaraID',
+                                'objectVestiging' => 'project_NVMVestigingNR',
+                            ),
 
-					        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
-					        'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
-				        ),
-				        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
+                        ),
+                        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array(/* TableName */ 'tableName' => 'og_mappingnieuwbouwprojecten')
-			        ),
-			        'bouwTypes' => array(
-				        # TableName
-				        'tableName' => 'tbl_OG_nieuwbouw_bouwTypes',
-				        # Normal fields
-				        'ID' => 'bouwType_ObjectTiaraID',                                           // Mapped value
-				        'id_projecten' => 'id_OG_nieuwbouw_projecten',                              // Mapped value
-				        'post_title' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',        // Mapped value if needed | is for seperating values (OR statement)
-				        'post_name' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',         // Mapped value
-				        'post_content' => 'bouwType_BouwTypeDetails_Aanbiedingstekst',              // Mapped value
-				        'ObjectStatus_database' => 'bouwType_BouwTypeDetails_Status_ObjectStatus',  // Mapped value
-				        'datum_gewijzigd' => 'datum_gewijzigd',                                     // Mapped value
-				        'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value
-				        'objectCode' => 'bouwType_ObjectCode',                                      // Mapped value
-				        'type' => 'bouwtype',                                                       // Standard value don't change
+                    ),
+                    'bouwTypes' => array(
+                        # TableName
+                        'tableName' => 'tbl_OG_nieuwbouw_bouwTypes',
+                        # Normal fields
+                        'ID' => 'bouwType_ObjectTiaraID',                                           // Mapped value
+                        'id_projecten' => 'id_OG_nieuwbouw_projecten',                              // Mapped value
+                        'post_title' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',        // Mapped value if needed | is for seperating values (OR statement)
+                        'post_name' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',         // Mapped value
+                        'post_content' => 'bouwType_BouwTypeDetails_Aanbiedingstekst',              // Mapped value
+                        'ObjectStatus_database' => 'bouwType_BouwTypeDetails_Status_ObjectStatus',  // Mapped value
+                        'datum_gewijzigd' => 'datum_gewijzigd',                                     // Mapped value
+                        'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value
+                        'objectCode' => 'bouwType_ObjectCode',                                      // Mapped value
+                        'type' => 'bouwtype',                                                       // Standard value don't change
 
-				        # Post fields
-				        'media' => array(
-					        # TableName
-					        'tableName' => 'tbl_OG_media',
-					        # Normal fields
-					        'folderRedirect' => '',                         // Mapped value CAN BE EMPTY
-					        'search_id' => 'id_OG_nieuwbouw_bouwtypes',     // NON Mapped value
-					        'mediaID' => 'media_Id',                        // NON Mapped value
-					        'datum_gewijzigd' => 'datum_gewijzigd',         // Mapped value
-					        'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value
-					        'mediaName' => 'MediaName',                     // Mapped value
-					        'media_Groep' => 'media_Groep',                 // Mapped value
+                        # Post fields
+                        'media' => array(
+                            # TableName
+                            'tableName' => 'tbl_OG_media',
+                            # Normal fields
+                            'folderRedirect' => '',                         // Mapped value CAN BE EMPTY
+                            'search_id' => 'id_OG_nieuwbouw_bouwtypes',     // NON Mapped value
+                            'mediaID' => 'media_Id',                        // NON Mapped value
+                            'datum_gewijzigd' => 'datum_gewijzigd',         // Mapped value
+                            'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value
+                            'mediaName' => 'MediaName',                     // Mapped value
+                            'media_Groep' => 'media_Groep',                 // Mapped value
 
-					        # Post fields
-					        'object_keys' => array(
-						        'objectTiara' => 'bouwType_ObjectTiaraID',
-						        'objectVestiging' => 'bouwType_NVMVestigingNR',
-					        ),
+                            # Post fields
+                            'object_keys' => array(
+                                'objectTiara' => 'bouwType_ObjectTiaraID',
+                                'objectVestiging' => 'bouwType_NVMVestigingNR',
+                            ),
 
-					        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
-					        'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
-				        ),
-				        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
+                        ),
+                        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array(/* TableName */ 'tableName' => 'og_mappingnieuwbouwbouwtypes')
-			        ),
-			        'bouwNummers' => array(
-				        # TableName
-				        'tableName' => 'tbl_OG_nieuwbouw_bouwNummers',
-				        # Normal fields
-				        'ID' => 'bouwNummer_ObjectTiaraID',                                                     // Mapped value
-				        'id_bouwtypes' => 'id_OG_nieuwbouw_bouwTypes',                                          // Mapped value
-				        'post_title' => 'Adres_Straatnaam;Adres_Huisnummer;Adres_Postcode;Adres_Woonplaats;Adres_HuisnummerToevoeging;bouwNummer_ObjectCode',    // Mapped value if needed | is for seperating values (OR statement)
-				        'post_name' => 'Adres_Straatnaam-Adres_Huisnummer-Adres_Postcode-Adres_Woonplaats-Adres_HuisnummerToevoeging-bouwNummer_ObjectCode',  // Mapped value
-				        'post_content' => 'Aanbiedingstekst',                                                   // Mapped value
-				        'ObjectStatus_database' => 'bouwNummer_ObjectCode',                                     // NON Mapped value
-				        'datum_gewijzigd' => 'datum_gewijzigd',                                                 // Mapped value
-				        'datum_toegevoegd' => 'datum_toegevoegd',                                               // Mapped value
-				        'objectCode' => 'bouwNummer_ObjectCode',                                                // Mapped value
-				        'type' => 'bouwnummer',                                                                 // Standard value don't change
+                    ),
+                    'bouwNummers' => array(
+                        # TableName
+                        'tableName' => 'tbl_OG_nieuwbouw_bouwNummers',
+                        # Normal fields
+                        'ID' => 'bouwNummer_ObjectTiaraID',                                                     // Mapped value
+                        'id_bouwtypes' => 'id_OG_nieuwbouw_bouwTypes',                                          // Mapped value
+                        'post_title' => 'Adres_Straatnaam;Adres_Huisnummer;Adres_Postcode;Adres_Woonplaats;Adres_HuisnummerToevoeging;bouwNummer_ObjectCode',    // Mapped value if needed | is for seperating values (OR statement)
+                        'post_name' => 'Adres_Straatnaam-Adres_Huisnummer-Adres_Postcode-Adres_Woonplaats-Adres_HuisnummerToevoeging-bouwNummer_ObjectCode',  // Mapped value
+                        'post_content' => 'Aanbiedingstekst',                                                   // Mapped value
+                        'ObjectStatus_database' => 'bouwNummer_ObjectCode',                                     // NON Mapped value
+                        'datum_gewijzigd' => 'datum_gewijzigd',                                                 // Mapped value
+                        'datum_toegevoegd' => 'datum_toegevoegd',                                               // Mapped value
+                        'objectCode' => 'bouwNummer_ObjectCode',                                                // Mapped value
+                        'type' => 'bouwnummer',                                                                 // Standard value don't change
 
-				        # Post fields
-				        'media' => array(
-					        # TableName
-					        'tableName' => 'tbl_OG_media',
-					        # Normal fields
-					        'folderRedirect' => '',                         // Mapped value CAN BE EMPTY
-					        'search_id' => 'id_OG_nieuwbouw_bouwnummers',   // NON Mapped value
-					        'mediaID' => 'media_Id',                        // NON Mapped value
-					        'datum_gewijzigd' => 'datum_gewijzigd',         // Mapped value
-					        'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value
-					        'mediaName' => 'MediaName',                     // Mapped value
-					        'media_Groep' => 'media_Groep',                 // Mapped value
+                        # Post fields
+                        'media' => array(
+                            # TableName
+                            'tableName' => 'tbl_OG_media',
+                            # Normal fields
+                            'folderRedirect' => '',                         // Mapped value CAN BE EMPTY
+                            'search_id' => 'id_OG_nieuwbouw_bouwnummers',   // NON Mapped value
+                            'mediaID' => 'media_Id',                        // NON Mapped value
+                            'datum_gewijzigd' => 'datum_gewijzigd',         // Mapped value
+                            'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value
+                            'mediaName' => 'MediaName',                     // Mapped value
+                            'media_Groep' => 'media_Groep',                 // Mapped value
 
-					        # Post fields
-					        'object_keys' => array(
-						        'objectTiara' => 'bouwNummer_ObjectTiaraID',
-						        'objectVestiging' => 'bouwNummer_NVMVestigingNR',
-					        ),
+                            # Post fields
+                            'object_keys' => array(
+                                'objectTiara' => 'bouwNummer_ObjectTiaraID',
+                                'objectVestiging' => 'bouwNummer_NVMVestigingNR',
+                            ),
 
-					        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
-					        'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
-				        ),
-				        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
+                        ),
+                        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array(/* TableName */ 'tableName' => 'og_mappingnieuwbouwbouwnummers')
-			        ),
-		        ),
+                    ),
+                ),
 
-	        ),
+            ),
             // Post Type 4
             /* post_type */'alv' => array(
                 'post_type_args' => array(
@@ -415,46 +428,46 @@ class OGPostTypeData {
                     'taxonomies' => array('category', 'post_tag')
                 ),
                 'database_tables' => array(
-	                'object' => array(
-		                # TableName
-		                'tableName' => 'tbl_OG_alv',
-		                # Normal fields
-		                'ID' => '_id',
-		                'post_title' => 'straat;huisnummer;huisnummertoevoeging;plaats', // Mapped value
-		                'post_name' => 'straat-huisnummer-huisnummertoevoeging-plaats',  // Mapped value
-		                'post_content' => 'aanbiedingstekst',       // Mapped value
-		                'datum_gewijzigd' => 'ObjectUpdated',       // Mapped value
-		                'datum_toegevoegd' => 'ObjectDate',         // Mapped value
-		                'objectCode' => 'ObjectCode',               // Mapped value
+                    'object' => array(
+                        # TableName
+                        'tableName' => 'tbl_OG_alv',
+                        # Normal fields
+                        'ID' => '_id',
+                        'post_title' => 'straat;huisnummer;huisnummertoevoeging;plaats', // Mapped value
+                        'post_name' => 'straat-huisnummer-huisnummertoevoeging-plaats',  // Mapped value
+                        'post_content' => 'aanbiedingstekst',       // Mapped value
+                        'datum_gewijzigd' => 'ObjectUpdated',       // Mapped value
+                        'datum_toegevoegd' => 'ObjectDate',         // Mapped value
+                        'objectCode' => 'ObjectCode',               // Mapped value
 
-		                # Post fields
-		                'media' => array(
-			                # TableName
-			                'tableName' => 'tbl_OG_media',
-			                # Normal fields
-			                'search_id' => 'id_OG_bog',
-			                'mediaID' => 'media_Id',                // Mapped value
-			                'datum_gewijzigd' => 'MediaUpdated',
-			                'mediaName' => 'MediaName',
-			                'media_Groep' => 'MediaType',
+                        # Post fields
+                        'media' => array(
+                            # TableName
+                            'tableName' => 'tbl_OG_media',
+                            # Normal fields
+                            'search_id' => 'id_OG_bog',
+                            'mediaID' => 'media_Id',                // Mapped value
+                            'datum_gewijzigd' => 'MediaUpdated',
+                            'mediaName' => 'MediaName',
+                            'media_Groep' => 'MediaType',
 
-			                # Post fields
-			                'object_keys' => array(
-				                'objectTiara' => '_id',
-				                'objectVestiging' => 'ObjectVerstigingsNummer',
-			                ),
-			                # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
-			                'mapping' => array(
-				                # TableName
-				                'tableName' => 'og_mappingmedia',
-			                )
-		                ),
-		                # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
-		                'mapping' => array(
-			                # TableName
-			                'tableName' => 'og_mappingbedrijven',
-		                ),
-	                ),
+                            # Post fields
+                            'object_keys' => array(
+                                'objectTiara' => '_id',
+                                'objectVestiging' => 'ObjectVerstigingsNummer',
+                            ),
+                            # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                            'mapping' => array(
+                                # TableName
+                                'tableName' => 'og_mappingmedia',
+                            )
+                        ),
+                        # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
+                        'mapping' => array(
+                            # TableName
+                            'tableName' => 'og_mappingbedrijven',
+                        ),
+                    ),
                 )
             )
         );
@@ -470,7 +483,7 @@ class OGPostTypeData {
         return $customPostTypes;
     }
 }
-class WPColorScheme {
+class OGSyncColorScheme {
     // ================ Declaring Variables ================
     public array $mainColors = array(
         'light' => 3,
@@ -500,35 +513,32 @@ class WPColorScheme {
     {
         // ======== Declaring Variables ========
         global $_wp_admin_css_colors;
-        $WPColorScheme = get_user_option('admin_color');
-        $boolResult = false;
+        $OGSyncColorScheme = get_user_option('admin_color');
 
         // ======== Start of Function ========
         foreach ($this->mainColors as $key => $value) {
-            if ($key == $WPColorScheme) {
-                return $_wp_admin_css_colors[$WPColorScheme]->colors[$this->mainColors[$key]];
+            if ($key == $OGSyncColorScheme) {
+                return $_wp_admin_css_colors[$OGSyncColorScheme]->colors[$this->mainColors[$key]];
             }
         }
         return $_wp_admin_css_colors['fresh']->colors[2];
     }
 }
-class OGSettingsData {
+class OGSyncSettingsData {
 	// ============ Declare Variables ============
 	// Strings
-	public static $settingPrefix = 'ppOG_'; // This is the prefix for all the settings used within the OG Plugin
-	public static $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
-	public static $templateFolder = 'php/templates'; // This is the folder where all the template files are stored within the server/ftp
+	public static string $settingPrefix = 'ppOGSync_'; // This is the prefix for all the settings used within the OG Plugin
+	public static string $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
 
 	// Arrays
-	public static array $apiURLs = [
+	private static array $apiURLs = [
 		'license' => 'https://og-feeds2.pixelplus.nl/api/validate.php',
 		'syncTimes' => 'https://og-feeds2.pixelplus.nl/api/latest.php'
 	];
-	public static array $cacheFiles = [
+	private static array $cacheFiles = [
 		'licenseCache' => 'licenseCache.json', // This is the cache file for the checking the Licence key
 	];
-
-	public static array $arrOptions = [
+	private static array $arrOptions = [
 		# ======== OG Admin Settings ========
 		# ==== Algemeen ====
 		/* Setting Name */'siteName' => /* Default Value */     '',
@@ -555,135 +565,36 @@ class OGSettingsData {
 		/* Setting Name */'wonenDetailpaginaIndeling' => /* Default Value */            'AantalWoonlagen:1f;AantalKamers:1f;AantalSlaapkamers:1f;AantalBadkamers:1',
 		/* Setting Name */'wonenDetailpaginaEnergieInstallatie' => /* Default Value */  'EnergieLabel:1f;Isolatie:1f;Verwarming:1f;WarmWater:1f;CvKetelType:1f;CvKetelBouwjaar:1f;CvKetelEigendom:1;CvKetelBrandstof:0;EnergieEinddatum:1f',
 	];
-	public static array $arrPages = [
-		// Page 1 - Homepage
-		/* Page Title= */'Homepagina' => [
-			# Main Information
-			'pageID' => 'ppOG_homepage',
-			'templateFile' => 'page-homepage.php',
-
-			# Page Information
-			'pageTitle' => 'Homepagina',
-			'pageContent' => '',
-			'pageSlug' => '',
-			# Page Settings
-			'boolIsFrontPage' => True,
-
-			# Child Pages
-			'childPages' => array()
-		],
-		// Page 2 - Diensten
-		/* Page Title= */'Diensten' => [
-			# Main Information
-			'pageID' => 'ppOG_diensten',
-			'templateFile' => 'page-diensten.php',
-
-			# Page Information
-			'pageTitle' => 'Diensten',
-			'pageContent' => '',
-			'pageSlug' => 'diensten',
-			# Page Settings
-			'boolIsFrontPage' => False,
-
-			# Child Pages
-			'childPages' => array(
-				// Child Page 1 - Verkoop
-				/* Page Title= */'Verkoop' => [
-					# Main Information
-					'pageID' => 'ppOG_dienstenVerkoop',
-					'templateFile' => 'page-dienstenVerkoop.php',
-
-					# Page Information
-					'pageTitle' => 'Verkoop',
-					'pageContent' => '',
-					'pageSlug' => 'verkoop',
-					# Page Settings
-					'boolIsFrontPage' => False,
-				],
-				// Child Page 2 - Aankoop
-				/* Page Title= */'Aankoop' => [
-					# Main Information
-					'pageID' => 'ppOG_dienstenAankoop',
-					'templateFile' => 'page-dienstenAankoop.php',
-
-					# Page Information
-					'pageTitle' => 'Aankoop',
-					'pageContent' => '',
-					'pageSlug' => 'aankoop',
-					# Page Settings
-					'boolIsFrontPage' => False,
-				],
-				// Child Page 3 - Taxatie
-				/* Page Title= */'Taxatie' => [
-					# Main Information
-					'pageID' => 'ppOG_dienstenTaxatie',
-					'templateFile' => 'page-dienstenTaxatie.php',
-
-					# Page Information
-					'pageTitle' => 'Taxatie',
-					'pageContent' => '',
-					'pageSlug' => 'taxatie',
-					# Page Settings
-					'boolIsFrontPage' => False,
-				],
-				// Child Page 4 - Zoekprofiel
-				/* Page Title= */'Zoekprofiel' => [
-					# Main Information
-					'pageID' => 'ppOG_dienstenZoekprofiel',
-					'templateFile' => 'page-dienstenZoekprofiel.php',
-
-					# Page Information
-					'pageTitle' => 'Zoekprofiel',
-					'pageContent' => '',
-					'pageSlug' => 'zoekprofiel',
-					# Page Settings
-					'boolIsFrontPage' => False,
-				],
-				// Child Page 5 - Hypotheek advies
-				/* Page Title= */'Hypotheek advies' => [
-					# Main Information
-					'pageID' => 'ppOG_dienstenHypotheekAdvies',
-					'templateFile' => 'page-dienstenHypotheekAdvies.php',
-
-					# Page Information
-					'pageTitle' => 'Hypotheek advies',
-					'pageContent' => '',
-					'pageSlug' => 'hypotheek-advies',
-					# Page Settings
-					'boolIsFrontPage' => False,
-				],
-			)
-		],
-	];
-	public static array $adminSettings = [
+	private static array $adminSettings = [
 		// Settings 1
-		/* Option Group= */ 'ppOG_adminOptions' => [
+		/* Option Group= */ 'ppOGSync_adminOptions' => [
 			// General information
 			'settingPageSlug' => 'pixelplus-og-plugin-settings',
 			// Sections
 			'sections' => [
 				// Section 1 - Algemeen section
 				/* Section Title= */'Algemeen' => [
-					'sectionID' => 'ppOG_SectionGeneral',
+					'sectionID' => 'ppOGSync_SectionGeneral',
 					'sectionCallback' => '',
+                    'permission' => 'plugin_activated',
 					// Fields
 					'fields' => [
 						// Field 1 - Site Naam
 						/* Setting Field Title= */'Site Naam' => [
-							'fieldID' => 'ppOG_siteName',
+							'fieldID' => 'ppOGSync_siteName',
 							'fieldCallback' => '',
 						],
 					]
 				],
 				// Section 2 - Licentie section
 				/* Section Title= */'Licentie' => [
-					'sectionID' => 'ppOG_SectionLicence',
+					'sectionID' => 'ppOGSync_SectionLicence',
 					'sectionCallback' => 'htmlLicenceSection',
 					// Fields
 					'fields' => [
 						// Field 1 - Licentie sleutel
 						/* Setting Field Title= */'Licentie Sleutel' => [
-							'fieldID' => 'ppOG_licenseKey',
+							'fieldID' => 'ppOGSync_licenseKey',
 							'fieldCallback' => 'htmlLicenceKeyField',
 						]
 					]
@@ -691,62 +602,62 @@ class OGSettingsData {
 			]
 		],
 		// Settings 2
-		/* Option Group= */ 'ppOG_WonenOptions' => [
+		/* Option Group= */ 'ppOGSync_WonenOptions' => [
 			// General information
 			'settingPageSlug' => 'pixelplus-og-plugin-settings-wonen',
 			// Sections
 			'sections' => [
 				// Section 1 - Detailpagina section
 				/* Section Title= */'Detailpagina' => [
-					'sectionID' => 'ppOG_wonenDetailpagina',
+					'sectionID' => 'ppOGSync_wonenDetailpagina',
 					'sectionCallback' => '',
 					// Fields
 					'fields' => [
 						// Field 1 - Basiskenmerken
 						/* Setting Field Title= */'Basiskenmerken' => [
-							'fieldID' => 'ppOG_wonenDetailpaginaBasiskenmerken',
+							'fieldID' => 'ppOGSync_wonenDetailpaginaBasiskenmerken',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_checkboxes'
 						],
 						// Field 2 - Overdracht
 						/* Setting Field Title= */'Overdracht' => [
-							'fieldID' => 'ppOG_wonenDetailpaginaOverdracht',
+							'fieldID' => 'ppOGSync_wonenDetailpaginaOverdracht',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_checkboxes'
 						],
 						// Field 3 - Bouw en onderhoud
 						/* Setting Field Title= */'Bouw en onderhoud' => [
-							'fieldID' => 'ppOG_wonenDetailpaginaBouwOnderhoud',
+							'fieldID' => 'ppOGSync_wonenDetailpaginaBouwOnderhoud',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_checkboxes'
 						],
 						// Field 4 - Parkeergelegenheid
 						/* Setting Field Title= */'Parkeergelegenheid' => [
-							'fieldID' => 'ppOG_wonenDetailpaginaParkeergelegenheid',
+							'fieldID' => 'ppOGSync_wonenDetailpaginaParkeergelegenheid',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_checkboxes'
 						],
 						// Field 5 - Oppervlakte en inhoud
 						/* Setting Field Title= */'Oppervlakte en inhoud' => [
-							'fieldID' => 'ppOG_wonenDetailpaginaOppervlakteInhoud',
+							'fieldID' => 'ppOGSync_wonenDetailpaginaOppervlakteInhoud',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_checkboxes'
 						],
 						// Field 6 - Bergruimte
 						/* Setting Field Title= */'Bergruimte' => [
-							'fieldID' => 'ppOG_wonenDetailpaginaBergruimte',
+							'fieldID' => 'ppOGSync_wonenDetailpaginaBergruimte',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_checkboxes'
 						],
 						// Field 7 - Indeling
 						/* Setting Field Title= */'Indeling' => [
-							'fieldID' => 'ppOG_wonenDetailpaginaIndeling',
+							'fieldID' => 'ppOGSync_wonenDetailpaginaIndeling',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_checkboxes'
 						],
 						// Field 8 - Energie en installatie
 						/* Setting Field Title= */'Energie en installatie' => [
-							'fieldID' => 'ppOG_wonenDetailpaginaEnergieInstallatie',
+							'fieldID' => 'ppOGSync_wonenDetailpaginaEnergieInstallatie',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_checkboxes'
 						],
@@ -755,44 +666,44 @@ class OGSettingsData {
 			]
 		],
 		// Settings 3
-		/* Option Group= */ 'ppOG_uiterlijkOptions' => [
+		/* Option Group= */ 'ppOGSync_uiterlijkOptions' => [
 			// General information
 			'settingPageSlug' => 'pixelplus-og-plugin-settings-uiterlijk',
 			// Sections
 			'sections' => [
 				// Section 1 - Logo's section
 				/* Section Title= */'Logo\'s' => [
-					'sectionID' => 'ppOG_uiterlijkLogos',
+					'sectionID' => 'ppOGSync_uiterlijkLogos',
 					'sectionCallback' => '',
 					// Fields
 					'fields' => [
 						// Field 1 - Site logo
 						/* Setting Field Title= */'Site logo' => [
-							'fieldID' => 'ppOG_siteLogo',
+							'fieldID' => 'ppOGSync_siteLogo',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_imageField'
 						],
 						// Field 2 - Site logo width
 						/* Setting Field Title= */'Site logo width' => [
-							'fieldID' => 'ppOG_siteLogoWidth',
+							'fieldID' => 'ppOGSync_siteLogoWidth',
 							'fieldCallback' => '',
 						],
 						// Field 3 - Site logo height
 						/* Setting Field Title= */'Site logo height' => [
-							'fieldID' => 'ppOG_siteLogoHeight',
+							'fieldID' => 'ppOGSync_siteLogoHeight',
 							'fieldCallback' => '',
 						],
 					]
 				],
 				// Section 2 - Favicon section
 				/* Section Title= */'Favicon' => [
-					'sectionID' => 'ppOG_uiterlijkFavicon',
+					'sectionID' => 'ppOGSync_uiterlijkFavicon',
 					'sectionCallback' => '',
 					// Fields
 					'fields' => [
 						// Field 1 - Favicon
 						/* Setting Field Title= */'Site favicon' => [
-							'fieldID' => 'ppOG_siteFavicon',
+							'fieldID' => 'ppOGSync_siteFavicon',
 							'fieldCallback' => '',
 							'sanitizeCallback' => 'sanitize_imageField'
 						],
@@ -812,36 +723,25 @@ class OGSettingsData {
 	public static function arrOptions(): array {
 		return self::$arrOptions;
 	}
-	public static function arrPages(): array {
-		return self::$arrPages;
-	}
 	public static function adminSettings(): array {
 		return self::$adminSettings;
 	}
 
 	// ============ PHP Functions ============
 	// ==== Sanitize Functions ====
-	public function sanitize_checkboxes($input) {
+	public function sanitize_checkboxes($input): string {
 		// ======== Declaring Variables ========
-		# Classes
-		global $wpdb;
-
 		# Vars
 		$strOutput = '';
 		foreach ($input as $key => $value) {
 			$strOutput .= "$key:$value;";
 		}
-		# Removing the last character
-		$strOutput = substr($strOutput, 0, -1);
 
 		// ======== Start of Function ========
-		return $strOutput;
+        # Return with last character removed
+		return substr($strOutput, 0, -1);
 	}
 	public function sanitize_imageField($input) {
-		// ======== Declaring Variables ========
-		# Classes
-		global $wpdb;
-
 		// ======== Start of Function ========
 		# Putting in 'testing' table to test
 		return $input;
@@ -868,7 +768,7 @@ class OGSettingsData {
 		}
 	}
 }
-class OGMapping {
+class OGSyncMapping {
 	// ================ Constructor ================
 	function __construct() {
 
@@ -1161,17 +1061,17 @@ class OGMapping {
 }
 
 // ========== Inactivated state of Plugin ==========
-class OGLicense {
+class OGSyncLicense {
 	// ============ Declaring Variables ============
 	# Static
 	private static $licenseDataCache = null;
 
 	// ============ Functions ============
 	# Function to fetch license data from the API
-	private function fetchLicenseData($url): mixed {
+	private static function fetchLicenseData($url): mixed {
 		// ==== Declaring Variables ====
 		# Getting the JSON from the API
-		$jsonData = getJSONFromAPI($url);
+		$jsonData = OGSyncTools::getJSONFromAPI($url);
 
 		if (is_wp_error($jsonData)) {
 			return $jsonData;
@@ -1186,7 +1086,7 @@ class OGLicense {
 	}
 
 	# Function for checking the license
-	function checkLicense(): mixed {
+	static function checkLicense(): mixed {
 		// Checking if the license data is already fetched return it
 		// If the license data is already fetched, return it
 		if (self::$licenseDataCache !== null) {
@@ -1195,11 +1095,10 @@ class OGLicense {
 
 		// ============= Declaring Variables =============
 		# Classes
-		$settingData = new OGSettingsData();
+		$settingData = new OGSyncSettingsData();
 
 		# Cache
-		$cacheFile = plugin_dir_path(dirname(__DIR__, 1)) . $settingData::$cacheFolder . $settingData::cacheFiles()['licenseCache'];
-		$cacheData = null;
+		$cacheFile = plugin_dir_path(dirname(__DIR__)) . $settingData::$cacheFolder . $settingData::cacheFiles()['licenseCache'];
 
 		# API
 		$url = $settingData::apiURLs()['license'];
@@ -1208,12 +1107,12 @@ class OGLicense {
 		// ================ Start of Function =============
 		// If cache file doesn't exist then create it
 		if (!file_exists($cacheFile)) {
-			$cacheData = $this->fetchLicenseData($url . $qArgs);
+			$cacheData = self::fetchLicenseData($url . $qArgs);
 
 			// ==== Start of IF ====
 			if (is_wp_error($cacheData)) {
 				# Giving the message
-				adminNotice('error', "#OG-WP Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
+				OGSyncTools::adminNotice('error', "#OG-WP Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
 			}
             elseif (isset($cacheData['success']) and $cacheData['success']) {
 				# Saving the data to the cache file
@@ -1224,14 +1123,14 @@ class OGLicense {
 			}
             elseif (isset($cacheData['success']) and !$cacheData['success']) {
 				# Telling the user that the license is invalid
-				adminNotice('error', "De licentie is ongeldig. Neem contact op met PixelPlus.");
+				OGSyncTools::adminNotice('error', "De licentie is ongeldig. Neem contact op met PixelPlus.");
 			}
             elseif (isset($cacheData['message']) and $cacheData['message'] == 'Invalid authentication token!') {
 				# Telling the user that the license is invalid
-				adminNotice('error', "#OngeldigeLicentie: De licentiesleutel is ongeldig. Neem contact op met PixelPlus.");
+				OGSyncTools::adminNotice('error', "#OngeldigeLicentie: De licentiesleutel is ongeldig. Neem contact op met PixelPlus.");
 			}
 			else {
-				adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
+				OGSyncTools::adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
 			}
 
 			# After fetching the license data, store it in the static cache variable
@@ -1246,13 +1145,13 @@ class OGLicense {
 
 		// Check if the data is stale (older than an hour) and needs to be updated
 		if ((time() - filemtime($cacheFile)) >= 3600) {
-			$cacheData = $this->fetchLicenseData($url . $qArgs);
+			$cacheData = self::fetchLicenseData($url . $qArgs);
 
 			// ==== Start of IF ====
 			# Checking if the data['success'] == True. If so then return otherwise check the API if anything changed by any chance
 			if (is_wp_error($cacheData)) {
 				# Giving the message
-				adminNotice('error', "#OG-WP Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
+				OGSyncTools::adminNotice('error', "#OG-WP Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
 			}
             elseif (isset($cacheData['success']) and $cacheData['success']) {
 				# Saving the data to the cache file
@@ -1263,13 +1162,13 @@ class OGLicense {
 			}
             elseif (isset($cacheData['success']) and !$cacheData['success']) {
 				# Telling the user that the license is invalid
-				adminNotice('error', "De licentie is ongeldig. Neem contact op met PixelPlus.");
+				OGSyncTools::adminNotice('error', "De licentie is ongeldig. Neem contact op met PixelPlus.");
 
 				# Saving the data to the cache file
 				file_put_contents($cacheFile, json_encode($cacheData));
 			}
 			else {
-				adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
+				OGSyncTools::adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
 			}
 		}
 
@@ -1277,9 +1176,9 @@ class OGLicense {
 	}
 
 	# A function for registering base settings of the unactivated plugin as activation hook.
-	function checkActivation() {
+	function checkActivation(): bool {
 		// ======== Declaring Variables ========
-		$jsonData = $this->checkLicense();
+		$jsonData = self::checkLicense();
 
 		// ======== Start of Function ========
 		# Checking if the license is valid
@@ -1297,24 +1196,17 @@ class OGLicense {
 	# A function to see, which OG Post types the user has access to
 	function checkPostTypeAccess(): array {
 		// ==== Declaring Variables ====
-		# Classes
-		$settingData = new OGSettingsData();
-
+		# Vars
+		$objectAccess = self::checkLicense();
 		// ==== Start of Function ====
-		$objectAccess = $this->checkLicense();
-
 		// Check if data exists
-		if (isset($objectAccess['data']['types'])) {
-			$objectAccess = $objectAccess['data']['types'];
-		}
-		else {
-			$objectAccess = [];
-		}
+
+
 		// Return the array
-		return $objectAccess;
+		return $objectAccess['data']['types'] ?? [];
 	}
 }
-class OGPages
+class OGSyncPages
 {
     function __construct()
     {
@@ -1325,9 +1217,9 @@ class OGPages
         // Updating the permalinks
         add_action('init', function() {
 	        // ======== Declaring Variables ========
-	        $OGSettingsData = new OGSettingsData();
+	        $OGSyncSettingsData = new OGSyncSettingsData();
 
-	        $favicon = get_option($OGSettingsData::$settingPrefix . 'siteFavicon') ?? '';
+	        $favicon = get_option($OGSyncSettingsData::$settingPrefix . 'siteFavicon') ?? '';
 	        // ======== Start of Function ========
 	        // Permalinks
 	        flush_rewrite_rules();
@@ -1344,8 +1236,8 @@ class OGPages
     function createPages(): void {
         // ======= Declaring Variables =======
         // Classes
-        $license = new OGLicense();
-        $postTypeData = new OGPostTypeData();
+        $license = new OGSyncLicense();
+        $postTypeData = new OGSyncPostTypeData();
 
 		# Vars
         $boolPluginActivated = $license->checkActivation();
@@ -1445,7 +1337,7 @@ class OGPages
         }
     }
 	// ==== Option functions ====
-	function createCheckboxes($input, $checkBoxName, $label) {
+	function createCheckboxes($input, $checkBoxName, $label): void {
 		if ($input[1] == '0') {
 			echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
 			echo("<input type='checkbox' name='{$checkBoxName}' value='1'>{$label}<br>");
@@ -1506,7 +1398,7 @@ class OGPages
 		echo("
         <br/>
         <table class='form-table'>
-            <tr valign='top'>
+            <tr>
                 <th>
                     <!-- Border -->
                     <img style='padding: 2px; border: 1px solid rgba(0, 0, 0, 0.1);' id='{$fieldArray['fieldID']}_logoPreview' src='$strOption' width='115' alt='⠀Niks gekozen' />
@@ -1525,7 +1417,7 @@ class OGPages
 
 		// ===== Script =====
 		# Script - Select Button
-		echo("<script>
+		echo( "<script>
             jQuery(document).ready(function($){
                 // ======== Declaring Variables ========
                 // Query Selectors
@@ -1547,7 +1439,7 @@ class OGPages
                 // ==== Select Button ====
                 $('#{$fieldArray['fieldID']}_upload').click(function(e) {
                     e.preventDefault();
-                    var custom_uploader = wp.media({
+                    const custom_uploader = wp.media({
                         title: 'Custom Image',
                         button: {
                             text: 'Use this image'
@@ -1557,7 +1449,7 @@ class OGPages
                         
                     }).on('select', function() {
                         // ===== Declaring Variables =====
-                        var attachment = custom_uploader.state().get('selection').first().toJSON();
+                        const attachment = custom_uploader.state().get('selection').first().toJSON();
                         
                         // ==== Updating the logo preview ====
                         // Attachement URL
@@ -1591,22 +1483,22 @@ class OGPages
                     logoURL.val('');
                 });
             });
-        </script>");
+        </script>" );
 	}
 
     // ==== Register Settings ====
 	function registerSettings(): void {
 		// ==== Declaring Variables ====
 		# Classes
-		$OGLicense = new OGLicense();
+		$OGSyncLicense = new OGSyncLicense();
 
 		# Vars
-		$boolPluginActivated = $OGLicense->checkActivation();
-		$OGSettingsData = new OGSettingsData();
+		$boolPluginActivated = $OGSyncLicense->checkActivation();
+		$OGSyncSettingsData = new OGSyncSettingsData();
 
 		// ==== Start of Function ====
-		# Setting sections and use the OGSettingsData adminSettings data
-		foreach($OGSettingsData::adminSettings() as $optionGroup => $optionArray) {
+		# Setting sections and use the OGSyncSettingsData adminSettings data
+		foreach($OGSyncSettingsData::adminSettings() as $optionGroup => $optionArray) {
 			# Settings for on settings page
 			foreach ($optionArray['sections'] as $sectionTitle => $sectionArray) {
 				# Checking if this section has the permission to be created
@@ -1616,7 +1508,7 @@ class OGPages
 				add_settings_section(
 					$sectionArray['sectionID'],
 					$sectionTitle,
-					!empty($sectionArray['sectionCallback']) ? array($OGSettingsData, $sectionArray['sectionCallback']) : function () {
+					!empty($sectionArray['sectionCallback']) ? array($OGSyncSettingsData, $sectionArray['sectionCallback']) : function () {
 
 					},
 					$optionArray['settingPageSlug'],
@@ -1626,7 +1518,7 @@ class OGPages
 					add_settings_field(
 						$fieldArray['fieldID'],
 						$fieldTitle,
-						!empty($fieldArray['fieldCallback']) ? array($OGSettingsData, $fieldArray['fieldCallback']) : function () use ($fieldArray) {
+						!empty($fieldArray['fieldCallback']) ? array($OGSyncSettingsData, $fieldArray['fieldCallback']) : function () use ($fieldArray) {
 							// ======== Declaring Variables ========
 							// Vars
 							$strOption = get_option($fieldArray['fieldID']);
@@ -1653,7 +1545,7 @@ class OGPages
 						$sectionArray['sectionID'],
 					);
 					// Registering the Field
-					register_setting($optionGroup, $fieldArray['fieldID'], !empty($fieldArray['sanitizeCallback']) ? array($OGSettingsData, $fieldArray['sanitizeCallback']) : '');
+					register_setting($optionGroup, $fieldArray['fieldID'], !empty($fieldArray['sanitizeCallback']) ? array($OGSyncSettingsData, $fieldArray['sanitizeCallback']) : '');
 				}
 			}
 		}
@@ -1664,9 +1556,9 @@ class OGPages
     function HTMLOGAdminDashboard(): void {
         // ======== Declaring Variables ========
         # Classes
-        $settingData = new OGSettingsData();
-        $postTypeData = new OGPostTypeData();
-        $wpColorScheme = new WPColorScheme();
+        $settingData = new OGSyncSettingsData();
+        $postTypeData = new OGSyncPostTypeData();
+        $OGSyncColorScheme = new OGSyncColorScheme();
 
         # Variables
         $postTypeData = $postTypeData->customPostTypes();
@@ -1675,12 +1567,12 @@ class OGPages
         $qArgs = "?token=".get_option($settingData::$settingPrefix.'licenseKey');
         $lastSyncTimes = json_decode(wp_remote_get($url.$qArgs)['body'], true);
 
-        $buttonColor = $wpColorScheme->returnColor();
+        $buttonColor = $OGSyncColorScheme->returnColor();
 
         // ======== Start of Function ========
         # Checking if the API request is successful
-        if (isset($lastSyncTimes['success']) and $lastSyncTimes['success'] == true) {
-            adminNotice('success', 'De laatste syncs zijn succesvol opgehaald.');
+        if (isset($lastSyncTimes['success']) and $lastSyncTimes['success']) {
+            OGSyncTools::adminNotice('success', 'De laatste syncs zijn succesvol opgehaald.');
             $lastSyncTimes = $lastSyncTimes['data'];
         }
         else {
@@ -1688,7 +1580,7 @@ class OGPages
         }
 
         # HTML
-        htmlAdminHeader('OG Admin Dashboard');
+        OGSyncTools::htmlAdminHeader('OG Admin Dashboard');
         echo("
             <div class='container-fluid'>
                 <div class='row'>
@@ -1720,54 +1612,54 @@ class OGPages
                 </div>
             </div>
         ");
-        htmlAdminFooter('OG Admin Dashboard');}
+        OGSyncTools::htmlAdminFooter('OG Admin Dashboard');}
     // OG Admin Settings
-    function HTMLOGAdminSettings(): void { htmlAdminHeader('OG Admin Settings - Algemeen');
-        $settingsData = new OGSettingsData(); ?>
+    function HTMLOGAdminSettings(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - Algemeen');
+        $settingsData = new OGSyncSettingsData(); ?>
         <form method="post" action="options.php">
             <?php settings_fields($settingsData::$settingPrefix.'adminOptions');
             do_settings_sections('pixelplus-og-plugin-settings');
-            hidePasswordByName($settingsData::$settingPrefix.'licenseKey');
+            OGSyncTools::hidePasswordByName($settingsData::$settingPrefix.'licenseKey');
             submit_button('Opslaan', 'primary', 'submit_license');
             ?>
         </form>
-    <?php htmlAdminFooter('OG Admin Settings - Licentie');}
-    function HTMLOGUiterlijkSettings(): void { htmlAdminHeader('OG Admin Settings - Uiterlijk');
+    <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Licentie');}
+    function HTMLOGUiterlijkSettings(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - Uiterlijk');
 	    // ======== Declaring Variables ========
-	    $settingsData = new OGSettingsData(); ?>
+	    $settingsData = new OGSyncSettingsData(); ?>
         <form method="post" action="options.php">
 		    <?php settings_fields($settingsData::$settingPrefix.'uiterlijkOptions');
 		    do_settings_sections('pixelplus-og-plugin-settings-uiterlijk');
 		    submit_button('Opslaan', 'primary', 'submit_uiterlijk');
 		    ?>
         </form>
-    <?php htmlAdminFooter('OG Admin Settings - Uiterlijk');}
-    function HTMLOGAdminSettingsWonen() { htmlAdminHeader('OG Admin Settings - Wonen');
+    <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Uiterlijk');}
+    function HTMLOGAdminSettingsWonen(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - Wonen');
         // ======== Declaring Variables ========
 
         // ======== Start of Function ========
-        $settingsData = new OGSettingsData(); ?>
+        $settingsData = new OGSyncSettingsData(); ?>
         <form method="post" action="options.php">
             <?php settings_fields($settingsData::$settingPrefix.'WonenOptions');
             do_settings_sections('pixelplus-og-plugin-settings-wonen');
             submit_button('Opslaan', 'primary', 'submit_wonen');
             ?>
         </form>
-    <?php htmlAdminFooter('OG Admin Settings - Wonen');}
-    function HTMLOGAdminSettingsBOG() { htmlAdminHeader('OG Admin Settings - BOG'); ?>
+    <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Wonen');}
+    function HTMLOGAdminSettingsBOG(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - BOG'); ?>
 
-        <?php htmlAdminFooter('OG Admin Settings - BOG');}
-    function HTMLOGAdminSettingsNieuwbouw() { htmlAdminHeader('OG Admin Settings - Nieuwbouw'); ?>
+        <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - BOG');}
+    function HTMLOGAdminSettingsNieuwbouw(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - Nieuwbouw'); ?>
 
-        <?php htmlAdminFooter('OG Admin Settings - Nieuwbouw');}
-    function HTMLOGAdminSettingsALV() { htmlAdminHeader('OG Admin Settings - A&LV'); ?>
+        <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Nieuwbouw');}
+    function HTMLOGAdminSettingsALV(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - A&LV'); ?>
 
-        <?php htmlAdminFooter('OG Admin Settings - A&LV');}
+        <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - A&LV');}
 
     // OG Aanbod
-    function HTMLOGAanbodDashboard(): void { htmlAdminHeader('OG Aanbod Dashboard'); ?>
+    function HTMLOGAanbodDashboard(): void { OGSyncTools::htmlAdminHeader('OG Aanbod Dashboard'); ?>
         <p>dingdong bishass</p>
-        <?php htmlAdminFooter('OG Aanbod Dashboard');}
+        <?php OGSyncTools::htmlAdminFooter('OG Aanbod Dashboard');}
 
     // OG Detailpage
     function HTMLOGDetailPageWonen() { ?>
@@ -1776,7 +1668,7 @@ class OGPages
 }
 
 // ========== Fully activated state of the plugin ==========
-class OGPostTypes {
+class OGSyncPostTypes {
 	// ======== Declaring Variables ========
 
 	// ======== Start of Class ========
@@ -1792,69 +1684,20 @@ class OGPostTypes {
 	function createPostTypes(): void {
 		// ======== Declaring Variables ========
 		# Classes
-		$postTypeData = new OGPostTypeData();
+		$postTypeData = new OGSyncPostTypeData();
 		$postTypeData = $postTypeData->customPostTypes();
         # Vars
-        $templateFolder = plugin_dir_path(dirname(__DIR__, 1)).'php/templates/';
+        $templateFolder = plugin_dir_path(dirname(__DIR__)) . 'php/templates/';
 
 		// ======== Start of Function ========
 
 		// Create the OG Custom Post Types (if the user has access to it)
 		foreach($postTypeData as $postType => $postTypeArray) {
 			register_post_type($postType, $postTypeArray['post_type_args']);
-
-            // Linking the template of the post type
-            if (isset($postTypeArray['templates'])) {
-                foreach ($postTypeArray['templates'] as $template) {
-                    // ==== Declaring Variables ====
-                    $templateName = $template['templateName'];
-                    $templateFile = $templateFolder.$template['templateFile'];
-
-                    // ==== Start of Loop ====
-                    if (file_exists($templateFile)) {
-                        // Single template
-                        add_filter("single_template", function ($single_template) use ($postType, $templateFile) {
-                            // ==== Declaring Variables ====
-
-                            // ==== Start of Function ====
-                            # Return the template
-                            if (get_post_type() == $postType) {
-                                return $templateFile;
-                            }
-                            return $single_template;
-                        });
-                    }
-                }
-            }
-
-		}
-	}
-	# This function is for checking if the post types are migrated to different tables / metadata tables
-	function checkMigrationPostTypes(): void {
-		// ==== Declaring Variables ====
-		# Classes
-		global $wpdb;
-		$postTypeData = new OGPostTypeData();
-		$postTypeData = $postTypeData->customPostTypes();
-
-		# Variables
-		$defaultPrefix = "wp_cpt_";
-		$sqlCheck = "SHOW TABLES LIKE '{$defaultPrefix}";
-
-		// ==== Start of Function ====
-		// Checking
-		foreach ($postTypeData as $postType => $postTypeArray) {
-			// Preparing the statement
-			$result = $wpdb->get_results("{$sqlCheck}{$postType}'");
-
-			if (empty($result)) {
-				// Migrating the data
-				adminNotice('error', 'Please migrate the '.strtoupper($postType).' custom post type to the new table structure using the CPT Tables Plugin.');
-			}
 		}
 	}
 }
-class OGOffers {
+class OGSyncOffers {
 	// ================ Start of Class ================
 	function __construct() {
 		# Use this one if it is going to be run on the site itself.
@@ -1978,7 +1821,7 @@ class OGOffers {
         // ============ Declaring Variables ============
         # Classes
         global $wpdb;
-        $OGMapping = new OGMapping();
+        $OGSyncMapping = new OGSyncMapping();
 
         # Variables
         $databaseKeysMedia = $databaseKey['media'];
@@ -2000,7 +1843,7 @@ class OGOffers {
         foreach ($mediaObjects as $mediaObject) {
             // ======== Declaring Variables ========
             # Mapping the data
-            $mediaObject = $OGMapping->mapMetaData($mediaObject, ($databaseKeysMedia['mapping'] ?? []));
+            $mediaObject = $OGSyncMapping->mapMetaData($mediaObject, ($databaseKeysMedia['mapping'] ?? []));
             $mediaQuery = new WP_Query([
                 'post_type' => 'attachment',
                 'meta_key' => $databaseKeysMedia['mediaName'],
@@ -2075,7 +1918,7 @@ class OGOffers {
         }
     }
 
-	function createPost($postTypeName, $OGobject, $databaseKey, $parentPostID='') {
+	function createPost($postTypeName, $OGobject, $databaseKey, $parentPostID=''): WP_Error|int {
 		// ============ Declaring Variables ===========
 		# Variables
 		$post_data = [
@@ -2107,7 +1950,6 @@ class OGOffers {
 	function updatePost($postTypeName, $postID, $OGobject, $databaseKey, $parentPostID=''): void {
 		// ======== Declaring Variables ========
 		# Classes
-		$ogMapping = new OGMapping();
 
 		# Vars
 		$post_data = [
@@ -2207,7 +2049,7 @@ class OGOffers {
 		// ======== Declaring Variables ========
 		# Classes
 		global $wpdb;
-		$OGMapping = new OGMapping();
+		$OGSyncMapping = new OGSyncMapping();
 
 		# Variables
 		$OGBouwtypeID = $OGBouwtype->id;
@@ -2226,7 +2068,7 @@ class OGOffers {
 
 			// ======== Declaring Variables ========
 			# Variables
-			$OGBouwnummer = $OGMapping->mapMetaData($OGBouwnummer, ($databaseKeys[2]['mapping'] ?? []), $locationCodes, $databaseKeys);
+			$OGBouwnummer = $OGSyncMapping->mapMetaData($OGBouwnummer, ($databaseKeys[2]['mapping'] ?? []), $locationCodes, $databaseKeys);
 			# Post - Bouwnummer
 			$postData = new WP_Query([
 				'post_type' => $postTypeName,
@@ -2272,7 +2114,7 @@ class OGOffers {
 		// ======== Declaring Variables ========
 		# Classes
 		global $wpdb;
-		$OGMapping = new OGMapping();
+		$OGSyncMapping = new OGSyncMapping();
 
 		# Variables
 		$OGProjectID = $OGProject->id;
@@ -2291,7 +2133,7 @@ class OGOffers {
 			}
 
 			// ======== Declaring Variables ========
-			$OGBouwtype = $OGMapping->mapMetaData($OGBouwtype, ($databaseKeys[1]['mapping'] ?? []), $locationCodes, $databaseKeys);
+			$OGBouwtype = $OGSyncMapping->mapMetaData($OGBouwtype, ($databaseKeys[1]['mapping'] ?? []), $locationCodes, $databaseKeys);
 			# Post - Bouwtype
 			$postData = new WP_Query([
 				'post_type' => $postTypeName,
@@ -2339,7 +2181,7 @@ class OGOffers {
 		# ============ Declaring Variables ============
 		# Classes
 		global $wpdb;
-		$OGMapping = new OGMapping();
+		$OGSyncMapping = new OGSyncMapping();
 		# Variables
 		$projectIds = [];
 		$locationCodes = $this->getLocationCodes();
@@ -2363,7 +2205,7 @@ class OGOffers {
 
 			// ======== Declaring Variables ========
 			# Remapping the object
-			$OGProject = $OGMapping->mapMetaData($OGProject, ($databaseKeys[0]['mapping'] ?? []), $locationCodes, $databaseKeys);
+			$OGProject = $OGSyncMapping->mapMetaData($OGProject, ($databaseKeys[0]['mapping'] ?? []), $locationCodes, $databaseKeys);
 
 			# Post - Project
 			$postData = new WP_Query([
@@ -2419,7 +2261,7 @@ class OGOffers {
 	function checkNormalPosts($postTypeName, $OGobjects, $databaseKey): void {
 		// ============ Declaring Variables ============
 		# Classes
-		$OGMapping = new OGMapping();
+		$OGSyncMapping = new OGSyncMapping();
 		# Variables
 		$locationCodes = $this->getLocationCodes();
 		$objectIDs = [];
@@ -2430,7 +2272,7 @@ class OGOffers {
 			// ======== Declaring Variables ========
 			# ==== Variables ====
 			# Remapping the object
-			$OGobject = $OGMapping->mapMetaData($OGobject, ($databaseKey['mapping'] ?? []), $locationCodes);
+			$OGobject = $OGSyncMapping->mapMetaData($OGobject, ($databaseKey['mapping'] ?? []), $locationCodes);
 
 			$postData = new WP_Query([
 				'post_type' => $postTypeName,
@@ -2474,7 +2316,7 @@ class OGOffers {
 		// ============ Declaring Variables ============
 		# Classes
 		global $wpdb;
-		$postTypeData = new OGPostTypeData();
+		$postTypeData = new OGSyncPostTypeData();
 
 		# Variables
 		date_default_timezone_set('Europe/Amsterdam');
@@ -2528,7 +2370,7 @@ class OGOffers {
 		$maxMemoryUsage = (memory_get_peak_usage(true) / 1024 / 1024);
 		$memoryUsage = (memory_get_usage(true) / 1024 / 1024);
 		$wpdb->insert('cronjobs', [
-			'name' => 'OGOffers',
+			'name' => 'OGSyncOffers',
 			# convert to megabytes
 			'memoryUsageMax' => $maxMemoryUsage,
 			'memoryUsage' => $memoryUsage,

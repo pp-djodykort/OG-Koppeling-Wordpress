@@ -1,7 +1,7 @@
 <?php
 // ============ Access allowed & Lock file ============
 // ======== Declaring Variables ========
-# Plus this variable: '/lockfiles/syncOffers.lock' do it the right way so it can be used on every os
+# Plus this variable: '/lockfiles/syncOffers.lock' do it the right way, so it can be used on every os.
 $lockFile = __DIR__. DIRECTORY_SEPARATOR. 'lockfiles'. DIRECTORY_SEPARATOR. 'syncOffers.lock';
 # Variables
 $boolLockFileSystemEnabled = false;
@@ -42,13 +42,12 @@ if ($boolLockFileSystemEnabled) {
 
 // ============ Imports ============
 # WordPress
-if ($wpLoad = dirname( __DIR__, 6 ) . '/wp/wp-load.php' and file_exists( $wpLoad ) ) {require_once( $wpLoad );}
-elseif ($wpLoad = dirname( __DIR__, 6 ) . '/wp-load.php' and file_exists( $wpLoad ) ) {require_once( $wpLoad );}
+if ($wpLoad = dirname( __DIR__, 6 ) . DIRECTORY_SEPARATOR . 'wp' . DIRECTORY_SEPARATOR . 'wp-load.php' and file_exists( $wpLoad ) ) {require_once( $wpLoad );}
+elseif ($wpLoad = dirname( __DIR__, 6 ) . DIRECTORY_SEPARATOR .'wp-load.php' and file_exists( $wpLoad ) ) {require_once( $wpLoad );}
 
 # Classes / Functions
-require_once( dirname( __DIR__, 1 ) . '/includes/classes.php' );
-require_once( dirname( __DIR__, 1 ) . '/includes/functions.php' );
-
+require_once(dirname(__DIR__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'classes.php');
+require_once(dirname(__DIR__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'functions.php');
 // ============ Declaring Variables ============
 # Limits
 // Changing the execution time and memory limit
@@ -59,7 +58,7 @@ ini_set( 'memory_limit', '-1' );
 global $wpdb;
 
 // ============ Start of Program ============
-$ogOffers = new OGOffers();
+$OGSyncOffers = new OGSyncOffers();
 
 // ============ End of Program ============
 if ($boolLockFileSystemEnabled) {
