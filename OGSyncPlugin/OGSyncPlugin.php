@@ -24,13 +24,11 @@ register_deactivation_hook(__FILE__, 'OGSyncActivationAndDeactivation::deactivat
 register_uninstall_hook(__FILE__, 'OGSyncActivationAndDeactivation::uninstall');
 
 // ============ Classes initialisation ============
-// Data Class of the License
-$license = new OGSyncLicense();
 // IF the license is activated, then load in the custom post types, and their respective sub-menu pages
-if ($license->checkActivation()) {
+if (OGSyncLicense::checkActivation()) {
     $postTypes = new OGSyncPostTypes();
 }
-$pages = new OGSyncPages();
+$OGSyncPages = new OGSyncPages();
 
 // ============ Start of Program ============
 add_action('admin_notices', function () {

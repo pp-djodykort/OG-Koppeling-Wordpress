@@ -24,7 +24,10 @@ register_deactivation_hook(__FILE__, 'OGSiteActivationAndDeactivation::deactivat
 register_uninstall_hook(__FILE__, 'OGSiteActivationAndDeactivation::uninstall');
 
 // ============ Classes initialisation ============
-$OGSiteSettingsData = new OGSiteSettingsData();
+if (OGSiteLicense::checkActivation()) {
+
+}
+$OGSitePages = new OGSitePages();
 
 // ============ Start of Program ============
 add_action('admin_notices', function () {

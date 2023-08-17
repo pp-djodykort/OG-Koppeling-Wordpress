@@ -22,7 +22,7 @@ class OGSyncActivationAndDeactivation {
 
 		// only get settings that start with ppOGSync_
 		$OGoptions = array_filter($OGoptions, function($key) {
-			return strpos($key, 'ppOGSync_') === 0;
+			return str_starts_with($key, OGSyncSettingsData::$settingPrefix);
 		}, ARRAY_FILTER_USE_KEY);
 
 		// Deleting all settings in database
@@ -34,13 +34,10 @@ class OGSyncActivationAndDeactivation {
     // ==== Functions ====
     // A function for registering base settings of the unactivated plugin as activation hook.
     static function registerSettings(): void {
-        // ==== Declaring Variables ====
-        $settingData = new OGSyncSettingsData();
-
         // ==== Start of Function ====
         // Registering settings
-        foreach ($settingData::arrOptions() as $settingName => $settingValue) {
-            add_option($settingData::$settingPrefix.$settingName, $settingValue);
+        foreach (OGSyncSettingsData::arrOptions() as $settingName => $settingValue) {
+            add_option(OGSyncSettingsData::$settingPrefix.$settingName, $settingValue);
         }
     }
     // A function for creating the cache files as activation hook.
@@ -73,13 +70,10 @@ class OGSyncActivationAndDeactivation {
 // ============ Data Classes ============
 class OGSyncPostTypeData {
     // ============ Begin of Class ============
-    function customPostTypes(): array {
+    public static function customPostTypes(): array {
         // ===== Declaring Variables =====
-        # Classes
-        $license = new OGSyncLicense();
-
         # Variables
-        $objectAccess = $license->checkPostTypeAccess();
+        $objectAccess = OGSyncLicense::checkPostTypeAccess();
         $customPostTypes = array(
             // Post Type 1
             // Post Type 1
@@ -540,53 +534,17 @@ class OGSyncSettingsData {
 	];
 	private static array $arrOptions = [
 		# ======== OG Admin Settings ========
-		# ==== Algemeen ====
-		/* Setting Name */'siteName' => /* Default Value */     '',
-
 		# ==== Licentie ====
 		/* Setting Name */'licenseKey' => /* Default Value */   '', // License Key
-
-		# ======== Uiterlijk Settings ========
-		# ==== Logo ====
-		/* Setting Name */'siteLogo' => /* Default Value */     '',
-		/* Setting Name */'siteLogoWidth' => /* Default Value */     '',
-		/* Setting Name */'siteLogoHeight' => /* Default Value */     '',
-
-		# ==== Favicon ====
-		/* Setting Name */'siteFavicon' => /* Default Value */     '',
-
-		# ======== Wonen Settings ========
-		/* Setting Name */'wonenDetailpaginaBasiskenmerken' => /* Default Value */      'Status:1f;Bouwjaar:1;Prijs:1f;PrijsPerM2:0;Woonoppervlakte:1;OverigeInpandigeOppervlakte:1;Inhoud:0;AantalSlaapkamers:1;AantalKamers:0',
-		/* Setting Name */'wonenDetailpaginaOverdracht' => /* Default Value */          'Aanvaarding:1f',
-		/* Setting Name */'wonenDetailpaginaBouwOnderhoud' => /* Default Value */       'Bouwjaar:1f;Ligging:1f;SoortBouw:1f;Bouwvorm:1;DakType:1f;DakMateriaal:1f;BouwgrondOppervlakte:1',
-		/* Setting Name */'wonenDetailpaginaParkeergelegenheid' => /* Default Value */  'Parkeerfaciliteiten:1f;GarageSoorten:1f',
-		/* Setting Name */'wonenDetailpaginaOppervlakteInhoud' => /* Default Value */   'Perceeloppervlakte:1f;Woonoppervlakte:1f;Gebruiksoppervlakte:1f;Inhoud:1f;OverigeInpandigeOppervlakte:1f;GebouwgebondenBuitenruimte:1f',
-		/* Setting Name */'wonenDetailpaginaBergruimte' => /* Default Value */          'Bergruimte:1f;SchuurBergingSoort:1f;SchuurBergingVoorzieningen:1f;SchuurBergingIsolatie:1f;SchuurBergingTotaalAantal:1f',
-		/* Setting Name */'wonenDetailpaginaIndeling' => /* Default Value */            'AantalWoonlagen:1f;AantalKamers:1f;AantalSlaapkamers:1f;AantalBadkamers:1',
-		/* Setting Name */'wonenDetailpaginaEnergieInstallatie' => /* Default Value */  'EnergieLabel:1f;Isolatie:1f;Verwarming:1f;WarmWater:1f;CvKetelType:1f;CvKetelBouwjaar:1f;CvKetelEigendom:1;CvKetelBrandstof:0;EnergieEinddatum:1f',
 	];
 	private static array $adminSettings = [
 		// Settings 1
 		/* Option Group= */ 'ppOGSync_adminOptions' => [
 			// General information
-			'settingPageSlug' => 'pixelplus-og-plugin-settings',
+			'settingPageSlug' => 'ppOGSync-plugin-settings',
 			// Sections
 			'sections' => [
-				// Section 1 - Algemeen section
-				/* Section Title= */'Algemeen' => [
-					'sectionID' => 'ppOGSync_SectionGeneral',
-					'sectionCallback' => '',
-                    'permission' => 'plugin_activated',
-					// Fields
-					'fields' => [
-						// Field 1 - Site Naam
-						/* Setting Field Title= */'Site Naam' => [
-							'fieldID' => 'ppOGSync_siteName',
-							'fieldCallback' => '',
-						],
-					]
-				],
-				// Section 2 - Licentie section
+				// Section 1 - Licentie section
 				/* Section Title= */'Licentie' => [
 					'sectionID' => 'ppOGSync_SectionLicence',
 					'sectionCallback' => 'htmlLicenceSection',
@@ -601,116 +559,6 @@ class OGSyncSettingsData {
 				],
 			]
 		],
-		// Settings 2
-		/* Option Group= */ 'ppOGSync_WonenOptions' => [
-			// General information
-			'settingPageSlug' => 'pixelplus-og-plugin-settings-wonen',
-			// Sections
-			'sections' => [
-				// Section 1 - Detailpagina section
-				/* Section Title= */'Detailpagina' => [
-					'sectionID' => 'ppOGSync_wonenDetailpagina',
-					'sectionCallback' => '',
-					// Fields
-					'fields' => [
-						// Field 1 - Basiskenmerken
-						/* Setting Field Title= */'Basiskenmerken' => [
-							'fieldID' => 'ppOGSync_wonenDetailpaginaBasiskenmerken',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_checkboxes'
-						],
-						// Field 2 - Overdracht
-						/* Setting Field Title= */'Overdracht' => [
-							'fieldID' => 'ppOGSync_wonenDetailpaginaOverdracht',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_checkboxes'
-						],
-						// Field 3 - Bouw en onderhoud
-						/* Setting Field Title= */'Bouw en onderhoud' => [
-							'fieldID' => 'ppOGSync_wonenDetailpaginaBouwOnderhoud',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_checkboxes'
-						],
-						// Field 4 - Parkeergelegenheid
-						/* Setting Field Title= */'Parkeergelegenheid' => [
-							'fieldID' => 'ppOGSync_wonenDetailpaginaParkeergelegenheid',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_checkboxes'
-						],
-						// Field 5 - Oppervlakte en inhoud
-						/* Setting Field Title= */'Oppervlakte en inhoud' => [
-							'fieldID' => 'ppOGSync_wonenDetailpaginaOppervlakteInhoud',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_checkboxes'
-						],
-						// Field 6 - Bergruimte
-						/* Setting Field Title= */'Bergruimte' => [
-							'fieldID' => 'ppOGSync_wonenDetailpaginaBergruimte',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_checkboxes'
-						],
-						// Field 7 - Indeling
-						/* Setting Field Title= */'Indeling' => [
-							'fieldID' => 'ppOGSync_wonenDetailpaginaIndeling',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_checkboxes'
-						],
-						// Field 8 - Energie en installatie
-						/* Setting Field Title= */'Energie en installatie' => [
-							'fieldID' => 'ppOGSync_wonenDetailpaginaEnergieInstallatie',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_checkboxes'
-						],
-					]
-				],
-			]
-		],
-		// Settings 3
-		/* Option Group= */ 'ppOGSync_uiterlijkOptions' => [
-			// General information
-			'settingPageSlug' => 'pixelplus-og-plugin-settings-uiterlijk',
-			// Sections
-			'sections' => [
-				// Section 1 - Logo's section
-				/* Section Title= */'Logo\'s' => [
-					'sectionID' => 'ppOGSync_uiterlijkLogos',
-					'sectionCallback' => '',
-					// Fields
-					'fields' => [
-						// Field 1 - Site logo
-						/* Setting Field Title= */'Site logo' => [
-							'fieldID' => 'ppOGSync_siteLogo',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_imageField'
-						],
-						// Field 2 - Site logo width
-						/* Setting Field Title= */'Site logo width' => [
-							'fieldID' => 'ppOGSync_siteLogoWidth',
-							'fieldCallback' => '',
-						],
-						// Field 3 - Site logo height
-						/* Setting Field Title= */'Site logo height' => [
-							'fieldID' => 'ppOGSync_siteLogoHeight',
-							'fieldCallback' => '',
-						],
-					]
-				],
-				// Section 2 - Favicon section
-				/* Section Title= */'Favicon' => [
-					'sectionID' => 'ppOGSync_uiterlijkFavicon',
-					'sectionCallback' => '',
-					// Fields
-					'fields' => [
-						// Field 1 - Favicon
-						/* Setting Field Title= */'Site favicon' => [
-							'fieldID' => 'ppOGSync_siteFavicon',
-							'fieldCallback' => '',
-							'sanitizeCallback' => 'sanitize_imageField'
-						],
-					]
-				],
-			]
-		]
 	];
 
 	// ============ Getters ============
@@ -750,18 +598,18 @@ class OGSyncSettingsData {
 	// ============ HTML Functions ============
 	// ======== Admin Options ========
 	// Sections
-	function htmlLicenceSection(): void { ?>
+	static function htmlLicenceSection(): void { ?>
         <p>De licentiesleutel die de plugin activeert</p>
 	<?php }
 	// Fields
-	function htmlLicenceKeyField(): void {
+	static function htmlLicenceKeyField(): void {
 		// ===== Declaring Variables =====
 		// Vars
-		$licenseKey = get_option($this::$settingPrefix.'licenseKey');
+		$licenseKey = get_option(self::$settingPrefix.'licenseKey');
 
 		// ===== Start of Function =====
 		// Check if licenseKey is empty
-		echo("<input type='text' name='".$this::$settingPrefix."licenseKey' value='".esc_attr($licenseKey)."'");
+		echo("<input type='text' name='".self::$settingPrefix."licenseKey' value='".esc_attr($licenseKey)."'");
 		if ($licenseKey == '') {
 			// Display a message
 			echo('Het veld is nog niet ingevuld.');
@@ -1060,199 +908,177 @@ class OGSyncMapping {
     }
 }
 
-// ========== Inactivated state of Plugin ==========
+// ========== Inactivated/Activated state of Plugin ==========
 class OGSyncLicense {
-	// ============ Declaring Variables ============
-	# Static
-	private static $licenseDataCache = null;
+    // ============ Declaring Variables ============
+    # Nulls
+    private static $licenseDataCache = null;
 
-	// ============ Functions ============
-	# Function to fetch license data from the API
-	private static function fetchLicenseData($url): mixed {
-		// ==== Declaring Variables ====
-		# Getting the JSON from the API
-		$jsonData = OGSyncTools::getJSONFromAPI($url);
+    # Strings
+    private static string $PluginError_Ophaalfout = '#OGSync-Ophaalfout: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.';
+    private static string $PluginError_Ongeldig = '#OGSync-Ongeldig: De licentie is ongeldig. Neem contact op met PixelPlus.';
+    private static string $PluginError_Unknown = '#OGSync-Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.';
+    private static string $PluginError_NotActivated = '#OGSync-NotActivated: De licentie is niet geactiveerd. Voer de licentie in en activeer de plugin.';
 
-		if (is_wp_error($jsonData)) {
-			return $jsonData;
-		}
+    // ============ Functions ============
+    # Function to fetch the Licence data from the API
+    private static function fetchLicenseData($url): mixed {
+        // ==== Getting the JSON from the API ====
+        $jsonData = OGSyncTools::getJSONFromAPI($url);
 
-		// ==== Start of IF ====
-		if (isset($jsonData['message']) and $jsonData['message'] == 'Authentication token is not set!') {
-			return ['success' => false, 'message' => 'Authentication token is not set!'];
-		}
+        if (is_wp_error($jsonData)) {
+            return $jsonData;
+        }
 
-		return $jsonData;
-	}
+        // ==== Start of IF ====
+        if (isset($jsonData['message']) and $jsonData['message'] == 'Authentication token is not set!') {
+            return ['success' => false, 'message' => 'Authentication token is not set!'];
+        }
 
-	# Function for checking the license
-	static function checkLicense(): mixed {
-		// Checking if the license data is already fetched return it
-		// If the license data is already fetched, return it
-		if (self::$licenseDataCache !== null) {
-			return self::$licenseDataCache;
-		}
+        return $jsonData;
+    }
 
-		// ============= Declaring Variables =============
-		# Classes
-		$settingData = new OGSyncSettingsData();
+    # Function to check the license and adminNotice the things that don't work
+    private static function checkLicense(): mixed {
+        // If the license data is already fetched, return it
+        if (self::$licenseDataCache !== null) {
+            return self::$licenseDataCache;
+        }
 
-		# Cache
-		$cacheFile = plugin_dir_path(dirname(__DIR__)) . $settingData::$cacheFolder . $settingData::cacheFiles()['licenseCache'];
+        // ======== Declaring Variables ========
+        # Cache
+        $cacheFile = plugin_dir_path(dirname(__DIR__)) . OGSyncSettingsData::$cacheFolder . OGSyncSettingsData::cacheFiles()['licenseCache'];
 
-		# API
-		$url = $settingData::apiURLs()['license'];
-		$qArgs = !empty(get_option($settingData::$settingPrefix.'licenseKey')) ? "?token=".get_option($settingData::$settingPrefix.'licenseKey') : '';
+        # API
+        $url = OGSyncSettingsData::apiURLs()['license'];
+        $qArgs = !empty(get_option(OGSyncSettingsData::$settingPrefix.'licenseKey')) ? "?token=".get_option(OGSyncSettingsData::$settingPrefix.'licenseKey') : '';
 
-		// ================ Start of Function =============
-		// If cache file doesn't exist then create it
-		if (!file_exists($cacheFile)) {
-			$cacheData = self::fetchLicenseData($url . $qArgs);
+        // ======== Start of Function ========
+        // If cache file doesn't exist, create it if the license is valid
+        if (!file_exists($cacheFile)) {
+            // ==== Declaring Variables IF ====
+            # Vars
+            $cacheData = self::fetchLicenseData($url . $qArgs);
 
-			// ==== Start of IF ====
-			if (is_wp_error($cacheData)) {
-				# Giving the message
-				OGSyncTools::adminNotice('error', "#OG-WP Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
-			}
+            // ==== Start of IF ====
+            if (is_wp_error($cacheData)) {
+                OGSyncTools::adminNotice('error', self::$PluginError_Ophaalfout);
+            }
             elseif (isset($cacheData['success']) and $cacheData['success']) {
-				# Saving the data to the cache file
-				file_put_contents($cacheFile, json_encode($cacheData));
-			}
+                file_put_contents($cacheFile, json_encode($cacheData));
+            }
+            elseif (isset($cacheData['success']) and $cacheData['message'] == 'Invalid authentication token!') {
+                OGSyncTools::adminNotice('error', self::$PluginError_Ongeldig);
+            }
             elseif (isset($cacheData['message']) and $cacheData['message'] == 'Authentication token is not set!') {
-				# Do absolutely nothing
-			}
-            elseif (isset($cacheData['success']) and !$cacheData['success']) {
-				# Telling the user that the license is invalid
-				OGSyncTools::adminNotice('error', "De licentie is ongeldig. Neem contact op met PixelPlus.");
-			}
-            elseif (isset($cacheData['message']) and $cacheData['message'] == 'Invalid authentication token!') {
-				# Telling the user that the license is invalid
-				OGSyncTools::adminNotice('error', "#OngeldigeLicentie: De licentiesleutel is ongeldig. Neem contact op met PixelPlus.");
-			}
-			else {
-				OGSyncTools::adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
-			}
+                OGSyncTools::adminNotice('error', self::$PluginError_NotActivated);
+            }
+            else {
+                OGSyncTools::adminNotice('error', self::$PluginError_Unknown);
+            }
+        }
+        else {
+            // ==== Declaring Variables ELSE ====
+            // If cache file exists, fetch data from the cache
+            $cacheData = json_decode(file_get_contents($cacheFile), true);
 
-			# After fetching the license data, store it in the static cache variable
-			self::$licenseDataCache = $cacheData;
+            // ==== Start of ELSE ====
+            // Check if the data is stale (older than an hour) and needs to be updated
+            if ((time() - filemtime($cacheFile)) >= 3600 || empty($cacheData)) {
+                $cacheData = self::fetchLicenseData($url . $qArgs);
 
-			# Returning the error
-			return $cacheData;
-		}
+                // ==== Start of IF ====
+                if (is_wp_error($cacheData)) {
+                    OGSyncTools::adminNotice('error', "#OGSync Plugin Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
+                }
+                elseif (isset($cacheData['success']) and $cacheData['success']) {
+                    file_put_contents($cacheFile, json_encode($cacheData));
+                }
+                elseif (isset($cacheData['message']) and $cacheData['message'] == 'Invalid authentication token!') {
+                    OGSyncTools::adminNotice('error', self::$PluginError_Ongeldig);
+                }
+                elseif (isset($cacheData['message']) and $cacheData['message'] == 'Authentication token is not set!') {
+                    OGSyncTools::adminNotice('error', self::$PluginError_NotActivated);
+                }
+                else {
+                    OGSyncTools::adminNotice('error', self::$PluginError_Unknown);
+                }
+            }
+        }
 
-		// If cache file exists, fetch data from the cache
-		$cacheData = json_decode(file_get_contents($cacheFile), true);
+        // After fetching the license data, store it in the static cache variable
+        self::$licenseDataCache = $cacheData;
 
-		// Check if the data is stale (older than an hour) and needs to be updated
-		if ((time() - filemtime($cacheFile)) >= 3600) {
-			$cacheData = self::fetchLicenseData($url . $qArgs);
+        return $cacheData;
+    }
 
-			// ==== Start of IF ====
-			# Checking if the data['success'] == True. If so then return otherwise check the API if anything changed by any chance
-			if (is_wp_error($cacheData)) {
-				# Giving the message
-				OGSyncTools::adminNotice('error', "#OG-WP Error: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
-			}
-            elseif (isset($cacheData['success']) and $cacheData['success']) {
-				# Saving the data to the cache file
-				file_put_contents($cacheFile, json_encode($cacheData));
-			}
-            elseif (isset($cacheData['message']) and $cacheData['message'] == 'Authentication token is not set!') {
-				# Do absolutely nothing
-			}
-            elseif (isset($cacheData['success']) and !$cacheData['success']) {
-				# Telling the user that the license is invalid
-				OGSyncTools::adminNotice('error', "De licentie is ongeldig. Neem contact op met PixelPlus.");
+    # Function to check if the plugin is activated or not
+    public static function checkActivation(): bool {
+        $jsonData = self::checkLicense();
 
-				# Saving the data to the cache file
-				file_put_contents($cacheFile, json_encode($cacheData));
-			}
-			else {
-				OGSyncTools::adminNotice('error', "#Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.");
-			}
-		}
-
-		return $cacheData;
-	}
-
-	# A function for registering base settings of the unactivated plugin as activation hook.
-	function checkActivation(): bool {
-		// ======== Declaring Variables ========
-		$jsonData = self::checkLicense();
-
-		// ======== Start of Function ========
-		# Checking if the license is valid
-		if (is_wp_error($jsonData)) {
-			return False;
-		}
+        // ======== Start of Function ========
+        # Checking if the license is valid
+        if (is_wp_error($jsonData)) {
+            return False;
+        }
         elseif (isset($jsonData['success']) and $jsonData['success']) {
-			return True;
-		}
-		else {
-			return False;
-		}
-	}
+            return True;
+        }
+        else {
+            return False;
+        }
+    }
 
-	# A function to see, which OG Post types the user has access to
-	function checkPostTypeAccess(): array {
-		// ==== Declaring Variables ====
-		# Vars
-		$objectAccess = self::checkLicense();
-		// ==== Start of Function ====
-		// Check if data exists
+    # Function to check the post type access
+    public static function checkPostTypeAccess(): array {
+        // ==== Start of Function ====
+        $objectAccess = self::checkLicense();
 
-
-		// Return the array
-		return $objectAccess['data']['types'] ?? [];
-	}
+        // Check if data exists
+        if (isset($objectAccess['data']['types'])) {
+            $objectAccess = $objectAccess['data']['types'];
+        }
+        else {
+            $objectAccess = [];
+        }
+        // Return the array
+        return $objectAccess;
+    }
 }
 class OGSyncPages
 {
+    // ======== Constructor ========
     function __construct()
     {
-        // Creating the Pages / Custom Post Types
-        add_action('admin_menu', array($this, 'createPages'));
+        // Creating the Menu's / Custom Post Types
+        add_action('admin_menu', [__CLASS__, 'createMenus']);
         // Registering all the needed settings for the plugin
-        add_action('admin_init', array($this, 'registerSettings'));
+        add_action('admin_init', [__CLASS__, 'registerSettings']);
         // Updating the permalinks
         add_action('init', function() {
-	        // ======== Declaring Variables ========
-	        $OGSyncSettingsData = new OGSyncSettingsData();
-
-	        $favicon = get_option($OGSyncSettingsData::$settingPrefix . 'siteFavicon') ?? '';
 	        // ======== Start of Function ========
 	        // Permalinks
 	        flush_rewrite_rules();
-
-	        // Favicon
-	        if (!empty($favicon)) {
-		        update_option('site_icon', $favicon);
-            }
-
         });
     }
 
-    // ======== Create Settings Page ========
-    function createPages(): void {
+    // ======== Creating menu's ========
+    public static function createMenus(): void {
         // ======= Declaring Variables =======
-        // Classes
-        $license = new OGSyncLicense();
-        $postTypeData = new OGSyncPostTypeData();
-
 		# Vars
-        $boolPluginActivated = $license->checkActivation();
+        $boolPluginActivated = OGSyncLicense::checkActivation();
 		if ($boolPluginActivated) {
-			$postTypeData = $postTypeData->customPostTypes();
-			$objectAccess = $license->checkPostTypeAccess();
+			$postTypeData = OGSyncPostTypeData::customPostTypes();
+			$objectAccess = OGSyncLicense::checkPostTypeAccess();
 		}
 
         // Making the Global Settings Page
         add_menu_page(
             'Admin Settings',
-            'OG Settings',
+            'OG Sync Settings',
             'manage_options',
-            'pixelplus-og-plugin-settings',
-            array($this, 'HTMLOGAdminSettings'),
+            'ppOGSync-plugin-settings',
+            [__CLASS__, 'HTMLOGAdminSettings'],
             'dashicons-admin-generic',
             101
         );
@@ -1261,22 +1087,12 @@ class OGSyncPages
             'Algemeen',
             'Algemeen',
             'manage_options',
-            'pixelplus-og-plugin-settings',
-            array($this, 'HTMLOGAdminSettings')
+            'ppOGSync-plugin-settings',
+            [__CLASS__, 'HTMLOGAdminSettings']
         );
 
         // ======= When Plugin is activated =======
         if ($boolPluginActivated) {
-            // ======== Uiterlijk ========
-            add_submenu_page(
-                'pixelplus-og-plugin-settings',
-                'Uiterlijk',
-                'Uiterlijk',
-                'manage_options',
-                'pixelplus-og-plugin-settings-uiterlijk',
-                array($this, 'HTMLOGUiterlijkSettings')
-            );
-
             // ======== Post Types ========
             // ==== OG Settings ====
             // Submenu Items based on the OG Post Types for in the OG Settings
@@ -1290,7 +1106,7 @@ class OGSyncPages
                         $name,
                         'manage_options',
                         'pixelplus-og-plugin-settings-' . strtolower($name),
-                        array($this, 'HTMLOGAdminSettings'.$name)
+                        [__CLASS__, 'HTMLOGAdminSettings'.$name]
                     );
                 }
             }
@@ -1302,7 +1118,7 @@ class OGSyncPages
                 'OG Admin Dashboard',
                 'manage_options',
                 'pixelplus-og-plugin',
-                array($this, 'HTMLOGAdminDashboard'),
+                [__CLASS__, 'HTMLOGAdminDashboard'],
                 'dashicons-plus-alt',
                 100);
             // First sub-menu item name change
@@ -1312,7 +1128,7 @@ class OGSyncPages
                 'Dashboard',
                 'manage_options',
                 'pixelplus-og-plugin',
-                array($this, 'HTMLOGAdminDashboard'));
+                [__CLASS__, 'HTMLOGAdminDashboard']);
 
             // ==== Items OG Aanbod ====
             // Menu Item: OG Aanbod Dashboard
@@ -1321,7 +1137,7 @@ class OGSyncPages
                 'OG Aanbod',
                 'manage_options',
                 'pixelplus-og-plugin-aanbod',
-                array($this, 'HTMLOGAanbodDashboard'),
+                [__CLASS__, 'HTMLOGAanbodDashboard'],
                 'dashicons-admin-multisite',
                 40);
             // First sub-menu item name change
@@ -1331,13 +1147,14 @@ class OGSyncPages
                 'Dashboard',
                 'manage_options',
                 'pixelplus-og-plugin-aanbod',
-                array($this, 'HTMLOGAanbodDashboard'),
+                [__CLASS__, 'HTMLOGAanbodDashboard'],
                 0
             );
         }
     }
+
 	// ==== Option functions ====
-	function createCheckboxes($input, $checkBoxName, $label): void {
+	static function createCheckboxes($input, $checkBoxName, $label): void {
 		if ($input[1] == '0') {
 			echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
 			echo("<input type='checkbox' name='{$checkBoxName}' value='1'>{$label}<br>");
@@ -1355,7 +1172,7 @@ class OGSyncPages
 			echo("<input type='checkbox' name='{$checkBoxName}' value='1' checked>{$label}<br>");
 		}
 	}
-    function createCheckboxField($fieldArray, $strOption): void {
+    static function createCheckboxField($fieldArray, $strOption): void {
         // ===== Declaring Variables ====
 	    $arrExplodedOption = explode(';', $strOption);
 
@@ -1373,11 +1190,11 @@ class OGSyncPages
 			    $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
 
 			    // ==== Start of Loop ====
-			    $this->createCheckboxes($explodedValue, $checkBoxName, $label);
+			    self::createCheckboxes($explodedValue, $checkBoxName, $label);
 		    }
 	    }
     }
-    function createTextField($fieldID, $strOption): void {
+    static function createTextField($fieldID, $strOption): void {
 	    // ===== Declaring Variables ====
         $value = esc_attr($strOption);
 
@@ -1385,7 +1202,7 @@ class OGSyncPages
 	    // Check if licenseKey is empty
 	    echo("<input type='text' name='$fieldID' value='$value'");
     }
-	function createImageField($fieldArray, $strOption): void {
+	static function createImageField($fieldArray, $strOption): void {
 		// ========== Declaring Variables =========
 		# Vars
 		$strTrimmedOption = basename($strOption) ?? '';
@@ -1487,18 +1304,14 @@ class OGSyncPages
 	}
 
     // ==== Register Settings ====
-	function registerSettings(): void {
+	public static function registerSettings(): void {
 		// ==== Declaring Variables ====
-		# Classes
-		$OGSyncLicense = new OGSyncLicense();
-
 		# Vars
-		$boolPluginActivated = $OGSyncLicense->checkActivation();
-		$OGSyncSettingsData = new OGSyncSettingsData();
+		$boolPluginActivated = OGSyncLicense::checkActivation();
 
 		// ==== Start of Function ====
 		# Setting sections and use the OGSyncSettingsData adminSettings data
-		foreach($OGSyncSettingsData::adminSettings() as $optionGroup => $optionArray) {
+		foreach(OGSyncSettingsData::adminSettings() as $optionGroup => $optionArray) {
 			# Settings for on settings page
 			foreach ($optionArray['sections'] as $sectionTitle => $sectionArray) {
 				# Checking if this section has the permission to be created
@@ -1508,7 +1321,7 @@ class OGSyncPages
 				add_settings_section(
 					$sectionArray['sectionID'],
 					$sectionTitle,
-					!empty($sectionArray['sectionCallback']) ? array($OGSyncSettingsData, $sectionArray['sectionCallback']) : function () {
+					!empty($sectionArray['sectionCallback']) ? "OGSyncSettingsData::{$sectionArray['sectionCallback']}" : function () {
 
 					},
 					$optionArray['settingPageSlug'],
@@ -1518,7 +1331,7 @@ class OGSyncPages
 					add_settings_field(
 						$fieldArray['fieldID'],
 						$fieldTitle,
-						!empty($fieldArray['fieldCallback']) ? array($OGSyncSettingsData, $fieldArray['fieldCallback']) : function () use ($fieldArray) {
+						!empty($fieldArray['fieldCallback']) ? "OGSyncSettingsData::{$fieldArray['fieldCallback']}" : function () use ($fieldArray) {
 							// ======== Declaring Variables ========
 							// Vars
 							$strOption = get_option($fieldArray['fieldID']);
@@ -1528,43 +1341,41 @@ class OGSyncPages
 							if (!empty($fieldArray['sanitizeCallback'])) {
 								switch ($fieldArray['sanitizeCallback']) {
 									case 'sanitize_checkboxes':
-										$this->createCheckboxField($fieldArray, $strOption);
+										self::createCheckboxField($fieldArray, $strOption);
 										break;
 									case 'sanitize_imageField':
-										$this->createImageField($fieldArray, $strOption);
+										self::createImageField($fieldArray, $strOption);
 										break;
 									default:
 										break;
 								}
 							}
 							else {
-								$this->createTextField($fieldArray['fieldID'], $strOption);
+								self::createTextField($fieldArray['fieldID'], $strOption);
 							}
 						},
 						$optionArray['settingPageSlug'],
 						$sectionArray['sectionID'],
 					);
 					// Registering the Field
-					register_setting($optionGroup, $fieldArray['fieldID'], !empty($fieldArray['sanitizeCallback']) ? array($OGSyncSettingsData, $fieldArray['sanitizeCallback']) : '');
+					register_setting($optionGroup, $fieldArray['fieldID'], !empty($fieldArray['sanitizeCallback']) ? "OGSyncSettingsData::{$fieldArray['sanitizeCallback']}" : '');
 				}
 			}
 		}
 	}
 
     // ============ HTML ============
-    // OG Admin
-    function HTMLOGAdminDashboard(): void {
+    // OG Sync Admin
+    static function HTMLOGAdminDashboard(): void {
         // ======== Declaring Variables ========
         # Classes
-        $settingData = new OGSyncSettingsData();
-        $postTypeData = new OGSyncPostTypeData();
         $OGSyncColorScheme = new OGSyncColorScheme();
 
         # Variables
-        $postTypeData = $postTypeData->customPostTypes();
+        $postTypeData = OGSyncPostTypeData::customPostTypes();
 
-        $url = $settingData::apiURLs()['syncTimes'];
-        $qArgs = "?token=".get_option($settingData::$settingPrefix.'licenseKey');
+        $url = OGSyncSettingsData::apiURLs()['syncTimes'];
+        $qArgs = "?token=".get_option(OGSyncSettingsData::$settingPrefix.'licenseKey');
         $lastSyncTimes = json_decode(wp_remote_get($url.$qArgs)['body'], true);
 
         $buttonColor = $OGSyncColorScheme->returnColor();
@@ -1613,51 +1424,19 @@ class OGSyncPages
             </div>
         ");
         OGSyncTools::htmlAdminFooter('OG Admin Dashboard');}
-    // OG Admin Settings
-    function HTMLOGAdminSettings(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - Algemeen');
-        $settingsData = new OGSyncSettingsData(); ?>
+    // OG Site Admin Settings
+    static function HTMLOGAdminSettings(): void {OGSyncTools::htmlAdminHeader('OG Admin Settings - Algemeen'); ?>
         <form method="post" action="options.php">
-            <?php settings_fields($settingsData::$settingPrefix.'adminOptions');
-            do_settings_sections('pixelplus-og-plugin-settings');
-            OGSyncTools::hidePasswordByName($settingsData::$settingPrefix.'licenseKey');
+            <?php settings_fields(OGSyncSettingsData::$settingPrefix.'adminOptions');
+            do_settings_sections('ppOGSync-plugin-settings');
+            OGSyncTools::hidePasswordByName(OGSyncSettingsData::$settingPrefix.'licenseKey');
             submit_button('Opslaan', 'primary', 'submit_license');
             ?>
         </form>
-    <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Licentie');}
-    function HTMLOGUiterlijkSettings(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - Uiterlijk');
-	    // ======== Declaring Variables ========
-	    $settingsData = new OGSyncSettingsData(); ?>
-        <form method="post" action="options.php">
-		    <?php settings_fields($settingsData::$settingPrefix.'uiterlijkOptions');
-		    do_settings_sections('pixelplus-og-plugin-settings-uiterlijk');
-		    submit_button('Opslaan', 'primary', 'submit_uiterlijk');
-		    ?>
-        </form>
-    <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Uiterlijk');}
-    function HTMLOGAdminSettingsWonen(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - Wonen');
-        // ======== Declaring Variables ========
-
-        // ======== Start of Function ========
-        $settingsData = new OGSyncSettingsData(); ?>
-        <form method="post" action="options.php">
-            <?php settings_fields($settingsData::$settingPrefix.'WonenOptions');
-            do_settings_sections('pixelplus-og-plugin-settings-wonen');
-            submit_button('Opslaan', 'primary', 'submit_wonen');
-            ?>
-        </form>
-    <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Wonen');}
-    function HTMLOGAdminSettingsBOG(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - BOG'); ?>
-
-        <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - BOG');}
-    function HTMLOGAdminSettingsNieuwbouw(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - Nieuwbouw'); ?>
-
-        <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Nieuwbouw');}
-    function HTMLOGAdminSettingsALV(): void { OGSyncTools::htmlAdminHeader('OG Admin Settings - A&LV'); ?>
-
-        <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - A&LV');}
+    <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Algemeen');}
 
     // OG Aanbod
-    function HTMLOGAanbodDashboard(): void { OGSyncTools::htmlAdminHeader('OG Aanbod Dashboard'); ?>
+    static function HTMLOGAanbodDashboard(): void { OGSyncTools::htmlAdminHeader('OG Aanbod Dashboard'); ?>
         <p>dingdong bishass</p>
         <?php OGSyncTools::htmlAdminFooter('OG Aanbod Dashboard');}
 
@@ -1684,8 +1463,7 @@ class OGSyncPostTypes {
 	function createPostTypes(): void {
 		// ======== Declaring Variables ========
 		# Classes
-		$postTypeData = new OGSyncPostTypeData();
-		$postTypeData = $postTypeData->customPostTypes();
+		$postTypeData = OGSyncPostTypeData::customPostTypes();
         # Vars
         $templateFolder = plugin_dir_path(dirname(__DIR__)) . 'php/templates/';
 
@@ -2316,12 +2094,11 @@ class OGSyncOffers {
 		// ============ Declaring Variables ============
 		# Classes
 		global $wpdb;
-		$postTypeData = new OGSyncPostTypeData();
 
 		# Variables
 		date_default_timezone_set('Europe/Amsterdam');
 		$beginTime = time();
-		$postTypeData = $postTypeData->customPostTypes();
+		$postTypeData = OGSyncPostTypeData::customPostTypes();
 		// ============ Start of Function ============
 		# ==== Checking all the post types ====
 		foreach ($postTypeData as $postTypeName => $postTypeArray) {

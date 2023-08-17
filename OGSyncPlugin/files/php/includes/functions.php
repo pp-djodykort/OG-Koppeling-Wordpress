@@ -51,6 +51,7 @@ class OGSyncTools {
 		}
 		return $welcomeMessage;
 	}
+
 	// ============ JS Functions ============
 	static function hidePasswordByName($name): void {
 		echo("
