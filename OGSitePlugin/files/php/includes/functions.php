@@ -98,4 +98,86 @@ class OGSiteTools {
         $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
         return "This page took $time seconds to load.";
     }
+
+    static function createWordpressPages(): void {
+        // ======== Declaring Variables ========
+        # Variables
+        $arrWordpressPages = OGSiteSettingsData::arrPages();
+
+        // ======== Start of Function ========
+        // Creating the pages
+        foreach ($arrWordpressPages as $wordpressPageKey => $wordpressPage) {
+            // ==== Declaring Variables ====
+            # Variables
+            $pageQuery = new WP_Query([
+                'post_type' => 'page',
+                'post_status' => ['any', 'trash'],
+                'meta_key' => 'pageID',
+                'meta_value' => $wordpressPage['pageID'],
+            ]);
+            $pageExists = $pageQuery->have_posts();
+
+            // ==== Start of Function ====
+            # IF the page exists then continue
+            if ($pageExists) {
+                // Don't need to do anything
+                continue;
+            }
+
+            // Creating the page
+            $pageID = wp_insert_post([
+                'post_title' => $wordpressPage['pageTitle'],
+                'post_content' => $wordpressPage['pageContent'],
+                'post_status' => 'publish',
+                'post_type' => 'page',
+                'post_slug' => $wordpressPage['pageSlug'],
+                'page_template' => $wordpressPage['templateFile'],
+                'meta_input' => [
+                    'pageID' => $wordpressPage['pageID'],
+                ],
+            ]);
+
+            // Checking if the page was created
+            if ($pageID == 0) {
+                // Page was not created
+                OGSyncTools::adminNotice('info', '<h1>Page was not created</h1>');
+                continue;
+            }
+
+            // Checking the child pages
+            if (isset($wordpressPage['childPages'])) {
+                // Creating the child pages
+                foreach ($wordpressPage['childPages'] as $childPageKey => $childPage) {
+                    // Creating the child page
+                    $childPageID = wp_insert_post([
+                        'post_title' => $childPage['pageTitle'],
+                        'post_content' => $childPage['pageContent'],
+                        'post_status' => 'publish',
+                        'post_type' => 'page',
+                        'post_slug' => $childPage['pageSlug'],
+                        'page_template' => $childPage['templateFile'],
+                        'post_parent' => $pageID,
+                        'meta_input' => [
+                            'pageID' => $childPage['pageID'],
+                        ],
+                    ]);
+
+                    // Checking if the page was created
+                    if ($childPageID == 0) {
+                        // Page was not created
+                        OGSyncTools::adminNotice('info', '<h1>Child Page was not created</h1>');
+                    }
+                }
+            }
+
+            // Checking if the page is supposed to be the homepage
+            if ($wordpressPage['boolIsFrontPage']) {
+                // Setting the page as the homepage
+                update_option('page_on_front', $pageID);
+                update_option('show_on_front', 'page');
+
+                OGSyncTools::adminNotice('info', '<h1>Page is created</h1>');
+            }
+        }
+    }
 }

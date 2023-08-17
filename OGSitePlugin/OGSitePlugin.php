@@ -20,11 +20,12 @@ include_once 'files'.DIRECTORY_SEPARATOR.'php'.DIRECTORY_SEPARATOR.'includes'.DI
 
 // ============ Activation and Deactivation and Uninstall ============
 register_activation_hook(__FILE__, 'OGSiteActivationAndDeactivation::activate');
-register_deactivation_hook(__FILE__, 'OGSiteActivationAndDeactivation::uninstall');
+register_deactivation_hook(__FILE__, 'OGSiteActivationAndDeactivation::deactivate');
 register_uninstall_hook(__FILE__, 'OGSiteActivationAndDeactivation::uninstall');
 
 // ============ Classes initialisation ============
 $OGSiteSettingsData = new OGSiteSettingsData();
+
 // ============ Start of Program ============
 add_action('admin_notices', function () {
     echo OGSiteTools::getLoadTime();
