@@ -47,7 +47,7 @@ class OGSyncActivationAndDeactivation {
         $settingsData = new OGSyncSettingsData();
 
         # Variables
-        $cacheFolder = plugin_dir_path(dirname(__DIR__, 1)).$settingsData::$cacheFolder;
+        $cacheFolder = plugin_dir_path(dirname(__DIR__ )) . $settingsData::$cacheFolder;
 
         // ==== Start of Function ====
         // Creating the cache files
@@ -128,7 +128,7 @@ class OGSyncPostTypeData {
                         # TableName
                         'tableName' => 'tbl_OG_wonen',
                         # Normal fields
-                        'ID' => 'object_ObjectTiaraID',                              // Mapped value
+                        'ID' => 'object_ObjectTiaraID',                              // Mapped value USE Tiara ID
                         'post_title' => 'objectDetails_Adres_NL_Straatnaam;objectDetails_Adres_NL_Huisnummer;objectDetails_Adres_NL_HuisnummerToevoeging;objectDetails_Adres_NL_Woonplaats', // Mapped value
                         'post_name' => 'objectDetails_Adres_NL_Straatnaam-objectDetails_Adres_NL_Huisnummer-objectDetails_Adres_NL_HuisnummerToevoeging-objectDetails_Adres_NL_Woonplaats',  // Mapped value
                         'post_content' => 'objectDetails_Aanbiedingstekst',       // Mapped value
@@ -202,10 +202,10 @@ class OGSyncPostTypeData {
                         # TableName
                         'tableName' => 'tbl_OG_bog',
                         # Normal fields
-                        'ID' => 'object_ObjectTiaraID',
+                        'ID' => 'object_ObjectTiaraID',                     // USE Tiara ID
                         'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer;objectDetails_Adres_HuisnummerToevoeging;objectDetails_Adres_Woonplaats', // Mapped value
                         'post_name' => 'objectDetails_Adres_Straatnaam-objectDetails_Adres_Huisnummer-objectDetails_Adres_HuisnummerToevoeging-objectDetails_Adres_Woonplaats',  // Mapped value
-                        'post_content' => 'objectDetails_Aanbiedingstekst',       // Mapped value
+                        'post_content' => 'objectDetails_Aanbiedingstekst', // Mapped value
                         'datum_gewijzigd' => 'datum_gewijzigd',             // Mapped value
                         'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value
                         'objectCode' => 'object_ObjectCode',                // Mapped value
@@ -276,7 +276,7 @@ class OGSyncPostTypeData {
                         # TableName
                         'tableName' => 'tbl_OG_nieuwbouw_projecten',
                         # Normal fields
-                        'ID' => 'project_ObjectTiaraID',                                            // Mapped value
+                        'ID' => 'project_ObjectTiaraID',                                            // Mapped value USE TIARA ID
                         'post_title' => 'project_ProjectDetails_Projectnaam',                       // Mapped value if needed
                         'post_name' => 'project_ProjectDetails_Projectnaam',                        // Mapped value
                         'post_content' => 'project_ProjectDetails_Presentatie_Aanbiedingstekst',    // Mapped value
@@ -292,12 +292,13 @@ class OGSyncPostTypeData {
                             'tableName' => 'tbl_OG_media',
                             # Normal fields
                             'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
-                            'search_id' => 'id_OG_nieuwbouw_projecten',
-                            'mediaID' => 'media_Id',                // Mapped value
+                            'search_id' => 'id_OG_nieuwbouw_projecten', //
+                            'mediaID' => 'media_Id',                    // Mapped value
                             'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value
                             'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
                             'mediaName' => 'MediaName',
                             'media_Groep' => 'media_Groep',             // Mapped value
+                            'mediaTiaraID' => 'object_ObjectTiaraID',
 
                             # Post fields
                             'object_keys' => array(
@@ -315,7 +316,7 @@ class OGSyncPostTypeData {
                         # TableName
                         'tableName' => 'tbl_OG_nieuwbouw_bouwTypes',
                         # Normal fields
-                        'ID' => 'bouwType_ObjectTiaraID',                                           // Mapped value
+                        'ID' => 'bouwType_ObjectTiaraID',                                           // Mapped value USE Tiara ID
                         'id_projecten' => 'id_OG_nieuwbouw_projecten',                              // Mapped value
                         'post_title' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',        // Mapped value if needed | is for seperating values (OR statement)
                         'post_name' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',         // Mapped value
@@ -338,6 +339,7 @@ class OGSyncPostTypeData {
                             'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value
                             'mediaName' => 'MediaName',                     // Mapped value
                             'media_Groep' => 'media_Groep',                 // Mapped value
+                            'mediaTiaraID' => 'object_ObjectTiaraID',
 
                             # Post fields
                             'object_keys' => array(
@@ -355,7 +357,7 @@ class OGSyncPostTypeData {
                         # TableName
                         'tableName' => 'tbl_OG_nieuwbouw_bouwNummers',
                         # Normal fields
-                        'ID' => 'bouwNummer_ObjectTiaraID',                                                     // Mapped value
+                        'ID' => 'bouwNummer_ObjectTiaraID',                                                     // Mapped value USE Tiara ID
                         'id_bouwtypes' => 'id_OG_nieuwbouw_bouwTypes',                                          // Mapped value
                         'post_title' => 'Adres_Straatnaam;Adres_Huisnummer;Adres_Postcode;Adres_Woonplaats;Adres_HuisnummerToevoeging;bouwNummer_ObjectCode',    // Mapped value if needed | is for seperating values (OR statement)
                         'post_name' => 'Adres_Straatnaam-Adres_Huisnummer-Adres_Postcode-Adres_Woonplaats-Adres_HuisnummerToevoeging-bouwNummer_ObjectCode',  // Mapped value
@@ -378,6 +380,7 @@ class OGSyncPostTypeData {
                             'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value
                             'mediaName' => 'MediaName',                     // Mapped value
                             'media_Groep' => 'media_Groep',                 // Mapped value
+                            'mediaTiaraID' => 'object_ObjectTiaraID',
 
                             # Post fields
                             'object_keys' => array(
@@ -426,7 +429,7 @@ class OGSyncPostTypeData {
                         # TableName
                         'tableName' => 'tbl_OG_alv',
                         # Normal fields
-                        'ID' => '_id',
+                        'ID' => 'object_ObjectTiaraID',                                  // Mapped value USE Tiara ID
                         'post_title' => 'straat;huisnummer;huisnummertoevoeging;plaats', // Mapped value
                         'post_name' => 'straat-huisnummer-huisnummertoevoeging-plaats',  // Mapped value
                         'post_content' => 'aanbiedingstekst',       // Mapped value
@@ -827,14 +830,14 @@ class OGSyncMapping {
                         // ==== Start of Function ====
                         if ($strTrimmedKey == 'bouwtypes') {
                             # Step 1: Getting the count of bouwtypes in the database
-                            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[1]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = {$projectID}");
+                            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[1]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = $projectID");
 
                             # Step 2: Adding the count to the OG Record
                             $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
                         }
                         if ($strTrimmedKey == 'bouwnummers') {
                             # Step 1: Getting the count of bouwnummers in the database
-                            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[2]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = {$projectID}");
+                            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[2]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = $projectID");
 
                             # Step 2: Adding the count to the OG Record
                             $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
@@ -1034,15 +1037,8 @@ class OGSyncLicense {
         // ==== Start of Function ====
         $objectAccess = self::checkLicense();
 
-        // Check if data exists
-        if (isset($objectAccess['data']['types'])) {
-            $objectAccess = $objectAccess['data']['types'];
-        }
-        else {
-            $objectAccess = [];
-        }
-        // Return the array
-        return $objectAccess;
+	    // Return the array
+        return $objectAccess['data']['types'] ?? [];
     }
 }
 class OGSyncPages
@@ -1156,20 +1152,20 @@ class OGSyncPages
 	// ==== Option functions ====
 	static function createCheckboxes($input, $checkBoxName, $label): void {
 		if ($input[1] == '0') {
-			echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
-			echo("<input type='checkbox' name='{$checkBoxName}' value='1'>{$label}<br>");
+			echo("<input type='hidden' name='$checkBoxName' value='0' checked>");
+			echo("<input type='checkbox' name='$checkBoxName' value='1'>$label<br>");
 		}
         elseif ($input[1] == '0f') {
-			echo("<input type='hidden' name='{$checkBoxName}' value='0f' checked>");
-			echo("<input type='checkbox' name='{$checkBoxName}' value='0f' disabled>{$label}<br>");
+			echo("<input type='hidden' name='$checkBoxName' value='0f' checked>");
+			echo("<input type='checkbox' name='$checkBoxName' value='0f' disabled>$label<br>");
 		}
         elseif ($input[1] == '1f') {
-			echo("<input type='hidden' name='{$checkBoxName}' value='1f' checked>");
-			echo("<input type='checkbox' name='{$checkBoxName}' value='1f' checked disabled>{$label}<br>");
+			echo("<input type='hidden' name='$checkBoxName' value='1f' checked>");
+			echo("<input type='checkbox' name='$checkBoxName' value='1f' checked disabled>$label<br>");
 		}
 		else {
-			echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
-			echo("<input type='checkbox' name='{$checkBoxName}' value='1' checked>{$label}<br>");
+			echo("<input type='hidden' name='$checkBoxName' value='0' checked>");
+			echo("<input type='checkbox' name='$checkBoxName' value='1' checked>$label<br>");
 		}
 	}
     static function createCheckboxField($fieldArray, $strOption): void {
@@ -1187,7 +1183,7 @@ class OGSyncPages
 
 			    # Checkboxes
 			    $checkBoxName = "{$fieldArray['fieldID']}[$explodedValue[0]]"; // Append index to the checkbox name
-			    $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
+			    $label = preg_replace('/(?<! )[A-Z]/', ' $0', $explodedValue[0]);
 
 			    // ==== Start of Loop ====
 			    self::createCheckboxes($explodedValue, $checkBoxName, $label);
@@ -1603,7 +1599,8 @@ class OGSyncOffers {
 
         # Variables
         $databaseKeysMedia = $databaseKey['media'];
-        $postTypeName = !empty($databaseKeysMedia['folderRedirect']) ? $databaseKeysMedia['folderRedirect'] : $postTypeName;
+	    $mediaTiaraIDName = !empty($databaseKeysMedia['mediaTiaraID']) ? $databaseKeysMedia['mediaTiaraID'] : $databaseKey['ID'];
+	    $postTypeName = !empty($databaseKeysMedia['folderRedirect']) ? $databaseKeysMedia['folderRedirect'] : $postTypeName;
         $mime_type_map = [
             'jpg' => 'image/jpeg',
             'png' => 'image/png',
@@ -1635,17 +1632,18 @@ class OGSyncOffers {
             $objectLastUpdated = $OGobject->{$databaseKey['datum_gewijzigd']} ?? $OGobject->{$databaseKey['datum_toegevoegd']};
 
             # Vars
+	        $mediaTiaraID = $mediaObject->{$mediaTiaraIDName};
             $boolIsConnectedPartner = $mediaObject->{$databaseKeysMedia['media_Groep']} == 'Connected_partner';
             $post_mime_type = $mime_type_map[$mediaObject->{'bestands_extensie'}] ?? $mime_type_map2[$mediaObject->{$databaseKeysMedia['media_Groep']}] ?? 'unknown';
-            $media_url = "og_media/{$postTypeName}_{$OGobject->{$databaseKeysMedia['object_keys']['objectVestiging']}}_{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}/{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}_{$mediaObject->{$databaseKey['ID']}}.$mediaObject->bestands_extensie";
+            $media_url = "og_media/{$postTypeName}_{$OGobject->{$databaseKeysMedia['object_keys']['objectVestiging']}}_{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}/{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}_{$mediaTiaraID}.$mediaObject->bestands_extensie";
             $post_data = [
                 'post_content' => '',
-                'post_title' => "{$mediaObject->{$databaseKey['ID']}}-$mediaObject->bestandsnaam",
+                'post_title' => "{$mediaObject->{$mediaTiaraIDName}}-$mediaObject->bestandsnaam",
                 'post_excerpt' => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
                 'post_status' => 'inherit',
                 'comment_status' => 'open',
                 'ping_status' => 'closed',
-                'post_name' => "{$mediaObject->{$databaseKey['ID']}}-$mediaObject->bestandsnaam",
+                'post_name' => "{$mediaObject->{$mediaTiaraIDName}}-$mediaObject->bestandsnaam",
                 'post_parent' => $postID,
                 'guid' => $boolIsConnectedPartner ? $mediaObject->media_URL : "$guid_url/$media_url",
                 'menu_order' => $mediaObject->{'media_volgorde'},
@@ -1661,7 +1659,7 @@ class OGSyncOffers {
                 'MediaName' => $mediaObject->{$databaseKeysMedia['mediaName']},
                 'MediaUpdated' => $mediaObject->{$databaseKeysMedia['datum_gewijzigd']},
                 '_wp_attachment_image_alt' => '',
-                '_id' => $mediaObject->{$databaseKey['ID']},
+                $mediaTiaraIDName => $mediaObject->{$mediaTiaraIDName},
             ];
             // ======== Start of Function ========
             # Checking if the media exists
@@ -2003,7 +2001,7 @@ class OGSyncOffers {
 			$dateUpdatedObject = $OGProject->{$databaseKeys[0]['datum_gewijzigd']} ?? $OGProject->{$databaseKeys[0]['datum_toegevoegd']};
 
 			// ======== Start of Function ========
-			# Checking if the project exists
+            			# Checking if the project exists
 			if ($projectExisted) {
 				// Checking if the post is updated
 				if ($dateUpdatedPost != $dateUpdatedObject) {

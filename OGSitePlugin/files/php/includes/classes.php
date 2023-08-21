@@ -20,7 +20,7 @@ class OGSiteActivationAndDeactivation {
         // Check which settings are registered
         $OGoptions = wp_load_alloptions();
 
-        // only get settings that start with ppOGSync_
+        // only get settings that start with prefix
         $OGoptions = array_filter($OGoptions, function($key) {
             return str_starts_with($key, OGSiteSettingsData::$settingPrefix);
         }, ARRAY_FILTER_USE_KEY);
@@ -374,6 +374,26 @@ class OGSiteSettingsData {
         return self::$arrPages;
     }
 
+    // ============ PHP Functions ============
+    // ==== Sanitize Functions ====
+    public static function sanitize_checkboxes($input): string {
+        // ======== Declaring Variables ========
+        # Vars
+        $strOutput = '';
+        foreach ($input as $key => $value) {
+            $strOutput .= "$key:$value;";
+        }
+
+        // ======== Start of Function ========
+        # Return with last character removed
+        return substr($strOutput, 0, -1);
+    }
+    public static function sanitize_imageField($input) {
+        // ======== Start of Function ========
+        # Putting in 'testing' table to test
+        return $input;
+    }
+
     // ============ HTML Functions ============
     // ======== Admin Options ========
     // Sections
@@ -641,7 +661,10 @@ class OGSitePages {
                         $fieldTitle,
                         !empty($fieldArray['fieldCallback']) ? "OGSiteSettingsData::{$fieldArray['fieldCallback']}" : function () use ($fieldArray) {
                             // ======== Declaring Variables ========
-                            // Vars
+                            # Classes
+                            global $wpdb;
+
+                            # Vars
                             $strOption = get_option($fieldArray['fieldID']);
 
                             // ======== Start of Function ========
@@ -845,10 +868,7 @@ class OGSitePages {
         </form>
         <?php OGSiteTools::htmlAdminFooter('OG Admin Settings - Uiterlijk');}
     static function HTMLOGAdminSettingsWonen(): void { OGSiteTools::htmlAdminHeader('OG Admin Settings - Wonen');
-        // ======== Declaring Variables ========
-
-        // ======== Start of Function ========
-        $settingsData = new OGSiteSettingsData(); ?>
+        // ======== Start of Function ======== ?>
         <form method="post" action="options.php">
             <?php settings_fields(OGSiteSettingsData::$settingPrefix.'WonenOptions');
             do_settings_sections('ppOGSite-plugin-settings-wonen');
