@@ -219,9 +219,9 @@ class OGSyncPostTypeData {
                             'search_id' => 'id_OG_bog',                 // NON Mapped value
                             'mediaID' => 'media_Id',                    // NON Mapped value
                             'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
-                            'datum_gewijzigd' => 'datum_gewijzigd',        // Mapped value
+                            'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value
                             'mediaName' => 'MediaName',                 // Mapped value
-                            'media_Groep' => 'media_Groep',               // Mapped value
+                            'media_Groep' => 'media_Groep',             // Mapped value
 
                             # Post fields
                             'object_keys' => array(
@@ -682,33 +682,45 @@ class OGSyncMapping {
                     }
                 }
                 // ==== Checking concatinations ====
-                if (str_starts_with($mappingValue['pixelplus'], '{') and str_ends_with($mappingValue['pixelplus'], '}')) {
-                    // ==== Declaring Variables ====
-                    # Vars
-                    $strTrimmedKey = trim($mappingValue['pixelplus'], '{}');
-                    $arrExplodedKey = explode('+', $strTrimmedKey);
-                    $arrExplodedKeyMinus = explode('-', $strTrimmedKey);
-                    $strResult = '';
+	            if (str_starts_with($mappingValue['pixelplus'], '{') and str_ends_with($mappingValue['pixelplus'], '}')) {
+		            // ==== Declaring Variables ====
+		            # Vars
+		            $strTrimmedKey = trim($mappingValue['pixelplus'], '{}');
+		            $arrExplodedKey = explode('+', $strTrimmedKey);
+		            $arrExplodedKeyMinus = explode('-', $strTrimmedKey);
+		            $strResult = '';
 
-                    // ==== Start of Function ====
-                    # Step 1: Looping through all the keys
-                    foreach($arrExplodedKey as $arrExplodedKeyValue) {
-                        # Step 2: Check if the key even isset or empty in OG Record
-                        if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-                            # Step 3: Add the value to the result string
-                            $strResult .= $OGTableRecord->{$arrExplodedKeyValue}.' ';
-                        }
-                    }
-                    foreach($arrExplodedKeyMinus as $arrExplodedKeyValue) {
-                        # Step 2: Check if the key even isset or empty in OG Record
-                        if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-                            # Step 3: Add the value to the result string
-                            $strResult .= $OGTableRecord->{$arrExplodedKeyValue}.'-';
-                        }
-                    }
-                    # Step 5: Putting it in the mapping table as a default value
-                    $mappingTable[$mappingKey]['pixelplus'] = "'".rtrim($strResult, ' -')."'";
-                }
+		            # Bools
+		            $boolTrimSpaces = False;
+
+		            // ==== Start of Function ====
+		            # Step 1: Looping through all the keys
+		            foreach($arrExplodedKey as $arrExplodedKeyValue) {
+			            # Step 2: Checking if there are any special character at the beginning and or end of the key
+			            if (str_starts_with($arrExplodedKeyValue, '~') and str_ends_with($arrExplodedKeyValue, '~')) {
+				            # Step 3: Remove the ~ from the value and all the spaces. And then adding it to strResult
+				            $boolTrimSpaces = True;
+
+				            # Removing the ~ from the value
+				            $arrExplodedKeyValue = trim($arrExplodedKeyValue, '~');
+			            }
+
+			            # Step 2: Check if the key even isset or empty in OG Record
+			            if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+				            # Step 4: Adding it to strResult
+				            $strResult .= $boolTrimSpaces ? str_replace(' ', '', $OGTableRecord->{$arrExplodedKeyValue}).' ' : $OGTableRecord->{$arrExplodedKeyValue}.' ';
+			            }
+		            }
+		            foreach($arrExplodedKeyMinus as $arrExplodedKeyValue) {
+			            # Step 2: Check if the key even isset or empty in OG Record
+			            if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+				            # Step 3: Add the value to the result string
+				            $strResult .= $OGTableRecord->{$arrExplodedKeyValue}.'-';
+			            }
+		            }
+		            # Step 5: Putting it in the mapping table as a default value
+		            $mappingTable[$mappingKey]['pixelplus'] = "'".rtrim($strResult, ' -')."'";
+	            }
 
                 // ==== Checking the statuses ====
                 if (str_starts_with($mappingValue['pixelplus'], '$') and str_ends_with($mappingValue['pixelplus'], '$')) {
@@ -1654,10 +1666,10 @@ class OGSyncOffers {
                 '_wp_attached_file' => $boolIsConnectedPartner ? $mediaObject->media_URL : $media_url,
                 'file_url' => $boolIsConnectedPartner ? $mediaObject->media_URL : $media_url,
                 '_wp_attachment_metadata' => '',
-                'ObjectCode' => $OGobject->{$databaseKey['objectCode']},
+                $databaseKey['objectCode'] => $OGobject->{$databaseKey['objectCode']},
                 'MediaType' => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
-                'MediaName' => $mediaObject->{$databaseKeysMedia['mediaName']},
-                'MediaUpdated' => $mediaObject->{$databaseKeysMedia['datum_gewijzigd']},
+                $databaseKeysMedia['mediaName'] => $mediaObject->{$databaseKeysMedia['mediaName']},
+                $databaseKeysMedia['datum_gewijzigd'] => $mediaObject->{$databaseKeysMedia['datum_gewijzigd']},
                 '_wp_attachment_image_alt' => '',
                 $mediaTiaraIDName => $mediaObject->{$mediaTiaraIDName},
             ];
