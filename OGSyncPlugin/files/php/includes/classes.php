@@ -1667,9 +1667,10 @@ class OGSyncOffers {
                 'file_url' => $boolIsConnectedPartner ? $mediaObject->media_URL : $media_url,
                 '_wp_attachment_metadata' => '',
                 $databaseKey['objectCode'] => $OGobject->{$databaseKey['objectCode']},
-                'MediaType' => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
+                $databaseKeysMedia['media_Groep'] => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
                 $databaseKeysMedia['mediaName'] => $mediaObject->{$databaseKeysMedia['mediaName']},
                 $databaseKeysMedia['datum_gewijzigd'] => $mediaObject->{$databaseKeysMedia['datum_gewijzigd']},
+                $databaseKeysMedia['datum_toegevoegd'] => $mediaObject->{$databaseKeysMedia['datum_toegevoegd']},
                 '_wp_attachment_image_alt' => '',
                 $mediaTiaraIDName => $mediaObject->{$mediaTiaraIDName},
             ];
