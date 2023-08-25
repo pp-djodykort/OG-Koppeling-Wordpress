@@ -548,7 +548,7 @@ class OGSiteLicense {
         return $objectAccess;
     }
 }
-class OGSitePages {
+class OGSiteMenus {
     // ======== Constructor ========
     public function __construct() {
         // ======== Start of Function ========

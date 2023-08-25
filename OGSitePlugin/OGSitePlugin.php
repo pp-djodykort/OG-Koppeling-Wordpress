@@ -27,7 +27,7 @@ register_uninstall_hook(__FILE__, 'OGSiteActivationAndDeactivation::uninstall');
 if (OGSiteLicense::checkActivation()) {
 
 }
-$OGSitePages = new OGSitePages();
+$OGSitePages = new OGSiteMenus();
 
 // ============ Start of Program ============
 add_action('admin_notices', function () {

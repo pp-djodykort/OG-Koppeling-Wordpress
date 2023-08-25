@@ -28,7 +28,7 @@ register_uninstall_hook(__FILE__, 'OGSyncActivationAndDeactivation::uninstall');
 if (OGSyncLicense::checkActivation()) {
     $postTypes = new OGSyncPostTypes();
 }
-$OGSyncPages = new OGSyncPages();
+$OGSyncPages = new OGSyncMenus();
 
 // ============ Start of Program ============
 add_action('admin_notices', function () {

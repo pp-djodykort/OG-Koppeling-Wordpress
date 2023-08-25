@@ -6,7 +6,7 @@ include_once 'functions.php';
 class OGSyncActivationAndDeactivation {
     // ==== Activation ====
     static function activate(): void {
-        self::registerSettings();
+        self::addOptions();
         self::createCacheFiles();
     }
     // ==== Deactivation ====
@@ -33,9 +33,9 @@ class OGSyncActivationAndDeactivation {
 
     // ==== Functions ====
     // A function for registering base settings of the unactivated plugin as activation hook.
-    static function registerSettings(): void {
+    static function addOptions(): void {
         // ==== Start of Function ====
-        // Registering settings
+        # Registering settings
         foreach (OGSyncSettingsData::arrOptions() as $settingName => $settingValue) {
             add_option(OGSyncSettingsData::$settingPrefix.$settingName, $settingValue);
         }
@@ -50,14 +50,14 @@ class OGSyncActivationAndDeactivation {
         $cacheFolder = plugin_dir_path(dirname(__DIR__ )) . $settingsData::$cacheFolder;
 
         // ==== Start of Function ====
-        // Creating the cache files
+        # Creating the cache files
         foreach ($settingsData::cacheFiles() as $cacheFile) {
-            // Creating the cache folder if it doesn't exist
+            # Creating the cache folder if it doesn't exist
             if (!file_exists($cacheFolder)) {
                 mkdir($cacheFolder, 0777, true);
             }
 
-            // Creating the cache file if it doesn't exist
+            # Creating the cache file if it doesn't exist
             if (!file_exists($cacheFolder.$cacheFile)) {
                 $file = fopen($cacheFolder.$cacheFile, 'w');
                 fwrite($file, '');
@@ -75,11 +75,12 @@ class OGSyncPostTypeData {
         # Variables
         $objectAccess = OGSyncLicense::checkPostTypeAccess();
         $customPostTypes = array(
-            // Post Type 1
-            // Post Type 1
-            /* post_type */'wonen' => array(
+            // Custom Post Type: 'wonen'
+            'wonen' => array(
                 'post_type_args' => array(
+                    // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
+                        // Labels for the custom post type in the WordPress admin
                         'name' => 'OG Wonen Objecten',
                         'singular_name' => 'OG Wonen Object',
                         'add_new' => 'Nieuwe toevoegen',
@@ -126,33 +127,47 @@ class OGSyncPostTypeData {
                 'database_tables' => array(
                     'object' => array(
                         # TableName
-                        'tableName' => 'tbl_OG_wonen',
+                        'tableName' => 'tbl_OG_wonen',                              // NON Mapped - Name of the table
                         # Normal fields
-                        'ID' => 'object_ObjectTiaraID',                              // Mapped value USE Tiara ID
-                        'post_title' => 'objectDetails_Adres_NL_Straatnaam;objectDetails_Adres_NL_Huisnummer;objectDetails_Adres_NL_HuisnummerToevoeging;objectDetails_Adres_NL_Woonplaats', // Mapped value
-                        'post_name' => 'objectDetails_Adres_NL_Straatnaam-objectDetails_Adres_NL_Huisnummer-objectDetails_Adres_NL_HuisnummerToevoeging-objectDetails_Adres_NL_Woonplaats',  // Mapped value
-                        'post_content' => 'objectDetails_Aanbiedingstekst',       // Mapped value
-                        'datum_gewijzigd' => 'datum_gewijzigd',             // Mapped value
-                        'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value
-                        'objectCode' => 'object_ObjectCode',                // Mapped value
+                        'ID' => 'object_ObjectTiaraID',                             // Mapped value - ALWAYS Use the TiaraID
+                        /*
+                        Warning: You can only use one of the separators at the same time.
+                        post_title Separators:
+                            ; (Semicolon)   - The semi-colon is used to separate the values from each other with ' '
+                            | (Pipe)        - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+                            Nothing       - If there is no separator, it will just use the first value. The only variable given in
+                        */
+                        'post_title' => 'objectDetails_Adres_NL_Straatnaam;objectDetails_Adres_NL_Huisnummer;objectDetails_Adres_NL_HuisnummerToevoeging;objectDetails_Adres_NL_Woonplaats', // Mapped value - Default: Straat;Huisnummer;Huisnummertoevoeging;Woonplaats
+                        /*
+                        Warning: You can only use one of the separators at the same time.
+                        post_name Separators:
+                            - (Dash)      - The dash is used to separate the values from each other with '-'
+                            | (Pipe)      - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+                            Nothing       - If there is no separator, it will just use the first value. The only variable given in
+                         */
+                        'post_name' => 'objectDetails_Adres_NL_Straatnaam-objectDetails_Adres_NL_Huisnummer-objectDetails_Adres_NL_HuisnummerToevoeging-objectDetails_Adres_NL_Woonplaats',  // Mapped value - Default: Straat-Huisnummer-Huisnummertoevoeging-Woonplaats
+                        'post_content' => 'objectDetails_Aanbiedingstekst',         // Mapped value - Default: De aanbiedingstekst
+                        'datum_gewijzigd' => 'datum_gewijzigd',                     // Mapped value - Default: datum_gewijzigd      ; Default value is only for objects without a mapping table within the database
+                        'datum_toegevoegd' => 'datum_toegevoegd',                   // Mapped value - Default: datum_toegevoegd     ; Default value is only for objects without a mapping table within the database
+                        'objectCode' => 'object_ObjectCode',                        // Mapped value - Default: object_ObjectCode    ; Default value is only for objects without a mapping table within the database
 
                         # Post fields
                         'media' => array(
                             # TableName
-                            'tableName' => 'tbl_OG_media',
+                            'tableName' => 'tbl_OG_media',              // NON Mapped - Name of the table
                             # Normal fields
-                            'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
-                            'search_id' => 'id_OG_wonen',               // NON Mapped value
-                            'mediaID' => 'media_Id',                    // NON Mapped value
-                            'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value
-                            'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
-                            'mediaName' => 'MediaName',                 // Mapped value
-                            'media_Groep' => 'media_Groep',             // Mapped value
+                            'folderRedirect' => '',                     // FTP Folder name of media from OG Feeds - ALLOWED TO BE EMPTY
+                            'search_id' => 'id_OG_wonen',               // NON Mapped value - Default: Can found in OG Feeds media table > Id of Post Type / OG Type
+                            'mediaID' => 'media_Id',                    // NON Mapped value - Default: media_Id; Can found in OG Feeds media table > Post Type / OG Type
+                            'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value     - Default: datum_toegevoegd ; Default value is only for objects without a mapping table within the database
+                            'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value     - Default: datum_gewijzigd  ; Default value is only for objects without a mapping table within the database
+                            'mediaName' => 'MediaName',                 // Mapped value     - Default: mediaName        ; This one is special. Even in the normal plugin I still have this one mapped within the database in a mapping table. Default value is only for objects without a mapping table within the database
+                            'media_Groep' => 'media_Groep',             // Mapped value     - Default: media_Groep      ; Default value is only for objects without a mapping table within the database
 
                             # Post fields
                             'object_keys' => array(
-                                'objectTiara' => 'object_ObjectTiaraID',
-                                'objectVestiging' => 'object_NVMVestigingNR',
+                                'objectTiara' => 'object_ObjectTiaraID',        // Mapped value - ALWAYS Use the TiaraID
+                                'objectVestiging' => 'object_NVMVestigingNR',   // Mapped value - USE the Vestigingsnummer of the OG Object, NOT The media objects.
                             ),
 
                             # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
@@ -169,10 +184,12 @@ class OGSyncPostTypeData {
                     ),
                 )
             ),
-            // Post Type 2
-            /* post_type */'bog' => array(
+            // Custom Post Type: 'bog'
+            'bog' => array(
                 'post_type_args' => array(
+                    // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
+                        // Labels for the custom post type in the WordPress admin
                         'name' => 'OG BOG Objecten',
                         'singular_name' => 'OG BOG Object',
                         'add_new' => 'Nieuwe toevoegen',
@@ -200,33 +217,47 @@ class OGSyncPostTypeData {
                 'database_tables' => array(
                     'object' => array(
                         # TableName
-                        'tableName' => 'tbl_OG_bog',
+                        'tableName' => 'tbl_OG_bog',                        // NON Mapped - Name of the table
                         # Normal fields
-                        'ID' => 'object_ObjectTiaraID',                     // USE Tiara ID
-                        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer;objectDetails_Adres_HuisnummerToevoeging;objectDetails_Adres_Woonplaats', // Mapped value
-                        'post_name' => 'objectDetails_Adres_Straatnaam-objectDetails_Adres_Huisnummer-objectDetails_Adres_HuisnummerToevoeging-objectDetails_Adres_Woonplaats',  // Mapped value
-                        'post_content' => 'objectDetails_Aanbiedingstekst', // Mapped value
-                        'datum_gewijzigd' => 'datum_gewijzigd',             // Mapped value
-                        'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value
-                        'objectCode' => 'object_ObjectCode',                // Mapped value
+                        'ID' => 'object_ObjectTiaraID',                     // Mapped value - ALWAYS Use the TiaraID
+                        /*
+                        Warning: You can only use one of the separators at the same time.
+                        post_title Separators:
+                            ; (Semicolon)   - The semi-colon is used to separate the values from each other with ' '
+                            | (Pipe)        - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+                            Nothing       - If there is no separator, it will just use the first value. The only variable given in
+                        */
+                        'post_title' => 'objectDetails_Adres_Straatnaam;objectDetails_Adres_Huisnummer;objectDetails_Adres_HuisnummerToevoeging;objectDetails_Adres_Woonplaats', // Mapped value - Default: Straat;Huisnummer;Huisnummertoevoeging;Woonplaats
+                        /*
+						Warning: You can only use one of the separators at the same time.
+						post_name Separators:
+							- (Dash)      - The dash is used to separate the values from each other with '-'
+							| (Pipe)      - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+							Nothing       - If there is no separator, it will just use the first value. The only variable given in
+						 */
+                        'post_name' => 'objectDetails_Adres_Straatnaam-objectDetails_Adres_Huisnummer-objectDetails_Adres_HuisnummerToevoeging-objectDetails_Adres_Woonplaats',  // Mapped value - Default: Straat-Huisnummer-Huisnummertoevoeging-Woonplaats
+                        'post_content' => 'objectDetails_Aanbiedingstekst', // Mapped value - Default: De aanbiedingstekst
+                        'datum_gewijzigd' => 'datum_gewijzigd',             // Mapped value - Default: datum_gewijzigd      ; Default value is only for objects without a mapping table within the database
+                        'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value - Default: datum_toegevoegd    ; Default value is only for objects without a mapping table within the database
+                        'objectCode' => 'object_ObjectCode',                // Mapped value - Default: object_ObjectCode    ; Default value is only for objects without a mapping table within the database
 
                         # Post fields
                         'media' => array(
                             # TableName
-                            'tableName' => 'tbl_OG_media',
+                            'tableName' => 'tbl_OG_media',              // NON Mapped - Name of the table
                             # Normal fields
-                            'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
-                            'search_id' => 'id_OG_bog',                 // NON Mapped value
-                            'mediaID' => 'media_Id',                    // NON Mapped value
-                            'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
-                            'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value
-                            'mediaName' => 'MediaName',                 // Mapped value
-                            'media_Groep' => 'media_Groep',             // Mapped value
+                            'folderRedirect' => '',                     // FTP Folder name of media from OG Feeds - ALLOWED TO BE EMPTY
+                            'search_id' => 'id_OG_bog',                 // NON Mapped value - Default: Can found in OG Feeds media table > Id of Post Type / OG Type
+                            'mediaID' => 'media_Id',                    // NON Mapped value - Default: media_Id; Can found in OG Feeds media table > Post Type / OG Type
+                            'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value     - Default: datum_toegevoegd ; Default value is only for objects without a mapping table within the database
+                            'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value     - Default: datum_gewijzigd  ; Default value is only for objects without a mapping table within the database
+                            'mediaName' => 'MediaName',                 // Mapped value     - Default: mediaName        ; This one is special. Even in the normal plugin I still have this one mapped within the database in a mapping table. Default value is only for objects without a mapping table within the database
+                            'media_Groep' => 'media_Groep',             // Mapped value     - Default: media_Groep      ; Default value is only for objects without a mapping table within the database
 
                             # Post fields
                             'object_keys' => array(
-                                'objectTiara' => 'object_ObjectTiaraID',
-                                'objectVestiging' => 'object_NVMVestigingNR',
+                                'objectTiara' => 'object_ObjectTiaraID',        // Mapped value - ALWAYS Use the TiaraID
+                                'objectVestiging' => 'object_NVMVestigingNR',   // Mapped value - USE the Vestigingsnummer of the OG Object, NOT The media objects.
                             ),
 
                             # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
@@ -243,10 +274,12 @@ class OGSyncPostTypeData {
                     ),
                 )
             ),
-            // Post Type 3
-            /* post_type */'nieuwbouw' => array(
+            // Custom Post Type: 'nieuwbouw'
+            'nieuwbouw' => array(
                 'post_type_args' => array(
+                    // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
+                        // Labels for the custom post type in the WordPress admin
                         'name' => 'OG Nieuwbouw Objecten',
                         'singular_name' => 'OG Nieuwbouw Object',
                         'add_new' => 'Nieuwe toevoegen',
@@ -274,36 +307,50 @@ class OGSyncPostTypeData {
                 'database_tables' => array(
                     'projecten' => array(
                         # TableName
-                        'tableName' => 'tbl_OG_nieuwbouw_projecten',
+                        'tableName' => 'tbl_OG_nieuwbouw_projecten',                                // NON Mapped - Name of the table
                         # Normal fields
-                        'ID' => 'project_ObjectTiaraID',                                            // Mapped value USE TIARA ID
-                        'post_title' => 'project_ProjectDetails_Projectnaam',                       // Mapped value if needed
-                        'post_name' => 'project_ProjectDetails_Projectnaam',                        // Mapped value
-                        'post_content' => 'project_ProjectDetails_Presentatie_Aanbiedingstekst',    // Mapped value
-                        'ObjectStatus_database' => 'project_ProjectDetails_Status_ObjectStatus',    // Mapped value
-                        'datum_gewijzigd' => 'datum_gewijzigd',                                     // Mapped value
-                        'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value
+                        'ID' => 'project_ObjectTiaraID',                                            // Mapped value - ALWAYS Use the TiaraID
+                        /*
+                        Warning: You can only use one of the separators at the same time.
+                        post_title Separators:
+                            ; (Semicolon)   - The semi-colon is used to separate the values from each other with ' '
+                            | (Pipe)        - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+                            Nothing       - If there is no separator, it will just use the first value. The only variable given in
+                        */
+                        'post_title' => 'project_ProjectDetails_Projectnaam',                       // Mapped value - Default: Projectnaam
+                        /*
+						Warning: You can only use one of the separators at the same time.
+						post_name Separators:
+							- (Dash)      - The dash is used to separate the values from each other with '-'
+							| (Pipe)      - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+							Nothing       - If there is no separator, it will just use the first value. The only variable given in
+						 */
+                        'post_name' => 'project_ProjectDetails_Projectnaam',                        // Mapped value - Default: Projectnaam
+                        'post_content' => 'project_ProjectDetails_Presentatie_Aanbiedingstekst',    // Mapped value - Default: Presentatie_Aanbiedingstekst
+                        'ObjectStatus_database' => 'project_ProjectDetails_Status_ObjectStatus',    // Mapped value - Default: Status_ObjectStatus              ; Default value is only for objects without a mapping table within the database
+                        'datum_gewijzigd' => 'datum_gewijzigd',                                     // Mapped value - Default: datum_gewijzigd                  ; Default value is only for objects without a mapping table within the database
+                        'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value - Default: datum_toegevoegd                 ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'project_ObjectCode',                                       // Mapped value
                         'type' => 'project',                                                        // Standard value don't change
 
                         # Post fields
                         'media' => array(
                             # TableName
-                            'tableName' => 'tbl_OG_media',
+                            'tableName' => 'tbl_OG_media',              // NON Mapped - Name of the table
                             # Normal fields
-                            'folderRedirect' => '',                     // Mapped value CAN BE EMPTY
-                            'search_id' => 'id_OG_nieuwbouw_projecten', //
-                            'mediaID' => 'media_Id',                    // Mapped value
-                            'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value
-                            'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value
-                            'mediaName' => 'MediaName',
-                            'media_Groep' => 'media_Groep',             // Mapped value
-                            'mediaTiaraID' => 'object_ObjectTiaraID',
+                            'folderRedirect' => '',                     // FTP Folder name of media from OG Feeds - ALLOWED TO BE EMPTY
+                            'search_id' => 'id_OG_nieuwbouw_projecten', // NON Mapped value - Default: Can found in OG Feeds media table > Id of Post Type / OG Type
+                            'mediaID' => 'media_Id',                    // NON Mapped value - Default: media_Id; Can found in OG Feeds media table > Post Type / OG Type
+                            'datum_gewijzigd' => 'datum_gewijzigd',     // Mapped value     - Default: datum_toegevoegd ; Default value is only for objects without a mapping table within the database
+                            'datum_toegevoegd' => 'datum_toegevoegd',   // Mapped value     - Default: datum_gewijzigd  ; Default value is only for objects without a mapping table within the database
+                            'mediaName' => 'MediaName',                 // Mapped value     - Default: mediaName        ; This one is special. Even in the normal plugin I still have this one mapped within the database in a mapping table. Default value is only for objects without a mapping table within the database
+                            'media_Groep' => 'media_Groep',             // Mapped value     - Default: media_Groep      ; Default value is only for objects without a mapping table within the database
+                            'mediaTiaraID' => 'object_ObjectTiaraID',   // Mapped value     - ALWAYS Use the TiaraID
 
                             # Post fields
                             'object_keys' => array(
-                                'objectTiara' => 'project_ObjectTiaraID',
-                                'objectVestiging' => 'project_NVMVestigingNR',
+                                'objectTiara' => 'project_ObjectTiaraID',       // Mapped value - ALWAYS Use the TiaraID
+                                'objectVestiging' => 'project_NVMVestigingNR',  // Mapped value - USE the Vestigingsnummer of the OG Object, NOT The media objects.
                             ),
 
                             # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
@@ -314,37 +361,51 @@ class OGSyncPostTypeData {
                     ),
                     'bouwTypes' => array(
                         # TableName
-                        'tableName' => 'tbl_OG_nieuwbouw_bouwTypes',
+                        'tableName' => 'tbl_OG_nieuwbouw_bouwTypes',                                // NON Mapped - Name of the table
                         # Normal fields
-                        'ID' => 'bouwType_ObjectTiaraID',                                           // Mapped value USE Tiara ID
-                        'id_projecten' => 'id_OG_nieuwbouw_projecten',                              // Mapped value
-                        'post_title' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',        // Mapped value if needed | is for seperating values (OR statement)
-                        'post_name' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',         // Mapped value
-                        'post_content' => 'bouwType_BouwTypeDetails_Aanbiedingstekst',              // Mapped value
-                        'ObjectStatus_database' => 'bouwType_BouwTypeDetails_Status_ObjectStatus',  // Mapped value
-                        'datum_gewijzigd' => 'datum_gewijzigd',                                     // Mapped value
-                        'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value
-                        'objectCode' => 'bouwType_ObjectCode',                                      // Mapped value
-                        'type' => 'bouwtype',                                                       // Standard value don't change
+                        'ID' => 'bouwType_ObjectTiaraID',                                           // Mapped value - ALWAYS Use the TiaraID
+                        'id_projecten' => 'id_OG_nieuwbouw_projecten',                              // Mapped value - Default: id_OG_nieuwbouw_projecten ; This is supposed to be the value that indicates the id of the project so it can search towards the porject in certain querys
+                        /*
+                        Warning: You can only use one of the separators at the same time.
+                        post_title Separators:
+                            ; (Semicolon)   - The semi-colon is used to separate the values from each other with ' '
+                            | (Pipe)        - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+                            Nothing       - If there is no separator, it will just use the first value. The only variable given in
+                        */
+                        'post_title' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',        // Mapped value - Default: Bouwtype Naam|ObjectCode ; The first value sometimes is filled and sometimes not, So I just made it an if statement
+                        /*
+						Warning: You can only use one of the separators at the same time.
+						post_name Separators:
+							- (Dash)      - The dash is used to separate the values from each other with '-'
+							| (Pipe)      - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+							Nothing       - If there is no separator, it will just use the first value. The only variable given in
+						 */
+                        'post_name' => 'bouwType_BouwTypeDetails_Naam|bouwType_ObjectCode',         // Mapped value - Default: Bouwtype Naam|ObjectCode ; The first value sometimes is filled and sometimes not, So I just made it an if statement
+                        'post_content' => 'bouwType_BouwTypeDetails_Aanbiedingstekst',              // Mapped value - Default: De aanbiedingstekst
+                        'ObjectStatus_database' => 'bouwType_BouwTypeDetails_Status_ObjectStatus',  // Mapped value - Default: Status_ObjectStatus              ; Default value is only for objects without a mapping table within the database
+                        'datum_gewijzigd' => 'datum_gewijzigd',                                     // Mapped value - Default: datum_gewijzigd                  ; Default value is only for objects without a mapping table within the database
+                        'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value - Default: datum_toegevoegd                 ; Default value is only for objects without a mapping table within the database
+                        'objectCode' => 'bouwType_ObjectCode',                                      // Mapped value - Default: bouwType_ObjectCode              ; Default value is only for objects without a mapping table within the database
+                        'type' => 'bouwtype',                                                       // Standard value - Default: bouwtype                       ; DO NOT CHANGE
 
                         # Post fields
                         'media' => array(
                             # TableName
-                            'tableName' => 'tbl_OG_media',
+                            'tableName' => 'tbl_OG_media',                  // NON Mapped - Name of the table
                             # Normal fields
-                            'folderRedirect' => '',                         // Mapped value CAN BE EMPTY
-                            'search_id' => 'id_OG_nieuwbouw_bouwtypes',     // NON Mapped value
-                            'mediaID' => 'media_Id',                        // NON Mapped value
-                            'datum_gewijzigd' => 'datum_gewijzigd',         // Mapped value
-                            'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value
-                            'mediaName' => 'MediaName',                     // Mapped value
-                            'media_Groep' => 'media_Groep',                 // Mapped value
-                            'mediaTiaraID' => 'object_ObjectTiaraID',
+                            'folderRedirect' => '',                         // FTP Folder name of media from OG Feeds - ALLOWED TO BE EMPTY
+                            'search_id' => 'id_OG_nieuwbouw_bouwtypes',     // NON Mapped value - Default: Can found in OG Feeds media table > Id of Post Type / OG Type
+                            'mediaID' => 'media_Id',                        // NON Mapped value - Default: media_Id; Can found in OG Feeds media table > Post Type / OG Type
+                            'datum_gewijzigd' => 'datum_gewijzigd',         // Mapped value     - Default: datum_toegevoegd ; Default value is only for objects without a mapping table within the database
+                            'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value     - Default: datum_gewijzigd  ; Default value is only for objects without a mapping table within the database
+                            'mediaName' => 'MediaName',                     // Mapped value     - Default: mediaName        ; This one is special. Even in the normal plugin I still have this one mapped within the database in a mapping table. Default value is only for objects without a mapping table within the database
+                            'media_Groep' => 'media_Groep',                 // Mapped value     - Default: media_Groep      ; Default value is only for objects without a mapping table within the database
+                            'mediaTiaraID' => 'object_ObjectTiaraID',       // Mapped value     - ALWAYS Use the TiaraID OF THE MEDIA TABLE
 
                             # Post fields
                             'object_keys' => array(
-                                'objectTiara' => 'bouwType_ObjectTiaraID',
-                                'objectVestiging' => 'bouwType_NVMVestigingNR',
+                                'objectTiara' => 'bouwType_ObjectTiaraID',      // Mapped value - ALWAYS Use the TiaraID
+                                'objectVestiging' => 'bouwType_NVMVestigingNR', // Mapped value - USE the Vestigingsnummer of the OG Object, NOT The media objects.
                             ),
 
                             # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
@@ -355,37 +416,37 @@ class OGSyncPostTypeData {
                     ),
                     'bouwNummers' => array(
                         # TableName
-                        'tableName' => 'tbl_OG_nieuwbouw_bouwNummers',
+                        'tableName' => 'tbl_OG_nieuwbouw_bouwNummers',                                          // NON Mapped - Name of the table
                         # Normal fields
-                        'ID' => 'bouwNummer_ObjectTiaraID',                                                     // Mapped value USE Tiara ID
-                        'id_bouwtypes' => 'id_OG_nieuwbouw_bouwTypes',                                          // Mapped value
-                        'post_title' => 'Adres_Straatnaam;Adres_Huisnummer;Adres_Postcode;Adres_Woonplaats;Adres_HuisnummerToevoeging;bouwNummer_ObjectCode',    // Mapped value if needed | is for seperating values (OR statement)
-                        'post_name' => 'Adres_Straatnaam-Adres_Huisnummer-Adres_Postcode-Adres_Woonplaats-Adres_HuisnummerToevoeging-bouwNummer_ObjectCode',  // Mapped value
-                        'post_content' => 'Aanbiedingstekst',                                                   // Mapped value
-                        'ObjectStatus_database' => 'bouwNummer_ObjectCode',                                     // NON Mapped value
-                        'datum_gewijzigd' => 'datum_gewijzigd',                                                 // Mapped value
-                        'datum_toegevoegd' => 'datum_toegevoegd',                                               // Mapped value
-                        'objectCode' => 'bouwNummer_ObjectCode',                                                // Mapped value
-                        'type' => 'bouwnummer',                                                                 // Standard value don't change
+                        'ID' => 'bouwNummer_ObjectTiaraID',                                                     // Mapped value - ALWAYS Use the TiaraID
+                        'id_bouwtypes' => 'id_OG_nieuwbouw_bouwTypes',                                          // Mapped value - Default: id_OG_nieuwbouw_bouwTypes ; This is supposed to be the value that indicates the id of the bouwtype so it can search towards the bouwtype in certain querys
+                        'post_title' => 'Adres_Straatnaam;Adres_Huisnummer;Adres_Postcode;Adres_Woonplaats;Adres_HuisnummerToevoeging;bouwNummer_ObjectCode',   // Mapped value - Default: Straat;Huisnummer;Postcode;Woonplaats;Huisnummertoevoeging;ObjectCode
+                        'post_name' => 'Adres_Straatnaam-Adres_Huisnummer-Adres_Postcode-Adres_Woonplaats-Adres_HuisnummerToevoeging-bouwNummer_ObjectCode',    // Mapped value - Default: Straat-Huisnummer-Postcode-Woonplaats-Huisnummertoevoeging-ObjectCode
+                        'post_content' => 'Aanbiedingstekst',                                                   // Mapped value - Default: De aanbiedingstekst      ; Default value is only for objects without a mapping table within the database
+                        'ObjectStatus_database' => 'bouwNummer_ObjectCode',                                     // Mapped value - Default: ObjectCode               ; Default value is only for objects without a mapping table within the database
+                        'datum_gewijzigd' => 'datum_gewijzigd',                                                 // Mapped value - Default: datum_gewijzigd          ; Default value is only for objects without a mapping table within the database
+                        'datum_toegevoegd' => 'datum_toegevoegd',                                               // Mapped value - Default: datum_toegevoegd         ; Default value is only for objects without a mapping table within the database
+                        'objectCode' => 'bouwNummer_ObjectCode',                                                // Mapped value - Default: bouwNummer_ObjectCode    ; Default value is only for objects without a mapping table within the database
+                        'type' => 'bouwnummer',                                                                 // Standard value - Default: bouwnummer             ; DO NOT CHANGE
 
                         # Post fields
                         'media' => array(
                             # TableName
-                            'tableName' => 'tbl_OG_media',
+                            'tableName' => 'tbl_OG_media',                  // NON Mapped - Name of the table
                             # Normal fields
-                            'folderRedirect' => '',                         // Mapped value CAN BE EMPTY
-                            'search_id' => 'id_OG_nieuwbouw_bouwnummers',   // NON Mapped value
-                            'mediaID' => 'media_Id',                        // NON Mapped value
-                            'datum_gewijzigd' => 'datum_gewijzigd',         // Mapped value
-                            'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value
-                            'mediaName' => 'MediaName',                     // Mapped value
-                            'media_Groep' => 'media_Groep',                 // Mapped value
-                            'mediaTiaraID' => 'object_ObjectTiaraID',
+                            'folderRedirect' => '',                         // FTP Folder name of media from OG Feeds - ALLOWED TO BE EMPTY
+                            'search_id' => 'id_OG_nieuwbouw_bouwnummers',   // NON Mapped value - Default: Can found in OG Feeds media table > Id of Post Type / OG Type
+                            'mediaID' => 'media_Id',                        // NON Mapped value - Default: media_Id; Can found in OG Feeds media table > Post Type / OG Type
+                            'datum_gewijzigd' => 'datum_gewijzigd',         // Mapped value     - Default: datum_toegevoegd ; Default value is only for objects without a mapping table within the database
+                            'datum_toegevoegd' => 'datum_toegevoegd',       // Mapped value     - Default: datum_gewijzigd  ; Default value is only for objects without a mapping table within the database
+                            'mediaName' => 'MediaName',                     // Mapped value     - Default: mediaName        ; This one is special. Even in the normal plugin I still have this one mapped within the database in a mapping table. Default value is only for objects without a mapping table within the database
+                            'media_Groep' => 'media_Groep',                 // Mapped value     - Default: media_Groep      ; Default value is only for objects without a mapping table within the database
+                            'mediaTiaraID' => 'object_ObjectTiaraID',       // Mapped value     - ALWAYS Use the TiaraID OF THE MEDIA TABLE
 
                             # Post fields
                             'object_keys' => array(
-                                'objectTiara' => 'bouwNummer_ObjectTiaraID',
-                                'objectVestiging' => 'bouwNummer_NVMVestigingNR',
+                                'objectTiara' => 'bouwNummer_ObjectTiaraID',        // Mapped value - ALWAYS Use the TiaraID
+                                'objectVestiging' => 'bouwNummer_NVMVestigingNR',   // Mapped value - USE the Vestigingsnummer of the OG Object, NOT The media objects.
                             ),
 
                             # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
@@ -395,12 +456,13 @@ class OGSyncPostTypeData {
                         // 'mapping' => array(/* TableName */ 'tableName' => 'og_mappingnieuwbouwbouwnummers')
                     ),
                 ),
-
             ),
-            // Post Type 4
-            /* post_type */'alv' => array(
+            // Custom Post Type: 'alv'
+            'alv' => array(
                 'post_type_args' => array(
+                    // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
+                        // Labels for the custom post type in the WordPress admin
                         'name' => 'OG A&LV Objecten',
                         'singular_name' => 'OG A&LV Object',
                         'add_new' => 'Nieuwe toevoegen',
@@ -427,15 +489,29 @@ class OGSyncPostTypeData {
                 'database_tables' => array(
                     'object' => array(
                         # TableName
-                        'tableName' => 'tbl_OG_alv',
+                        'tableName' => 'tbl_OG_alv',                                        // NON Mapped - Name of the table
                         # Normal fields
-                        'ID' => 'object_ObjectTiaraID',                                  // Mapped value USE Tiara ID
-                        'post_title' => 'straat;huisnummer;huisnummertoevoeging;plaats', // Mapped value
-                        'post_name' => 'straat-huisnummer-huisnummertoevoeging-plaats',  // Mapped value
-                        'post_content' => 'aanbiedingstekst',       // Mapped value
-                        'datum_gewijzigd' => 'ObjectUpdated',       // Mapped value
-                        'datum_toegevoegd' => 'ObjectDate',         // Mapped value
-                        'objectCode' => 'ObjectCode',               // Mapped value
+                        'ID' => 'object_ObjectTiaraID',                                     // Mapped value - ALWAYS Use the TiaraID
+                        /*
+                        Warning: You can only use one of the separators at the same time.
+                        post_title Separators:
+                            ; (Semicolon)   - The semi-colon is used to separate the values from each other with ' '
+                            | (Pipe)        - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+                            Nothing       - If there is no separator, it will just use the first value. The only variable given in
+                        */
+                        'post_title' => 'straat;huisnummer;huisnummertoevoeging;plaats',    // Mapped value - Default: Straat;Huisnummer;Huisnummertoevoeging;Plaats
+                        /*
+                        Warning: You can only use one of the separators at the same time.
+                        post_name Separators:
+                            - (Dash)      - The dash is used to separate the values from each other with '-'
+                            | (Pipe)      - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+                            Nothing       - If there is no separator, it will just use the first value. The only variable given in
+                         */
+                        'post_name' => 'straat-huisnummer-huisnummertoevoeging-plaats',     // Mapped value - Default: Straat-Huisnummer-Huisnummertoevoeging-Plaats
+                        'post_content' => 'aanbiedingstekst',                               // Mapped value - Default: De aanbiedingstekst
+                        'datum_gewijzigd' => '',                                            // Mapped value - Default: datum_gewijzigd  ; Default value is only for objects without a mapping table within the database
+                        'datum_toegevoegd' => 'ObjectDate',                                 // Mapped value - Default: datum_toegevoegd ; Default value is only for objects without a mapping table within the database
+                        'objectCode' => 'ObjectCode',                                       // Mapped value - Default: ObjectCode       ; Default value is only for objects without a mapping table within the database
 
                         # Post fields
                         'media' => array(
@@ -1053,7 +1129,7 @@ class OGSyncLicense {
         return $objectAccess['data']['types'] ?? [];
     }
 }
-class OGSyncPages
+class OGSyncMenus
 {
     // ======== Constructor ========
     function __construct()
@@ -1470,15 +1546,12 @@ class OGSyncPostTypes {
 	// =========== Functions ===========
 	function createPostTypes(): void {
 		// ======== Declaring Variables ========
-		# Classes
-		$postTypeData = OGSyncPostTypeData::customPostTypes();
         # Vars
         $templateFolder = plugin_dir_path(dirname(__DIR__)) . 'php/templates/';
 
 		// ======== Start of Function ========
-
-		// Create the OG Custom Post Types (if the user has access to it)
-		foreach($postTypeData as $postType => $postTypeArray) {
+		# Create the OG Custom Post Types (if the user has access to it)
+		foreach(OGSyncPostTypeData::customPostTypes() as $postType => $postTypeArray) {
 			register_post_type($postType, $postTypeArray['post_type_args']);
 		}
 	}
@@ -1497,37 +1570,40 @@ class OGSyncOffers {
 	function getNames($post_data, $object, $databaseKey) {
 		# ======== Post Title ========
 		// Check if the post_title contains '|' or ';' to determine if to concatenate or just use one
-		if (str_contains($databaseKey['post_title'], '|' ) ) {
-			$postTitle = explode('|', $databaseKey['post_title']);
-			$title = $postTitle[0];
+        if (str_contains($databaseKey['post_title'], '|' ) ) {
+            $postTitle = explode('|', $databaseKey['post_title']);
+            $title = $postTitle[0];
 
-			# Check the first one if it is empty, if it is, use the second one
-			if (!empty($object->{$title})) {
-				$post_data['post_title'] = $object->{$title};
-			}
-			else {
-				$post_data['post_title'] = $object->{$postTitle[1]};
-			}
-		}
-		else {
-			$postTitle = explode(';', $databaseKey['post_title']);
-			$processedTitles = [];
+            # Check the first one if it is empty, if it is, use the second one
+            if (!empty($object->{$title})) {
+                $post_data['post_title'] = $object->{$title};
+            }
+            else {
+                $post_data['post_title'] = $object->{$postTitle[1]};
+            }
+        }
+        elseif (str_contains($databaseKey['post_title'], ';')) {
+            $postTitle = explode(';', $databaseKey['post_title']);
+            $processedTitles = [];
 
-			# Loop through the titles and check if they are empty, if they are, skip them
-			foreach ($postTitle as $title) {
-				$objectTitle = $object->{$title} ?? '';
+            # Loop through the titles and check if they are empty, if they are, skip them
+            foreach ($postTitle as $title) {
+                $objectTitle = $object->{$title} ?? '';
 
-				# Check if the title is uppercase, if it is, make it lowercase
-				if (!empty($objectTitle)) {
-					if ($objectTitle == strtoupper($objectTitle)) {
-						$objectTitle = ucfirst(strtolower($objectTitle));
-					}
-					$processedTitles[] = $objectTitle;
-				}
-			}
-
-			$post_data['post_title'] = implode(' ', $processedTitles);
-		}
+                # Check if the title is uppercase, if it is, make it lowercase
+                if (!empty($objectTitle)) {
+                    if ($objectTitle == strtoupper($objectTitle)) {
+                        $objectTitle = ucfirst(strtolower($objectTitle));
+                    }
+                    $processedTitles[] = $objectTitle;
+                }
+            }
+            $post_data['post_title'] = implode(' ', $processedTitles);
+        }
+        else {
+            # If there are no separators just think of it as one title and one variable
+            $post_data['post_title'] = ucfirst(strtolower($object->{$databaseKey['post_title']} ?? ''));
+        }
 
 		# ======== Post Name ========
 		if (str_contains($databaseKey['post_name'], '-')) {
