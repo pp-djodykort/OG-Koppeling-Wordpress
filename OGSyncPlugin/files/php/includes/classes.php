@@ -696,13 +696,8 @@ class OGSyncSettingsData {
 	}
 }
 class OGSyncMapping {
-	// ================ Constructor ================
-	function __construct() {
-
-	}
-
 	// ================ Begin of Class ================
-    function cleanupObjects($OGTableRecord): mixed {
+    private static function cleanupObjects($OGTableRecord): mixed {
 	    foreach ($OGTableRecord as $OGTableRecordKey => $OGTableRecordValue) {
 		    # Check if the value is empty and if so remove the whole key from the OBJECT
 		    if ($OGTableRecordValue == '' or $OGTableRecordValue == NULL or $OGTableRecordValue == 'NULL') {
@@ -713,7 +708,7 @@ class OGSyncMapping {
         # Return the cleaned up OBJECT
         return $OGTableRecord;
     }
-    function mapMetaData($OGTableRecord, $databaseKeysMapping, $locationCodes=[], $databaseKeys=[]) {
+    public static function mapMetaData($OGTableRecord, $databaseKeysMapping, $locationCodes=[], $databaseKeys=[]) {
         if (!empty($databaseKeysMapping)) {
             // ======== Declaring Variables ========
             # Classes
@@ -724,7 +719,7 @@ class OGSyncMapping {
             // ========================= Start of Function =========================
             // ================ Cleaning the Tables/Records ================
             # Getting rid of all the useless and empty values in the OBJECT
-            $OGTableRecord = $this->cleanupObjects($OGTableRecord);
+            $OGTableRecord = self::cleanupObjects($OGTableRecord);
             # Getting rid of all the useless and empty values in the MAPPING TABLE
             foreach ($mappingTable as $mappingKey => $mappingTableValue) {
                 # Check if the value is empty and if so remove the whole key from the OBJECT
@@ -990,7 +985,7 @@ class OGSyncMapping {
         else {
             // ================ Cleaning the Tables/Records ================
             # Getting rid of all the useless and empty values in the OBJECT
-            $OGTableRecord = $this->cleanupObjects($OGTableRecord);
+            $OGTableRecord = self::cleanupObjects($OGTableRecord);
         }
 
         // ================ Returning the Object ================
@@ -999,7 +994,7 @@ class OGSyncMapping {
     }
 }
 
-// ========== Inactivated/Activated state of Plugin ==========
+// ========== Unlicensed / Licensed Classes ==========
 class OGSyncLicense {
     // ============ Declaring Variables ============
     # Nulls
@@ -1150,12 +1145,10 @@ class OGSyncMenus
     public static function createMenus(): void {
         // ======= Declaring Variables =======
 		# Vars
-        $boolPluginActivated = OGSyncLicense::checkActivation();
-		if ($boolPluginActivated) {
+		if (OGSyncLicense::checkActivation()) {
 			$postTypeData = OGSyncPostTypeData::customPostTypes();
 			$objectAccess = OGSyncLicense::checkPostTypeAccess();
 		}
-
         // Making the Global Settings Page
         add_menu_page(
             'Admin Settings',
@@ -1176,7 +1169,7 @@ class OGSyncMenus
         );
 
         // ======= When Plugin is activated =======
-        if ($boolPluginActivated) {
+        if (OGSyncLicense::checkActivation()) {
             // ======== Post Types ========
             // ==== OG Settings ====
             // Submenu Items based on the OG Post Types for in the OG Settings
@@ -1205,7 +1198,7 @@ class OGSyncMenus
                 [__CLASS__, 'HTMLOGAdminDashboard'],
                 'dashicons-plus-alt',
                 100);
-            // First sub-menu item name change
+            // First sub-menu item for name change
             add_submenu_page(
                 'pixelplus-og-plugin',
                 'Admin Dashboard',
@@ -1224,7 +1217,7 @@ class OGSyncMenus
                 [__CLASS__, 'HTMLOGAanbodDashboard'],
                 'dashicons-admin-multisite',
                 40);
-            // First sub-menu item name change
+            // First sub-menu item for name change
             add_submenu_page(
                 'pixelplus-og-plugin-aanbod',
                 'Aanbod Dashboard',
@@ -1389,17 +1382,13 @@ class OGSyncMenus
 
     // ==== Register Settings ====
 	public static function registerSettings(): void {
-		// ==== Declaring Variables ====
-		# Vars
-		$boolPluginActivated = OGSyncLicense::checkActivation();
-
 		// ==== Start of Function ====
 		# Setting sections and use the OGSyncSettingsData adminSettings data
 		foreach(OGSyncSettingsData::adminSettings() as $optionGroup => $optionArray) {
 			# Settings for on settings page
 			foreach ($optionArray['sections'] as $sectionTitle => $sectionArray) {
 				# Checking if this section has the permission to be created
-				if (!empty($sectionArray['permission']) && $sectionArray['permission'] == 'plugin_activated' && !$boolPluginActivated) continue;
+				if (!empty($sectionArray['permission']) && $sectionArray['permission'] == 'plugin_activated' && !OGSyncLicense::checkActivation()) continue;
 
 				# Creating the Section
 				add_settings_section(
@@ -1411,7 +1400,7 @@ class OGSyncMenus
 					$optionArray['settingPageSlug'],
 				);
 				foreach ($sectionArray['fields'] as $fieldTitle => $fieldArray) {
-					// Creating the Field
+					// Creating the Field based off of the fieldArray settings.
 					add_settings_field(
 						$fieldArray['fieldID'],
 						$fieldTitle,
@@ -1441,7 +1430,7 @@ class OGSyncMenus
 						$optionArray['settingPageSlug'],
 						$sectionArray['sectionID'],
 					);
-					// Registering the Field
+					// Registering the Field based off of the fieldArray settings.
 					register_setting($optionGroup, $fieldArray['fieldID'], !empty($fieldArray['sanitizeCallback']) ? "OGSyncSettingsData::{$fieldArray['sanitizeCallback']}" : '');
 				}
 			}
@@ -1518,19 +1507,17 @@ class OGSyncMenus
             ?>
         </form>
     <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Algemeen');}
-
     // OG Aanbod
     static function HTMLOGAanbodDashboard(): void { OGSyncTools::htmlAdminHeader('OG Aanbod Dashboard'); ?>
         <p>dingdong bishass</p>
         <?php OGSyncTools::htmlAdminFooter('OG Aanbod Dashboard');}
-
     // OG Detailpage
     function HTMLOGDetailPageWonen() { ?>
 
     <?php }
 }
 
-// ========== Fully activated state of the plugin ==========
+// ========== Fully Licensed ==========
 class OGSyncPostTypes {
 	// ======== Declaring Variables ========
 
@@ -1683,7 +1670,6 @@ class OGSyncOffers {
         // ============ Declaring Variables ============
         # Classes
         global $wpdb;
-        $OGSyncMapping = new OGSyncMapping();
 
         # Variables
         $databaseKeysMedia = $databaseKey['media'];
@@ -1706,7 +1692,7 @@ class OGSyncOffers {
         foreach ($mediaObjects as $mediaObject) {
             // ======== Declaring Variables ========
             # Mapping the data
-            $mediaObject = $OGSyncMapping->mapMetaData($mediaObject, ($databaseKeysMedia['mapping'] ?? []));
+            $mediaObject = OGSyncMapping::mapMetaData($mediaObject, ($databaseKeysMedia['mapping'] ?? []));
             $mediaQuery = new WP_Query([
                 'post_type' => 'attachment',
                 'meta_key' => $databaseKeysMedia['mediaName'],
@@ -1914,7 +1900,6 @@ class OGSyncOffers {
 		// ======== Declaring Variables ========
 		# Classes
 		global $wpdb;
-		$OGSyncMapping = new OGSyncMapping();
 
 		# Variables
 		$OGBouwtypeID = $OGBouwtype->id;
@@ -1933,7 +1918,7 @@ class OGSyncOffers {
 
 			// ======== Declaring Variables ========
 			# Variables
-			$OGBouwnummer = $OGSyncMapping->mapMetaData($OGBouwnummer, ($databaseKeys[2]['mapping'] ?? []), $locationCodes, $databaseKeys);
+			$OGBouwnummer = OGSyncMapping::mapMetaData($OGBouwnummer, ($databaseKeys[2]['mapping'] ?? []), $locationCodes, $databaseKeys);
 			# Post - Bouwnummer
 			$postData = new WP_Query([
 				'post_type' => $postTypeName,
@@ -1979,7 +1964,6 @@ class OGSyncOffers {
 		// ======== Declaring Variables ========
 		# Classes
 		global $wpdb;
-		$OGSyncMapping = new OGSyncMapping();
 
 		# Variables
 		$OGProjectID = $OGProject->id;
@@ -1998,7 +1982,7 @@ class OGSyncOffers {
 			}
 
 			// ======== Declaring Variables ========
-			$OGBouwtype = $OGSyncMapping->mapMetaData($OGBouwtype, ($databaseKeys[1]['mapping'] ?? []), $locationCodes, $databaseKeys);
+			$OGBouwtype = OGSyncMapping::mapMetaData($OGBouwtype, ($databaseKeys[1]['mapping'] ?? []), $locationCodes, $databaseKeys);
 			# Post - Bouwtype
 			$postData = new WP_Query([
 				'post_type' => $postTypeName,
@@ -2046,7 +2030,7 @@ class OGSyncOffers {
 		# ============ Declaring Variables ============
 		# Classes
 		global $wpdb;
-		$OGSyncMapping = new OGSyncMapping();
+
 		# Variables
 		$projectIds = [];
 		$locationCodes = $this->getLocationCodes();
@@ -2070,7 +2054,7 @@ class OGSyncOffers {
 
 			// ======== Declaring Variables ========
 			# Remapping the object
-			$OGProject = $OGSyncMapping->mapMetaData($OGProject, ($databaseKeys[0]['mapping'] ?? []), $locationCodes, $databaseKeys);
+			$OGProject = OGSyncMapping::mapMetaData($OGProject, ($databaseKeys[0]['mapping'] ?? []), $locationCodes, $databaseKeys);
 
 			# Post - Project
 			$postData = new WP_Query([
@@ -2125,8 +2109,6 @@ class OGSyncOffers {
 
 	function checkNormalPosts($postTypeName, $OGobjects, $databaseKey): void {
 		// ============ Declaring Variables ============
-		# Classes
-		$OGSyncMapping = new OGSyncMapping();
 		# Variables
 		$locationCodes = $this->getLocationCodes();
 		$objectIDs = [];
@@ -2137,7 +2119,7 @@ class OGSyncOffers {
 			// ======== Declaring Variables ========
 			# ==== Variables ====
 			# Remapping the object
-			$OGobject = $OGSyncMapping->mapMetaData($OGobject, ($databaseKey['mapping'] ?? []), $locationCodes);
+			$OGobject = OGSyncMapping::mapMetaData($OGobject, ($databaseKey['mapping'] ?? []), $locationCodes);
 
 			$postData = new WP_Query([
 				'post_type' => $postTypeName,

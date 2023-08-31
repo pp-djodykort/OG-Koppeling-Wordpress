@@ -82,14 +82,30 @@ class OGSiteSettingsData {
     private static array $cacheFiles = [
         'licenseCache' => 'licenseCache.json', // This is the cache file for the checking the Licence key
     ];
+    /*
+    Documentation for 'wonen-settings' Checkbox Options:
+
+    Checkbox Format:
+    (checkbox-name: boolean-value)
+
+    Separator:
+    ; (semicolon)
+
+    Boolean Values:
+    1 = Checked (not forced)
+    1f = Checked and Forced
+    ---
+    0 = Unchecked (not forced)
+    0f = Unchecked and Forced
+    */
     private static array $arrOptions = [
         # ======== OG Admin Settings ========
         # ==== Licentie ====
         /* Setting Name */'licenseKey' => /* Default Value */   '', // License Key
-        
+
         # ==== Algemeen ====
         /* Setting Name */'siteName' => /* Default Value */     '',
-        
+
         # ======== Uiterlijk Settings ========
         # ==== Logo ====
         /* Setting Name */'siteLogo' => /* Default Value */     '',
@@ -109,6 +125,43 @@ class OGSiteSettingsData {
         /* Setting Name */'wonenDetailpaginaIndeling' => /* Default Value */            'AantalWoonlagen:1f;AantalKamers:1f;AantalSlaapkamers:1f;AantalBadkamers:1',
         /* Setting Name */'wonenDetailpaginaEnergieInstallatie' => /* Default Value */  'EnergieLabel:1f;Isolatie:1f;Verwarming:1f;WarmWater:1f;CvKetelType:1f;CvKetelBouwjaar:1f;CvKetelEigendom:1;CvKetelBrandstof:0;EnergieEinddatum:1f',
     ];
+    /*
+    Documentation for 'adminSettings' Array Configuration:
+
+    This array defines admin settings and their configurations for a WordPress plugin.
+
+    Array Structure:
+    - 'Option Group' groups related settings.
+    - Each group can have sections to organize options.
+    - Within sections, fields represent user-editable choices.
+
+    Example:
+    'ppOGSite_adminOptions' => [
+        'settingPageSlug' => 'ppOGSite-plugin-settings',
+        'sections' => [
+            'General' => [
+                'sectionID' => 'ppOGSite_SectionGeneral',
+                'permission' => 'plugin_activated',
+                'fields' => [
+                    'Site Name' => [
+                        'fieldID' => 'ppOGSite_siteName',
+                    ],
+                    // Other fields...
+                ],
+            ],
+            // Other sections...
+        ],
+    ],
+
+    Key Parts:
+    - 'settingPageSlug': Page to edit settings.
+    - 'sections': Group options.
+    - 'sectionID': Unique section ID.
+    - 'permission': Access control.
+    - 'fields': Editable options.
+
+    Remember, this structure simplifies settings management and customization.
+    */
     private static array $adminSettings = [
         // Settings 1
         /* Option Group= */ 'ppOGSite_adminOptions' => [
@@ -256,6 +309,41 @@ class OGSiteSettingsData {
             ]
         ]
     ];
+    /*
+    Documentation for 'arrPages' Array Configuration:
+
+    This array contains configurations for generating pages when the plugin is first activated in WordPress.
+
+    Array Structure:
+    - Each page is defined using its 'Page Title'.
+    - The configuration includes various details about the page, such as its template, content, and settings.
+
+    Example:
+    'Homepagina' => [
+        'pageID' => 'ppOGSite_homepage',
+        'templateFile' => 'page-homepage.php',
+        'pageTitle' => 'Homepagina',
+        'pageContent' => '',
+        'pageSlug' => '',
+        'boolIsFrontPage' => True,
+        'childPages' => array(),
+    ],
+
+    Key Parts Explanation:
+    - 'pageID': A unique identifier for the page.
+    - 'templateFile': The template file used to render the page.
+    - 'pageTitle': The title displayed for the page.
+    - 'pageContent': The content of the page (initially empty).
+    - 'pageSlug': The URL slug for the page.
+    - 'boolIsFrontPage': Whether this page is the front page of the site.
+    - 'childPages': If the page has child pages, they are defined here.
+
+    Child Pages Explanation:
+    - For pages with sub-pages, like 'Diensten', you can define child pages similarly.
+    - 'pageID', 'templateFile', 'pageTitle', and other details follow the same structure as parent pages.
+
+    This array simplifies the process of generating initial pages when your plugin is activated.
+    */
     private static array $arrPages = [
         // Page 1 - Homepage
         /* Page Title= */'Homepagina' => [
@@ -567,13 +655,11 @@ class OGSiteMenus {
                 update_option('site_icon', $favicon);
             }
         });
-
-
     }
 
     // ======== Functions ========
     // ==== Creating the menu's ====
-    public static function createMenus() {
+    public static function createMenus(): void {
         // ==== Declaring Variables ====
         # Vars
         $boolPluginActivated = OGSiteLicense::checkActivation();
