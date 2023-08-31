@@ -557,8 +557,9 @@ class OGSyncPostTypeData {
     }
 }
 class OGSyncColorScheme {
-    // ================ Declaring Variables ================
-    public array $mainColors = array(
+    // ============ Declaring Variables ============
+    # Arrays
+    private static array $mainColors = array(
         'light' => 3,
         'modern' => 1,
         'coffee' => 2,
@@ -580,18 +581,23 @@ class OGSyncColorScheme {
         'seashore' => 3,
         'vinyard' => 3
     );
+    // ============ Getters ============
+    public static function mainColors(): array
+    {
+        return self::$mainColors;
+    }
 
-    // ================ Begin of Class ================
-    function returnColor(): string
+    // ============ Functions ============
+    public static function returnColor(): string
     {
         // ======== Declaring Variables ========
         global $_wp_admin_css_colors;
         $OGSyncColorScheme = get_user_option('admin_color');
 
         // ======== Start of Function ========
-        foreach ($this->mainColors as $key => $value) {
+        foreach (self::mainColors() as $key => $value) {
             if ($key == $OGSyncColorScheme) {
-                return $_wp_admin_css_colors[$OGSyncColorScheme]->colors[$this->mainColors[$key]];
+                return $_wp_admin_css_colors[$OGSyncColorScheme]->colors[self::mainColors()[$key]];
             }
         }
         return $_wp_admin_css_colors['fresh']->colors[2];
@@ -1524,14 +1530,14 @@ class OGSyncPostTypes {
 	// ======== Start of Class ========
 	function __construct() {
 		# Creating the post types
-		add_action('init', array($this, 'createPostTypes'));
+		add_action('init', [__CLASS__, 'createPostTypes']);
 
 		# Checking the post migration
-//		add_action('init', array($this, 'checkMigrationPostTypes'));
+		// add_action('init', [__CLASS__, 'checkMigrationPostTypes']);
 	}
 
 	// =========== Functions ===========
-	function createPostTypes(): void {
+	public static function createPostTypes(): void {
 		// ======== Declaring Variables ========
         # Vars
         $templateFolder = plugin_dir_path(dirname(__DIR__)) . 'php/templates/';
@@ -1542,19 +1548,41 @@ class OGSyncPostTypes {
 			register_post_type($postType, $postTypeArray['post_type_args']);
 		}
 	}
+    public static function checkMigrationPostTypes(): void {
+        // ==== Declaring Variables ====
+        # Classes
+        global $wpdb;
+        $postTypeData = OGSyncPostTypeData::customPostTypes();
+
+        # Variables
+        $defaultPrefix = "wp_cpt_";
+        $sqlCheck = "SHOW TABLES LIKE '{$defaultPrefix}";
+
+        // ==== Start of Function ====
+        // Checking
+        foreach ($postTypeData as $postType => $postTypeArray) {
+            // Preparing the statement
+            $result = $wpdb->get_results("{$sqlCheck}{$postType}'");
+
+            if (empty($result)) {
+                // Migrating the data
+                OGSyncTools::adminNotice('error', 'Please migrate the '.strtoupper($postType).' custom post type to the new table structure using the CPT Tables Plugin.');
+            }
+        }
+    }
 }
 class OGSyncOffers {
 	// ================ Start of Class ================
-	function __construct() {
+	public function __construct() {
 		# Use this one if it is going to be run on the site itself.
 //		 add_action('admin_init', array($this, 'examinePosts'));
 
 		# Use this one if it is going to be a cronjob.
-		$this->examinePosts();
+		self::examinePosts();
 	}
 
 	// ================ Functions ================
-	function getNames($post_data, $object, $databaseKey) {
+	private static function getNames($post_data, $object, $databaseKey) {
 		# ======== Post Title ========
 		// Check if the post_title contains '|' or ';' to determine if to concatenate or just use one
         if (str_contains($databaseKey['post_title'], '|' ) ) {
@@ -1635,7 +1663,7 @@ class OGSyncOffers {
 		# Return the post_data
 		return $post_data;
 	}
-	function getLocationCodes(): array {
+	private static function getLocationCodes(): array {
 		// ================ Declaring Variables ================
 		# ==== Variables ====
 		# Shit
@@ -1666,7 +1694,7 @@ class OGSyncOffers {
 		return [$arrAfdelingcodes, $arrAfdelingNames];
 	}
 
-    function updateMedia($postID, $postTypeName, $OGobject, $databaseKey): void {
+    private static function updateMedia($postID, $postTypeName, $OGobject, $databaseKey): void {
         // ============ Declaring Variables ============
         # Classes
         global $wpdb;
@@ -1769,7 +1797,7 @@ class OGSyncOffers {
         }
     }
 
-	function createPost($postTypeName, $OGobject, $databaseKey, $parentPostID=''): WP_Error|int {
+    private static function createPost($postTypeName, $OGobject, $databaseKey, $parentPostID=''): WP_Error|int {
 		// ============ Declaring Variables ===========
 		# Variables
 		$post_data = [
@@ -1780,7 +1808,7 @@ class OGSyncOffers {
 			'post_content' => '',
 			'post_status' => 'draft'
 		];
-		$post_data = $this->getNames($post_data, $OGobject, $databaseKey);
+		$post_data = self::getNames($post_data, $OGobject, $databaseKey);
 
 		// ============ Start of Function ============
 		# Creating the post
@@ -1790,7 +1818,7 @@ class OGSyncOffers {
 		}
 
 		# Adding meta data for images
-		$this->updateMedia($postID, $postTypeName, $OGobject, $databaseKey);
+		self::updateMedia($postID, $postTypeName, $OGobject, $databaseKey);
 
 		# Publishing the post
 		wp_publish_post($postID);
@@ -1798,7 +1826,7 @@ class OGSyncOffers {
 		# Returning the postID
 		return $postID;
 	}
-	function updatePost($postTypeName, $postID, $OGobject, $databaseKey, $parentPostID=''): void {
+    private static function updatePost($postTypeName, $postID, $OGobject, $databaseKey, $parentPostID=''): void {
 		// ======== Declaring Variables ========
 		# Classes
 
@@ -1809,20 +1837,20 @@ class OGSyncOffers {
 			'post_parent' => $parentPostID,
 			'post_content' => ''
 		];
-		$post_data = $this->getNames($post_data, $OGobject, $databaseKey);
+		$post_data = self::getNames($post_data, $OGobject, $databaseKey);
 
 		// ======== Start of Function ========
 		# Overwriting the post
 		wp_update_post($post_data);
 
-		$this->updateMedia($postID, $postTypeName, $OGobject, $databaseKey);
+		self::updateMedia($postID, $postTypeName, $OGobject, $databaseKey);
 
 		# Updating the post meta
 		foreach ($OGobject as $key => $value) {
 			update_post_meta($postID, $key, $value);
 		}
 	}
-	function deleteUnneededPosts($postTypeName, $databaseKeysObject, $objectIDs, $type=''): void {
+	public static function deleteUnneededPosts($postTypeName, $databaseKeysObject, $objectIDs, $type=''): void {
 		if (empty($objectIDs)) {return;}
 		// ======== Declaring Variables ========
 		# Variables
@@ -1872,7 +1900,7 @@ class OGSyncOffers {
 		}
 	}
 
-	function checkMedia($mediaDatabaseKeys): void {
+	public static function checkMedia($mediaDatabaseKeys): void {
 		// ============ Declaring Variables ============
 		# Classes
 		global $wpdb;
@@ -1896,14 +1924,14 @@ class OGSyncOffers {
 
 	}
 
-	function checkBouwnummersPosts($postTypeName, $parentPostID, $OGBouwtype, $databaseKeys): array {
+    private static function checkBouwnummersPosts($postTypeName, $parentPostID, $OGBouwtype, $databaseKeys): array {
 		// ======== Declaring Variables ========
 		# Classes
 		global $wpdb;
 
 		# Variables
 		$OGBouwtypeID = $OGBouwtype->id;
-		$locationCodes = $this->getLocationCodes();
+		$locationCodes = self::getLocationCodes();
 		$objectIDs = [];
 
 		$OGBouwnummers = $wpdb->get_results("SELECT * FROM {$databaseKeys[2]['tableName']} WHERE {$databaseKeys[2]['id_bouwtypes']} = $OGBouwtypeID");
@@ -1943,13 +1971,13 @@ class OGSyncOffers {
 			if ($bouwNummerExisted) {
 				// Checking if the bouwtype is updated
 				if ($dateUpdatedPost != $dateUpdatedDatabase) {
-					$this->updatePost($postTypeName, $postID, $OGBouwnummer, $databaseKeys[2], $parentPostID);
+					self::updatePost($postTypeName, $postID, $OGBouwnummer, $databaseKeys[2], $parentPostID);
 					echo("Updated Nieuwbouw bouwnummer: $postID<br/>");
 				}
 			}
 			else {
 				// Creating the post
-				$postID = $this->createPost($postTypeName, $OGBouwnummer, $databaseKeys[2], $parentPostID);
+				$postID = self::createPost($postTypeName, $OGBouwnummer, $databaseKeys[2], $parentPostID);
 				echo("Created Nieuwbouw bouwnummer: $postID<br/>");
 			}
 
@@ -1960,14 +1988,14 @@ class OGSyncOffers {
 		// Returning the objectIDs
 		return $objectIDs;
 	}
-	function checkBouwtypesPosts($postTypeName, $parentPostID, $OGProject, $databaseKeys): array {
+    private static function checkBouwtypesPosts($postTypeName, $parentPostID, $OGProject, $databaseKeys): array {
 		// ======== Declaring Variables ========
 		# Classes
 		global $wpdb;
 
 		# Variables
 		$OGProjectID = $OGProject->id;
-		$locationCodes = $this->getLocationCodes();
+		$locationCodes = self::getLocationCodes();
 		$objectIDs = [];
 		$bouwnummerIds = [];
 
@@ -2007,33 +2035,33 @@ class OGSyncOffers {
 				// Checking if the post is updated
 				if ($dateUpdatedPost != $dateUpdatedObject) {
 					// Updating/overwriting the post
-					$this->updatePost($postTypeName, $postID, $OGBouwtype, $databaseKeys[1], $parentPostID);
+					self::updatePost($postTypeName, $postID, $OGBouwtype, $databaseKeys[1], $parentPostID);
 					echo("Updated Nieuwbouw bouwtype: {$postID}<br/>");
 				}
 			}
 			else {
 				// Creating the post
-				$postID = $this->createPost($postTypeName, $OGBouwtype, $databaseKeys[1], $parentPostID);
+				$postID = self::createPost($postTypeName, $OGBouwtype, $databaseKeys[1], $parentPostID);
 				echo("Created Nieuwbouw bouwtype: {$postID}<br/>");
 			}
 
 			# Adding the postID to the array
 			$objectIDs = array_merge($objectIDs, [$OGBouwtype->{$databaseKeys[1]['ID']}]);
 			# Checking the children (bouwnummers)
-			$bouwnummerIds = array_merge($bouwnummerIds, $this->checkBouwnummersPosts($postTypeName, $postID, $OGBouwtype, $databaseKeys));
+			$bouwnummerIds = array_merge($bouwnummerIds, self::checkBouwnummersPosts($postTypeName, $postID, $OGBouwtype, $databaseKeys));
 		}
 
 		# Returning the objectIDs
 		return [$objectIDs, $bouwnummerIds];
 	}
-	function checkNieuwbouwPosts($postTypeName, $databaseKeys): void {
+    private static function checkNieuwbouwPosts($postTypeName, $databaseKeys): void {
 		# ============ Declaring Variables ============
 		# Classes
 		global $wpdb;
 
 		# Variables
 		$projectIds = [];
-		$locationCodes = $this->getLocationCodes();
+		$locationCodes = self::getLocationCodes();
 		$OGProjects = $wpdb->get_results("SELECT * FROM {$databaseKeys[0]['tableName']}");
 		# Removing every null out of the objects so Wordpress won't get crazy.
 		foreach ($OGProjects as $key => $object) {
@@ -2079,38 +2107,38 @@ class OGSyncOffers {
 				// Checking if the post is updated
 				if ($dateUpdatedPost != $dateUpdatedObject) {
 					// Updating/overwriting the post
-					$this->updatePost($postTypeName, $postID, $OGProject, $databaseKeys[0]);
+					self::updatePost($postTypeName, $postID, $OGProject, $databaseKeys[0]);
 					echo("Updated Nieuwbouw project: {$postID}<br/>");
 				}
 			}
 			else {
 				// Creating the post
-				$postID = $this->createPost($postTypeName, $OGProject, $databaseKeys[0]);
+				$postID = self::createPost($postTypeName, $OGProject, $databaseKeys[0]);
 				echo("Created Nieuwbouw project: {$postID}<br/>");
 			}
 
 			# Adding the postID to the array
 			$projectIds[] = $OGProject->{$databaseKeys[0]['ID']};
 			# Checking the child-posts
-			$arrayIds = $this->checkBouwtypesPosts($postTypeName, $postID, $OGProject, $databaseKeys);
+			$arrayIds = self::checkBouwtypesPosts($postTypeName, $postID, $OGProject, $databaseKeys);
 		}
 
 		# ==== Deleting the unneeded posts ====
 		# Projects
-//		$this->deleteUnneededPosts($postTypeName, $databaseKeys[0], $projectIds, $databaseKeys[0]['type']);
+//		self::deleteUnneededPosts($postTypeName, $databaseKeys[0], $projectIds, $databaseKeys[0]['type']);
 
 		# Bouwtypes
-//		$this->deleteUnneededPosts($postTypeName, $databaseKeys[1], $arrayIds[0] ?? [], $databaseKeys[1]['type']);
+//		self::deleteUnneededPosts($postTypeName, $databaseKeys[1], $arrayIds[0] ?? [], $databaseKeys[1]['type']);
 
 		# Bouwnummers
-//		$this->deleteUnneededPosts($postTypeName, $databaseKeys[2], $arrayIds[1] ?? [], $databaseKeys[2]['type']);
+//		self::deleteUnneededPosts($postTypeName, $databaseKeys[2], $arrayIds[1] ?? [], $databaseKeys[2]['type']);
 		echo('Nieuwbouw Projecten klaar!<br/>');
 	}
 
-	function checkNormalPosts($postTypeName, $OGobjects, $databaseKey): void {
+    private static function checkNormalPosts($postTypeName, $OGobjects, $databaseKey): void {
 		// ============ Declaring Variables ============
 		# Variables
-		$locationCodes = $this->getLocationCodes();
+		$locationCodes = self::getLocationCodes();
 		$objectIDs = [];
 
 		// ============ Start of Function ============
@@ -2142,12 +2170,12 @@ class OGSyncOffers {
 					// Echo the fact that this is happening
 					echo("Updating {$postTypeName} object: {$postData->post->ID}<br/>");
 					// Updating/overwriting the post
-					$this->updatePost($postTypeName, $postData->post->ID, $OGobject, $databaseKey);
+					self::updatePost($postTypeName, $postData->post->ID, $OGobject, $databaseKey);
 				}
 			}
 			else {
 				// Creating the post
-				$postID = $this->createPost($postTypeName, $OGobject, $databaseKey);
+				$postID = self::createPost($postTypeName, $OGobject, $databaseKey);
 				echo("Created {$postTypeName} object: {$postID}<br/>");
 			}
 
@@ -2156,10 +2184,10 @@ class OGSyncOffers {
 		}
 
 		# Deleting the posts that are not in the array
-//		$this->deleteUnneededPosts($postTypeName, $databaseKey, $objectIDs);
+//		self::deleteUnneededPosts($postTypeName, $databaseKey, $objectIDs);
 	}
 
-	function examinePosts(): void {
+	public static function examinePosts(): void {
 		// ============ Declaring Variables ============
 		# Classes
 		global $wpdb;
@@ -2190,7 +2218,7 @@ class OGSyncOffers {
 			// ======== Start of Loop ========
 			echo("<h1>".$postTypeName."</h1>");
 			if ($boolIsNieuwbouw) {
-				$this->checkNieuwbouwPosts($postTypeName, $databaseKeys);
+				self::checkNieuwbouwPosts($postTypeName, $databaseKeys);
 			}
 			else {
 				foreach ($databaseKeys as $databaseKey) {
@@ -2206,7 +2234,7 @@ class OGSyncOffers {
 					}
 
 					if (!empty($OGobjects)) {
-						$this->checkNormalPosts($postTypeName, $OGobjects, $databaseKey);
+						self::checkNormalPosts($postTypeName, $OGobjects, $databaseKey);
 					}
 				}
 			}
