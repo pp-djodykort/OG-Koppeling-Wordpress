@@ -4,7 +4,7 @@
 # Plus this variable: '/lockfiles/syncOffers.lock' do it the right way, so it can be used on every os.
 $lockFile = __DIR__. DIRECTORY_SEPARATOR. 'lockfiles'. DIRECTORY_SEPARATOR. 'syncOffers.lock';
 # Variables
-$boolLockFileSystemEnabled = True;
+$boolLockFileSystemEnabled = OGSyncOffers::boolFirstInit() ? True : /* Change this to True if u want it to be permanent */False;
 $accessToken = ['accessToken', '5375636B4D79416363657373546F6B656E'];
 $overrideToken = ['overrideToken', '5375636B4D794C6F636B46696C65546F6B656E'];
 
@@ -49,8 +49,8 @@ if ($boolLockFileSystemEnabled) {
 
 // ============ Imports ============
 # WordPress
-if ($wpLoad = dirname( __DIR__, 6 ) . DIRECTORY_SEPARATOR . 'wp' . DIRECTORY_SEPARATOR . 'wp-load.php' and file_exists( $wpLoad ) ) {require_once( $wpLoad );}
-elseif ($wpLoad = dirname( __DIR__, 6 ) . DIRECTORY_SEPARATOR .'wp-load.php' and file_exists( $wpLoad ) ) {require_once( $wpLoad );}
+if ($wpLoad = dirname(__DIR__, 6) . DIRECTORY_SEPARATOR . 'wp' . DIRECTORY_SEPARATOR . 'wp-load.php' and file_exists( $wpLoad ) ) {require_once( $wpLoad );}
+elseif ($wpLoad = dirname(__DIR__, 6) . DIRECTORY_SEPARATOR .'wp-load.php' and file_exists( $wpLoad ) ) {require_once( $wpLoad );}
 
 # Classes / Functions
 require_once(dirname(__DIR__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'classes.php');
