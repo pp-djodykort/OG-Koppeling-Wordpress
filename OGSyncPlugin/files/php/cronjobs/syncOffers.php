@@ -4,7 +4,7 @@
 # Plus this variable: '/lockfiles/syncOffers.lock' do it the right way, so it can be used on every os.
 $lockFile = __DIR__. DIRECTORY_SEPARATOR. 'lockfiles'. DIRECTORY_SEPARATOR. 'syncOffers.lock';
 # Variables
-$boolLockFileSystemEnabled = false;
+$boolLockFileSystemEnabled = True;
 $accessToken = ['accessToken', '5375636B4D79416363657373546F6B656E'];
 $overrideToken = ['overrideToken', '5375636B4D794C6F636B46696C65546F6B656E'];
 
@@ -37,7 +37,14 @@ if ($boolLockFileSystemEnabled) {
             mkdir(dirname($lockFile), 0777, true);
         }
     }
+
+	# Touching the file, so it can be used as a lock file
     touch($lockFile);
+
+	# Registering a shutdown function, so the lock file can be removed after the program has finished
+	register_shutdown_function(function () use ($lockFile) {
+		unlink($lockFile);
+	});
 }
 
 // ============ Imports ============
@@ -59,8 +66,3 @@ global $wpdb;
 
 // ============ Start of Program ============
 $OGSyncOffers = new OGSyncOffers();
-
-// ============ End of Program ============
-if ($boolLockFileSystemEnabled) {
-    unlink($lockFile);
-}
