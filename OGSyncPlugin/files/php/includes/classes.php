@@ -148,7 +148,7 @@ class OGSyncPostTypeData {
                         'post_name' => 'objectDetails_Adres_NL_Straatnaam-objectDetails_Adres_NL_Huisnummer-objectDetails_Adres_NL_HuisnummerToevoeging-objectDetails_Adres_NL_Woonplaats',  // Mapped value - Default: Straat-Huisnummer-Huisnummertoevoeging-Woonplaats
                         'post_content' => 'objectDetails_Aanbiedingstekst',         // Mapped value - Default: De aanbiedingstekst
                         'datum_gewijzigd' => 'datum_gewijzigd',                     // Mapped value - Default: datum_gewijzigd      ; Default value is only for objects without a mapping table within the database
-                        'datum_gewijzigd_unmapped' => 'datum_gewijzigd',            // NON Mapped value - Default: datum_gewijzigd ; The extra field is needed so the plugin can filter on the date for less memory usage
+                        'datum_gewijzigd_unmapped' => 'datum_gewijzigd',            // NON Mapped value - Default: datum_gewijzigd  ; The extra field is needed so the plugin can filter on the date for less memory usage
                         'datum_toegevoegd' => 'datum_toegevoegd',                   // Mapped value - Default: datum_toegevoegd     ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'object_ObjectCode',                        // Mapped value - Default: object_ObjectCode    ; Default value is only for objects without a mapping table within the database
 
@@ -611,11 +611,11 @@ class OGSyncColorScheme {
 }
 class OGSyncSettingsData {
 	// ============ Declare Variables ============
-	// Strings
+	# Strings
 	public static string $settingPrefix = 'ppOGSync_'; // This is the prefix for all the settings used within the OG Plugin
 	public static string $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
 
-	// Arrays
+	# Arrays
 	private static array $apiURLs = [
 		'license' => 'https://og-feeds2.pixelplus.nl/api/validate.php',
 		'syncTimes' => 'https://og-feeds2.pixelplus.nl/api/latest.php'
@@ -652,6 +652,12 @@ class OGSyncSettingsData {
 		],
 	];
 
+	# Bools
+	public static bool $boolGiveLastCron = True;
+
+	# Ints
+	public static int $intObjectsCreated = 0;
+	public static int $intObjectsUpdated = 0;
 	// ============ Getters ============
 	public static function apiURLs(): array {
 		return self::$apiURLs;
@@ -1579,7 +1585,7 @@ class OGSyncPostTypes {
 class OGSyncOffers {
 	// ============ Constructor ============
 	public function __construct() {
-		# Use this one if it is going to be run on the site itself.
+		# Use this one if it is going to be run on the site itself. SMALl NOTE: There will be no input to the cronjobs table
 		// add_action('admin_init', [__CLASS__, 'examinePosts']);
 
 		# Use this one if it is going to be a cronjob.
@@ -1587,13 +1593,6 @@ class OGSyncOffers {
 	}
 
 	// ============ Declaring Variables ============
-	# Bools
-	private static bool $boolGiveLastCron = True;
-
-	# Ints
-	private static int $intObjectsCreated = 0;
-	private static int $intObjectsUpdated = 0;
-
 	# ==== Getters ====
 	private static function lastCronjob() {
 		// ==== Declaring Variables ====
@@ -1618,7 +1617,7 @@ class OGSyncOffers {
               PRIMARY KEY (`cronjob_count`)) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=COMPRESSED");
 		}
 
-		return self::$boolGiveLastCron ? ($wpdb->get_results("SELECT datetime FROM cronjobs ORDER BY datetime DESC LIMIT 1")[0]->datetime ?? 0) : 0;
+		return OGSyncSettingsData::$boolGiveLastCron ? ($wpdb->get_results("SELECT datetime FROM cronjobs ORDER BY datetime DESC LIMIT 1")[0]->datetime ?? 0) : 0;
 	}
 	public static function boolFirstInit(): bool {
 		// ==== Start of Function ====
@@ -2140,7 +2139,7 @@ class OGSyncOffers {
 				echo("Created Nieuwbouw project: {$postID}<br/>");
 
 				# Updating the count
-				self::$intObjectsCreated++;
+				OGSyncSettingsData::$intObjectsCreated++;
 
 				# Adding the postID to the array
 				$projectIds[] = $OGProject->{$databaseKeys[0]['ID']};
@@ -2176,7 +2175,7 @@ class OGSyncOffers {
 					echo("Created Nieuwbouw project: {$postID}<br/>");
 
 					# Updating the count
-					self::$intObjectsCreated++;
+					OGSyncSettingsData::$intObjectsCreated++;
 				}
 				else {
 					// == Declaring Variables ==
@@ -2191,7 +2190,7 @@ class OGSyncOffers {
 						echo("Updated Nieuwbouw project: {$projectPosts->posts[$postKey]->ID}<br/>");
 
 						# Updating the count
-						self::$intObjectsUpdated++;
+						OGSyncSettingsData::$intObjectsUpdated++;
 					}
 				}
 
@@ -2225,7 +2224,7 @@ class OGSyncOffers {
 				echo("Created {$postTypeName} object: {$postID}<br/>");
 
 				# Updating the count
-				self::$intObjectsCreated++;
+				OGSyncSettingsData::$intObjectsCreated++;
 
 				# Adding the object ID to the array
 				$objectIDs[] = $OGobject->{$databaseKey['ID']};
@@ -2253,7 +2252,7 @@ class OGSyncOffers {
 					echo("Created {$postTypeName} object: {$postID}<br/>");
 
 					# Updating the count
-					self::$intObjectsCreated++;
+					OGSyncSettingsData::$intObjectsCreated++;
 				}
 				else {
 					// == Declaring Variables ==
@@ -2267,7 +2266,7 @@ class OGSyncOffers {
 						echo("Updated {$postTypeName} object: {$postData->posts[$postKey]->ID}<br/>");
 
 						# Updating the count
-						self::$intObjectsUpdated++;
+						OGSyncSettingsData::$intObjectsUpdated++;
 					}
 				}
 
@@ -2282,10 +2281,6 @@ class OGSyncOffers {
 		// ============ Declaring Variables ============
 		# Classes
 		global $wpdb;
-
-		# Variables
-		date_default_timezone_set('Europe/Amsterdam');
-		$beginTime = time();
 
 		// ============ Start of Function ============
 		# ==== Checking all the post types ====
@@ -2330,20 +2325,5 @@ class OGSyncOffers {
 				}
 			}
 		}
-
-		// Putting in the database how much memory it ended up gusing maximum from bytes to megabytes
-		$maxMemoryUsage = (memory_get_peak_usage(true) / 1024 / 1024);
-		$memoryUsage = (memory_get_usage(true) / 1024 / 1024);
-		$wpdb->insert('cronjobs', [
-			'name' => 'OGOffers',
-			# convert to megabytes
-			'memoryUsageMax' => $maxMemoryUsage,
-			'memoryUsage' => $memoryUsage,
-			'boolGiveLastCron' => self::$boolGiveLastCron,
-			'objectsCreated' => self::$intObjectsCreated,
-			'objectsUpdated' => self::$intObjectsUpdated,
-			'datetime' => date('Y-m-d H:i:s', $beginTime),
-			'duration' => round((time() - $beginTime) / 60, 2)
-		]);
 	}
 }
