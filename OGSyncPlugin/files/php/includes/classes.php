@@ -2,7 +2,7 @@
 // ========== Imports =========
 include_once 'functions.php';
 
-// ============ Activation and Deactivation ============
+// ============ Activation, Deactivation and Uninstall ============
 class OGSyncActivationAndDeactivation {
     // ==== Activation ====
     static function activate(): void {
@@ -626,7 +626,7 @@ class OGSyncSettingsData {
 	private static array $arrOptions = [
 		# ======== OG Admin Settings ========
 		# ==== Licentie ====
-		/* Setting Name */'licenseKey' => /* Default Value */   '', // License Key
+		/* Setting Name */'licenseKey' => /* Default Value */   '',     // License Key
 	];
 	private static array $adminSettings = [
 		// Settings 1
@@ -653,11 +653,12 @@ class OGSyncSettingsData {
 	];
 
 	# Bools
-	public static bool $boolGiveLastCron = True;
+	public static bool $boolGiveLastCron = False;
 
 	# Ints
 	public static int $intObjectsCreated = 0;
 	public static int $intObjectsUpdated = 0;
+
 	// ============ Getters ============
 	public static function apiURLs(): array {
 		return self::$apiURLs;
@@ -746,7 +747,76 @@ class OGSyncMapping {
             }
 
             // ================ Mapping the Data ================
+	        # Looping through all the keys in the mapping table
             foreach ($mappingTable as $mappingKey => $mappingValue) {
+	            /*
+				Placeholders:
+
+				() = If-Else Statement: If statement with unlimited statements that can go in it
+					 Separator between values:
+						1. | (Pipe) - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+
+					Examples:
+						1. (straat|adres) => If straat is empty, use adres instead
+						2. (straat|adres|plaats) => If straat is empty, use adres instead, if adres is empty, use plaats instead
+
+				----------------------------
+				[] = Array Extraction: Instead of using the array it converts it to a string with an comma as separator.
+					Input:
+					String “[value1, value2, value3, etc.]”
+
+					Example: [1,2,3] => '1, 2, 3'
+
+				----------------------------
+				{} = Concatenation: Join the values together.
+					Separator between values:
+						1. + (Plus) - The plus is used to separate the values from each other with ' '
+						2. - (Dash) - The dash is used to separate the values from each other with '-'
+
+					Placeholders within concatenation:
+					~ (Tilde) - Remove all the spaces from the value
+
+					Examples:
+						1. {straat+huisnummer+huisnummertoevoeging} => 'Vroedelstroefe 48 15 B'
+						2. {straat+huisnummer+~huisnummertoevoeging~} => 'Vroedelstroefe 48 15B'
+						3. {straat-huisnummer-huisnummertoevoeging} => 'Vroedelstroefe-48-15-B'
+						4. {straat-huisnummer-~huisnummertoevoeging~} => 'Vroedelstroefe-48-15B'
+
+				----------------------------
+				$  = Status Handling: Transform values based on specific statuses.
+					Separator between values:
+						1. | (Pipe) - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+
+					Options:
+						1. $status|sold$ => If status is "sold", set pixelplus to 1, otherwise 0.
+						2. $price|prijs$ => If price is greater than 0, set pixelplus to 1, otherwise 0.
+						3. $rating|onderhoudswaardering$ => Setting everything to lowercase besides the first letter and removing all the spaces.
+
+				----------------------------
+				<> = Location Codes: Map numeric codes to values. Convert date-like values to datetime.
+					 Options:
+						1. <city_code> = Numeric Office Code (If value is in array city codes, convert to corresponding city name)
+						2. <date_like_value> => Convert date-like value to Unix timestamp
+
+					 Examples:
+						<bouwNummer_NVMVestigingNR> = 551235 => "Amsterdam"
+						<datum_toegevoegd> = '2021-01-01' => 1609459200
+
+				----------------------------
+				^  = Counting: Calculate and store counts.
+					 Options:
+						1. ^bouwtypes^ => Calculate based off and store the count of build types for a project.
+						2. ^bouwnummers^ => Calculate and store the count of build numbers for a project.
+
+				----------------------------
+				*  = Object Types: Conditionally set values based on conditions. !(Only works with 2 values)!
+					Options:
+						1. *property_type|Residential* => If property type exists, set to "Residential".
+						2. *property_type|Commercial* => If property type doesn't exist, set to "Commercial".
+
+					Examples:
+						objecttype = *wonen_Appartement_KenmerkAppartement|woonhuis*
+				*/
                 // ==== Checking conditional ====
                 if (str_starts_with($mappingValue['pixelplus'], '(') and str_ends_with($mappingValue['pixelplus'], ')')) {
                     // ==== Declaring Variables ====
@@ -769,7 +839,7 @@ class OGSyncMapping {
                         unset($mappingTable[$mappingKey]);
                     }
                 }
-                // ==== Checking concatinations ====
+                // ==== Checking concatenations ====
 	            if (str_starts_with($mappingValue['pixelplus'], '{') and str_ends_with($mappingValue['pixelplus'], '}')) {
 		            // ==== Declaring Variables ====
 		            # Vars
@@ -778,27 +848,30 @@ class OGSyncMapping {
 		            $arrExplodedKeyMinus = explode('-', $strTrimmedKey);
 		            $strResult = '';
 
-		            # Bools
-		            $boolTrimSpaces = False;
-
 		            // ==== Start of Function ====
-		            # Step 1: Looping through all the keys
+		            # Looping through the plus keys
 		            foreach($arrExplodedKey as $arrExplodedKeyValue) {
-			            # Step 2: Checking if there are any special character at the beginning and or end of the key
+			            // ==== Declaring Variables ====
+			            # Bools
+			            $boolTrimSpaces = False;
+
+			            // ==== Start of Function ====
+			            # Step 1: Checking if there are any special character at the beginning and or end of the key
 			            if (str_starts_with($arrExplodedKeyValue, '~') and str_ends_with($arrExplodedKeyValue, '~')) {
-				            # Step 3: Remove the ~ from the value and all the spaces. And then adding it to strResult
+				            # Step 2: Remove the ~ from the value and all the spaces. And then adding it to strResult
 				            $boolTrimSpaces = True;
 
-				            # Removing the ~ from the value
+				            # Step 3: Removing the ~ from the value
 				            $arrExplodedKeyValue = trim($arrExplodedKeyValue, '~');
 			            }
 
-			            # Step 2: Check if the key even isset or empty in OG Record
+			            # Step 4: Check if the key even isset or empty in OG Record
 			            if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-				            # Step 4: Adding it to strResult
+				            # Step 5: Adding it to strResult
 				            $strResult .= $boolTrimSpaces ? str_replace(' ', '', $OGTableRecord->{$arrExplodedKeyValue}).' ' : $OGTableRecord->{$arrExplodedKeyValue}.' ';
 			            }
 		            }
+		            # Looping through the minus keys
 		            foreach($arrExplodedKeyMinus as $arrExplodedKeyValue) {
 			            # Step 2: Check if the key even isset or empty in OG Record
 			            if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
@@ -806,10 +879,10 @@ class OGSyncMapping {
 				            $strResult .= $OGTableRecord->{$arrExplodedKeyValue}.'-';
 			            }
 		            }
-		            # Step 5: Putting it in the mapping table as a default value
+
+		            # Putting it in the mapping table as a default value
 		            $mappingTable[$mappingKey]['pixelplus'] = "'".rtrim($strResult, ' -')."'";
 	            }
-
                 // ==== Checking the statuses ====
                 if (str_starts_with($mappingValue['pixelplus'], '$') and str_ends_with($mappingValue['pixelplus'], '$')) {
                     // ==== Declaring Variables ====
@@ -846,7 +919,6 @@ class OGSyncMapping {
                         }
                     }
                 }
-
                 // ==== Checking arrays ====
                 if (str_starts_with($mappingValue['pixelplus'], '[') and str_ends_with($mappingValue['pixelplus'], ']')) {
                     // ==== Declaring Variables ====
@@ -881,40 +953,39 @@ class OGSyncMapping {
 
                     }
                 }
-
                 // ==== Checking location codes ====
                 if (str_starts_with($mappingValue['pixelplus'], '<') and str_ends_with($mappingValue['pixelplus'], '>')) {
                     // ==== Declaring Variables ====
                     # Vars
                     $strTrimmedKey = trim($mappingValue['pixelplus'], '<>');
 
-                    // ==== Start of Function ====
-                    if (!empty($strTrimmedKey)) {
-                        # Step 1: Getting the value from the OG Record
+					// ==== Start of Function ====
+					if (!empty($strTrimmedKey)) {
+						# Step 2: Checking if the value is NOT empty
+						if (isset($OGTableRecord->{$strTrimmedKey}) and !empty($OGTableRecord->{$strTrimmedKey})) {
+							# Step 3: If value is a numeric
+                            # Converting numeric value to Location Code
+							if (is_numeric($OGTableRecord->{$strTrimmedKey})) {
+								# Step 4: Checking if the value is in the locationCodes array
+								$key = array_search($OGTableRecord->{$strTrimmedKey}, $locationCodes[0]);
+								if ($key !== false) {
+									# Step 5: setting the key as the value
+									$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $locationCodes[1][$key];
+								}
+							}
 
-                        # Step 2: Checking if the value is empty
-                        if (isset($OGTableRecord->{$strTrimmedKey}) and !empty($OGTableRecord->{$strTrimmedKey})) {
-                            # Step 3: Check if it's a number or a string
-                            if (is_numeric($OGTableRecord->{$strTrimmedKey})) {
-                                # Step 4: Checking if the value is in the locationCodes array
-                                $key = array_search($OGTableRecord->{$strTrimmedKey}, $locationCodes[0]);
-                                if ($key !== false) {
-                                    # Step 5: setting the key as the value
-                                    $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $locationCodes[1][$key];
-                                }
-                            }
-                            else {
-                                # Step 4: Checking if the value is can be converted to a datetime
-                                $datetime = strtotime($OGTableRecord->{$strTrimmedKey});
-                                if ($datetime !== false) {
-                                    # Step 5: Adding it to the OG Record
-                                    $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $datetime;
-                                }
-                            }
-                        }
-                    }
-                }
-
+                            # Converting the value to Unix Timestamp
+							else {
+								# Step 4: Checking if the value is can be converted to a datetime
+								$datetime = strtotime($OGTableRecord->{$strTrimmedKey});
+								if ($datetime !== false) {
+									# Step 5: Adding it to the OG Record
+									$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $datetime;
+								}
+							}
+						}
+					}
+				}
                 // ==== Checking the total buildnumbers/buildtypes ====
                 if (str_starts_with($mappingValue['pixelplus'], '^') and str_ends_with($mappingValue['pixelplus'], '^')) {
                     // ==== Declaring Variables ====
@@ -944,8 +1015,7 @@ class OGSyncMapping {
                         }
                     }
                 }
-
-                // ==== Checking the objecttype ====
+                // ==== Checking the objecttype (basically a conditional) ====
                 if (str_starts_with($mappingValue['pixelplus'], '*') and str_ends_with($mappingValue['pixelplus'], '*')) {
                     // ==== Declaring Variables ====
                     # Vars
@@ -1603,18 +1673,19 @@ class OGSyncOffers {
 		# Checking if the cronjob table exists
 		$cronjobTableExists = $wpdb->get_results("SHOW TABLES LIKE 'cronjobs'");
 		if (empty($cronjobTableExists)) {
-			$wpdb->query("
-                CREATE TABLE `cronjobs` (
-              `cronjob_count` int(5) NOT NULL AUTO_INCREMENT,
-              `name` varchar(60) DEFAULT NULL,
-              `boolGiveLastCron` tinyint(1) DEFAULT NULL,
-              `MemoryUsageMax` float NOT NULL,
-              `memoryUsage` float NOT NULL,
-              `datetime` datetime NOT NULL,
-              `objectsCreated` int(5) DEFAULT NULL,
-              `objectsUpdated` int(5) DEFAULT NULL,
-              `duration` float NOT NULL,
-              PRIMARY KEY (`cronjob_count`)) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=COMPRESSED");
+            $wpdb->query("CREATE TABLE `cronjobs` (
+                `cronjob_count` int(5) NOT NULL AUTO_INCREMENT,
+                `name` varchar(60) DEFAULT NULL,
+                `boolGiveLastCron` tinyint(1) DEFAULT NULL,
+                `MemoryUsageMax` float NOT NULL,
+                `memoryUsage` float NOT NULL,
+                `datetime` datetime NOT NULL,
+                `objectsCreated` int(5) DEFAULT NULL,
+                `objectsUpdated` int(5) DEFAULT NULL,
+                `duration` float NOT NULL,
+                `boolDone` tinyint(1) DEFAULT NULL,
+                PRIMARY KEY (`cronjob_count`)) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=COMPRESSED
+            ");
 		}
 
 		return OGSyncSettingsData::$boolGiveLastCron ? ($wpdb->get_results("SELECT datetime FROM cronjobs ORDER BY datetime DESC LIMIT 1")[0]->datetime ?? 0) : 0;
