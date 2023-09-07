@@ -614,6 +614,7 @@ class OGSyncSettingsData {
 	# Strings
 	public static string $settingPrefix = 'ppOGSync_'; // This is the prefix for all the settings used within the OG Plugin
 	public static string $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
+    public static string $cronjobTableName = 'cronjobs'; // This is the table name where all the cronjobs are stored within the database
 
 	# Arrays
 	private static array $apiURLs = [
@@ -654,6 +655,7 @@ class OGSyncSettingsData {
 
 	# Bools
 	public static bool $boolGiveLastCron = False;
+    public static bool $boolForceCreateUpdateMode = False;
 
 	# Ints
 	public static int $intObjectsCreated = 0;
@@ -1671,10 +1673,10 @@ class OGSyncOffers {
 
 		// ==== Start of Function ====
 		# Checking if the cronjob table exists
-		$cronjobTableExists = $wpdb->get_results("SHOW TABLES LIKE 'cronjobs'");
+		$cronjobTableExists = $wpdb->get_results("SHOW TABLES LIKE '".OGSyncSettingsData::$cronjobTableName."'");
 		if (empty($cronjobTableExists)) {
-            $wpdb->query("CREATE TABLE `cronjobs` (
-                `cronjob_count` int(5) NOT NULL AUTO_INCREMENT,
+            $wpdb->query("CREATE TABLE `".OGSyncSettingsData::$cronjobTableName."` (
+                `cronjobID` int(5) NOT NULL AUTO_INCREMENT,
                 `name` varchar(60) DEFAULT NULL,
                 `boolGiveLastCron` tinyint(1) DEFAULT NULL,
                 `MemoryUsageMax` float NOT NULL,
@@ -1684,15 +1686,19 @@ class OGSyncOffers {
                 `objectsUpdated` int(5) DEFAULT NULL,
                 `duration` float NOT NULL,
                 `boolDone` tinyint(1) DEFAULT NULL,
-                PRIMARY KEY (`cronjob_count`)) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=COMPRESSED
-            ");
+                PRIMARY KEY (`cronjobID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=COMPRESSED ");
 		}
 
-		return OGSyncSettingsData::$boolGiveLastCron ? ($wpdb->get_results("SELECT datetime FROM cronjobs ORDER BY datetime DESC LIMIT 1")[0]->datetime ?? 0) : 0;
+		return OGSyncSettingsData::$boolGiveLastCron ? ($wpdb->get_results("SELECT datetime FROM `".OGSyncSettingsData::$cronjobTableName."` ORDER BY cronjobID DESC LIMIT 1")[0]->datetime ?? 0) : 0;
 	}
 	public static function boolFirstInit(): bool {
+        // ==== Declaring Variables ====
+        # Classes
+        global $wpdb;
+
 		// ==== Start of Function ====
-		return self::lastCronjob() == 0;
+        # Return 
+		return !OGSyncSettingsData::$boolForceCreateUpdateMode && empty($wpdb->get_results("SELECT * FROM `" . OGSyncSettingsData::$cronjobTableName . "` LIMIT 1"));
 	}
 
 	// ============ Functions ============
@@ -2103,9 +2109,6 @@ class OGSyncOffers {
 
 			# Adding the post ID to the array
 			$objectIDs[] = $OGBouwnummer->{$databaseKeys[2]['ID']};
-
-			# Freeing memory
-			unset($OGBouwnummer);
 		}
 
 		// Returning the objectIDs
@@ -2175,9 +2178,6 @@ class OGSyncOffers {
 			$objectIDs = array_merge($objectIDs, [$OGBouwtype->{$databaseKeys[1]['ID']}]);
 			# Checking the children (bouwnummers)
 			$bouwnummerIds = array_merge($bouwnummerIds, self::checkBouwnummersPosts($postTypeName, $postID, $OGBouwtype, $databaseKeys));
-
-			# Freeing memory
-			unset($OGBouwtype);
 		}
 
 		# Returning the objectIDs
@@ -2220,57 +2220,64 @@ class OGSyncOffers {
 			}
 		}
 		else {
-			// ======== Declaring Variables ========
-			# Vars
-			$projectPosts = new WP_Query([
-				'post_type' => $postTypeName,
-				'meta_key' => 'type',
-				'meta_value' => 'project',
-				'posts_per_page' => -1,
-				'post_status' => 'any',
-			]);
+            foreach ($OGProjects as $OGProject) {
+                # Checking if this OG project is valid and if not just skip it.
+                if (isset($OGProject->{$databaseKeys[0]['ObjectStatus_database']}) AND $OGProject->{$databaseKeys[0]['ObjectStatus_database']} == '') {
+                    continue;
+                }
 
-			// ======== Rest of ELSE ========
-			foreach ($OGProjects as $OGProject) {
-				// ==== Declaring Variables ====
-				# Remapping the object
-				$OGProject = OGSyncMapping::mapMetaData($OGProject, ($databaseKeys[0]['mapping'] ?? []), self::getLocationCodes());
-				# Adding the 'type' meta data
-				$OGProject->type = $databaseKeys[0]['type'];
+                // ======== Declaring Variables ========
+                # Remapping the object
+                $OGProject = OGSyncMapping::mapMetaData($OGProject, ($databaseKeys[0]['mapping'] ?? []), self::getLocationCodes(), $databaseKeys);
 
-				$postKey = array_search($OGProject->{$databaseKeys[0]['ID']}, array_column($projectPosts->posts, $databaseKeys[0]['ID']));
+                # Post - Project
+                $postData = new WP_Query([
+                    'post_type' => $postTypeName,
+                    'meta_key' => $databaseKeys[0]['ID'],
+                    'meta_value' => $OGProject->{$databaseKeys[0]['ID']},
+                    'posts_per_page' => -1,
+                    'post_status' => 'any',
+                ]);
+                $projectExisted = $postData->have_posts();
 
-				if (!$postKey) {
-					// ==== Creating the post ====
-					$postID = self::createPost($postTypeName, $OGProject, $databaseKeys[0]);
-					echo("Created Nieuwbouw project: {$postID}<br/>");
+                if ($projectExisted) {
+                    $postID = $postData->post->ID;
+                    $dateUpdatedPost = $postData->post->{$databaseKeys[0]['datum_gewijzigd']} ?? $postData->post->{$databaseKeys[0]['datum_toegevoegd']};
+                }
+                # Database - Project
+                $dateUpdatedObject = $OGProject->{$databaseKeys[0]['datum_gewijzigd']} ?? $OGProject->{$databaseKeys[0]['datum_toegevoegd']};
 
-					# Updating the count
-					OGSyncSettingsData::$intObjectsCreated++;
-				}
-				else {
-					// == Declaring Variables ==
-					$postID = $projectPosts->posts[$postKey]->ID;
-					$dateUpdatedPost = $projectPosts->posts[$postKey]->{$databaseKeys[0]['datum_gewijzigd']} ?? $projectPosts->posts[$postKey]->{$databaseKeys[0]['datum_toegevoegd']};
-					$dateUpdatedObject = $OGProject->{$databaseKeys[0]['datum_gewijzigd']} ?? $OGProject->{$databaseKeys[0]['datum_toegevoegd']};
+                // ======== Start of Function ========
+                # Checking if the project exists
+                if ($projectExisted) {
+                    // Checking if the post is updated
+                    if ($dateUpdatedPost != $dateUpdatedObject) {
+                        // Updating/overwriting the post
+                        self::updatePost($postTypeName, $postID, $OGProject, $databaseKeys[0]);
+                        echo("Updated Nieuwbouw project: {$postID}<br/>");
+                    }
+                }
+                else {
+                    // Creating the post
+                    $postID = self::createPost($postTypeName, $OGProject, $databaseKeys[0]);
+                    echo("Created Nieuwbouw project: {$postID}<br/>");
+                }
 
-					// == Rest of ELSE ==
-					if ($dateUpdatedPost != $dateUpdatedObject) {
-						// ==== Updating the post ====
-						self::updatePost($postTypeName, $projectPosts->posts[$postKey]->ID, $OGProject, $databaseKeys[0]);
-						echo("Updated Nieuwbouw project: {$projectPosts->posts[$postKey]->ID}<br/>");
+                # Adding the postID to the array
+                $projectIds[] = $OGProject->{$databaseKeys[0]['ID']};
+                # Checking the child-posts
+                $arrayIds = self::checkBouwtypesPosts($postTypeName, $postID, $OGProject, $databaseKeys);
+            }
 
-						# Updating the count
-						OGSyncSettingsData::$intObjectsUpdated++;
-					}
-				}
+            # ==== Deleting the unneeded posts ====
+            # Projects
+            //self::deleteUnneededPosts($postTypeName, $databaseKeys[0], $projectIds, $databaseKeys[0]['type']);
 
-				# Adding the postID to the array
-				$projectIds[] = $OGProject->{$databaseKeys[0]['ID']};
+            # Bouwtypes
+            //self::deleteUnneededPosts($postTypeName, $databaseKeys[1], $arrayIds[0] ?? [], $databaseKeys[1]['type']);
 
-				# Checking the child-posts
-				$arrayIds = self::checkBouwtypesPosts($postTypeName, $postID, $OGProject, $databaseKeys);
-			}
+            # Bouwnummers
+            //self::deleteUnneededPosts($postTypeName, $databaseKeys[2], $arrayIds[1] ?? [], $databaseKeys[2]['type']);
 		}
 	}
 
@@ -2311,39 +2318,55 @@ class OGSyncOffers {
 			]);
 
 			// ======== Rest of ELSE ========
-			foreach ($OGobjects as $OGobject) {
-				// ==== Declaring Variables ====
-				# Remapping the object
-				$OGobject = OGSyncMapping::mapMetaData($OGobject, ($databaseKey['mapping'] ?? []), self::getLocationCodes());
-				$postKey = array_search($OGobject->{$databaseKey['ID']}, array_column($postData->posts, $databaseKey['ID']));
+            # Creating/Updating the posts
+            foreach ($OGobjects as $OGobject) {
+                // ======== Declaring Variables ========
+                # ==== Variables ====
+                # Remapping the object
+                $OGobject = OGSyncMapping::mapMetaData($OGobject, ($databaseKey['mapping'] ?? []), self::getLocationCodes());
 
-				if (!$postKey) {
-					// ==== Creating the post ====
-					$postID = self::createPost($postTypeName, $OGobject, $databaseKey);
-					echo("Created {$postTypeName} object: {$postID}<br/>");
+                $postData = new WP_Query([
+                    'post_type' => $postTypeName,
+                    'meta_key' => $databaseKey['ID'],
+                    'meta_value' => $OGobject->{$databaseKey['ID']},
+                    'posts_per_page' => -1,
+                    'post_status' => 'any',
+                ]);
+                $postExists = $postData->have_posts();
 
-					# Updating the count
-					OGSyncSettingsData::$intObjectsCreated++;
-				}
-				else {
-					// == Declaring Variables ==
-					$dateUpdatedPost = $postData->posts[$postKey]->{$databaseKey['datum_gewijzigd']} ?? $postData->posts[$postKey]->{$databaseKey['datum_toegevoegd']};
-					$dateUpdatedObject = $OGobject->{$databaseKey['datum_gewijzigd']} ?? $OGobject->{$databaseKey['datum_toegevoegd']};
+                if ($postExists) {
+                    $dateUpdatedPost = $postData->post->{$databaseKey['datum_gewijzigd']};
+                }
+                # Database dateUpdated
+                $dateUpdatedObject = $OGobject->{$databaseKey['datum_gewijzigd']} ?? $OGobject->{$databaseKey['datum_toegevoegd']};
 
-					// == Rest of ELSE ==
-					if ($dateUpdatedPost != $dateUpdatedObject) {
-						// ==== Updating the post ====
-						self::updatePost($postTypeName, $postData->posts[$postKey]->ID, $OGobject, $databaseKey);
-						echo("Updated {$postTypeName} object: {$postData->posts[$postKey]->ID}<br/>");
+                // ======== Start of Function ========
+                if ($postExists) {
+                    // Checking if the post is updated
+                    if ($dateUpdatedPost != $dateUpdatedObject) {
+                        // Updating/overwriting the post
+                        self::updatePost($postTypeName, $postData->post->ID, $OGobject, $databaseKey);
+                        echo("Updated {$postTypeName} object: {$postData->post->ID}<br/>");
 
-						# Updating the count
-						OGSyncSettingsData::$intObjectsUpdated++;
-					}
-				}
+                        // Updating the count
+                        OGSyncSettingsData::$intObjectsUpdated++;
+                    }
+                }
+                else {
+                    // Creating the post
+                    $postID = self::createPost($postTypeName, $OGobject, $databaseKey);
+                    echo("Created {$postTypeName} object: {$postID}<br/>");
 
-				# Adding the object ID to the array
-				$objectIDs[] = $OGobject->{$databaseKey['ID']};
-			}
+                    // Updating the count
+                    OGSyncSettingsData::$intObjectsCreated++;
+                }
+
+                # Adding the object ID to the array
+                $objectIDs[] = $OGobject->{$databaseKey['ID']};
+            }
+
+            # Deleting the posts that are not in the array
+            // self::deleteUnneededPosts($postTypeName, $databaseKey, $objectIDs);
 		}
 	}
 
@@ -2354,6 +2377,12 @@ class OGSyncOffers {
 		global $wpdb;
 
 		// ============ Start of Function ============
+        if (self::boolFirstInit()) {
+            echo("<h1>First Initiation</h1>");
+        }
+        else {
+            echo("<h1>Not First Initiation</h1>");
+        }
 		# ==== Checking all the post types ====
 		foreach (OGSyncPostTypeData::customPostTypes() as $postTypeName => $postTypeArray) {
 			# If statement to filter which ones we want to try out or not. Basically not needed overall
@@ -2373,7 +2402,7 @@ class OGSyncOffers {
 			}
 
 			// ======== Start of Loop ========
-			echo("<h1>".$postTypeName."</h1>");
+            echo("<h1>".$postTypeName."</h1>");
 			if ($boolIsNieuwbouw) {
 				self::checkNieuwbouwPosts($postTypeName, $databaseKeys);
 			}
