@@ -82,6 +82,12 @@ class OGSyncPostTypeData {
                     'labels' => array(
                         // Labels for the custom post type in the WordPress admin
                         'name' => 'OG Wonen Objecten',
+                        'columns' => array(
+                            'cb' => '<input type="checkbox" />',
+                            'title' => 'Title',
+                            'TiaraID' => 'TiaraID',
+                            'Publicatiedatum' => 'Publicatiedatum',
+                        ),
                         'singular_name' => 'OG Wonen Object',
                         'add_new' => 'Nieuwe toevoegen',
                         'add_new_item' => 'Nieuw OG Wonen Object toevoegen',
@@ -151,6 +157,7 @@ class OGSyncPostTypeData {
                         'datum_gewijzigd_unmapped' => 'datum_gewijzigd',            // NON Mapped value - Default: datum_gewijzigd  ; The extra field is needed so the plugin can filter on the date for less memory usage
                         'datum_toegevoegd' => 'datum_toegevoegd',                   // Mapped value - Default: datum_toegevoegd     ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'object_ObjectCode',                        // Mapped value - Default: object_ObjectCode    ; Default value is only for objects without a mapping table within the database
+                        'publicatiedatum' => 'publicatiedatum',
 
                         # Post fields
                         'media' => array(
@@ -192,6 +199,12 @@ class OGSyncPostTypeData {
                     'labels' => array(
                         // Labels for the custom post type in the WordPress admin
                         'name' => 'OG BOG Objecten',
+                        'columns' => array(
+	                        'cb' => '<input type="checkbox" />',
+	                        'title' => 'Title',
+	                        'TiaraID' => 'TiaraID',
+	                        'Publicatiedatum' => 'Publicatiedatum',
+                        ),
                         'singular_name' => 'OG BOG Object',
                         'add_new' => 'Nieuwe toevoegen',
                         'add_new_item' => 'Nieuw OG BOG Object toevoegen',
@@ -242,6 +255,7 @@ class OGSyncPostTypeData {
                         'datum_gewijzigd_unmapped' => 'datum_gewijzigd',    // NON Mapped value - Default: datum_gewijzigd ; The extra field is needed so the plugin can filter on the date for less memory usage
                         'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value - Default: datum_toegevoegd    ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'object_ObjectCode',                // Mapped value - Default: object_ObjectCode    ; Default value is only for objects without a mapping table within the database
+                        'publicatiedatum' => 'publicatiedatum',
 
                         # Post fields
                         'media' => array(
@@ -283,6 +297,12 @@ class OGSyncPostTypeData {
                     'labels' => array(
                         // Labels for the custom post type in the WordPress admin
                         'name' => 'OG Nieuwbouw Objecten',
+                        'columns' => array(
+	                        'cb' => '<input type="checkbox" />',
+	                        'title' => 'Title',
+	                        'TiaraID' => 'TiaraID',
+	                        'Publicatiedatum' => 'Publicatiedatum',
+                        ),
                         'singular_name' => 'OG Nieuwbouw Object',
                         'add_new' => 'Nieuwe toevoegen',
                         'add_new_item' => 'Nieuw OG Nieuwbouw Object toevoegen',
@@ -335,6 +355,7 @@ class OGSyncPostTypeData {
                         'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value - Default: datum_toegevoegd                 ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'project_ObjectCode',                                       // Mapped value
                         'type' => 'project',                                                        // Standard value don't change
+                        'publicatiedatum' => 'publicatiedatum',
 
                         # Post fields
                         'media' => array(
@@ -1628,7 +1649,49 @@ class OGSyncPostTypes {
 		// ======== Start of Function ========
 		# Create the OG Custom Post Types (if the user has access to it)
 		foreach(OGSyncPostTypeData::customPostTypes() as $postType => $postTypeArray) {
+            // ==== Declaring Variables ====
+
+            // ==== Start of Function ====
+            # Creating the post type
 			register_post_type($postType, $postTypeArray['post_type_args']);
+
+            # Altering the list within the wp-admin so we have the have information that we want, and add more maybe
+            add_filter("manage_{$postType}_posts_columns", function($columns) use ($postTypeArray) {
+                // ======== Declaring Variables ========
+                # Vars
+                $newColumns = [];
+
+                // ======== Start of Function ========
+                # Looping through the columns
+                foreach ($columns as $key => $value) {
+                    # Checking if the key is the title
+                    if ($key == 'title') {
+                        # Adding the new columns
+                        foreach ($postTypeArray['post_type_args']['labels']['columns'] as $columnKey => $columnValue) {
+                            $newColumns[$columnKey] = $columnValue;
+                        }
+                    }
+
+                    # Adding the old columns
+                    $newColumns[$key] = $value;
+                }
+
+                # Returning the new columns
+                return $newColumns;
+            });
+
+            # Adding the content to the columns
+            add_action("manage_{$postType}_posts_custom_column", function($column) use ($postTypeArray) {
+                // ======== Declaring Variables ========
+
+                // ======== Start of Function ========
+                if ($column == 'TiaraID') {
+                    echo(get_post_meta(get_the_ID(), $postTypeArray['database_tables']['object']['ID'], true));
+                }
+                if ($column == 'Publicatiedatum') {
+                    echo(get_post_meta(get_the_ID(), $postTypeArray['database_tables']['object']['publicatiedatum'], true));
+                }
+            });
 		}
 	}
     public static function checkMigrationPostTypes(): void {
