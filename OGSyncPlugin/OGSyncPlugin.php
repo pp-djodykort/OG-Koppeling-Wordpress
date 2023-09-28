@@ -31,6 +31,3 @@ if (OGSyncLicense::checkActivation()) {
 $OGSyncPages = new OGSyncMenus();
 
 // ============ Start of Program ============
-add_action('admin_notices', function () {
-	echo OGSyncTools::getLoadTime();
-});

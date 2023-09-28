@@ -1649,13 +1649,59 @@ class OGSyncPostTypes {
 		// ======== Start of Function ========
 		# Create the OG Custom Post Types (if the user has access to it)
 		foreach(OGSyncPostTypeData::customPostTypes() as $postType => $postTypeArray) {
-            // ==== Declaring Variables ====
-
             // ==== Start of Function ====
             # Creating the post type
 			register_post_type($postType, $postTypeArray['post_type_args']);
 
-            # Altering the list within the wp-admin so we have the have information that we want, and add more maybe
+            # -- Styling --
+            # Header
+            add_action('admin_notices', function() use ($postType) {
+                // ======== Declaring Variables ========
+                # Globals
+                global $pagenow, $typenow;
+
+                # Vars
+                $boolIsPost = $pagenow == 'post.php' && $typenow == $postType;
+                $boolIsEdit = $pagenow == 'edit.php' && $typenow == $postType;
+                // ======== Start of Function ========
+                if ($boolIsEdit || $boolIsPost) {
+                    // ==== Declaring Variables ====
+                    if ($boolIsPost) {
+                        $marginTop = '50px';
+                    }
+                    else{
+                        $marginTop = '20px';
+                    }
+
+                    // ==== Start of IF ====
+                    # Creating the header
+                    if ($boolIsEdit) OGSyncTools::htmlAdminHeader("OG {$postType} Objecten");
+                    echo("
+                        <script>
+                            document.onreadystatechange = function() {
+                                // ==== Start of Function ====
+                                if (document.readyState === 'complete') {
+                                     document.querySelector('.wp-heading-inline').remove();
+                                     document.querySelector('.page-title-action').remove();
+                                    // Making space to let it look better
+                                    document.querySelector('.wrap').style.marginTop = '{$marginTop}';
+                                }
+                            }
+                        </script>
+                    ");
+                }
+            });
+            # Footer
+			add_action('admin_footer', function() use ($postType) {
+				global $pagenow, $typenow;
+
+				if (($pagenow == 'edit.php' || $pagenow == 'post.php') && $typenow == $postType) {
+					OGSyncTools::htmlAdminFooter('OG Aanbod Dashboard');
+				}
+			});
+
+            # -- Adding/Editing columns --
+            # Adding the column-names
             add_filter("manage_{$postType}_posts_columns", function($columns) use ($postTypeArray) {
                 // ======== Declaring Variables ========
                 # Vars
@@ -1679,11 +1725,8 @@ class OGSyncPostTypes {
                 # Returning the new columns
                 return $newColumns;
             });
-
-            # Adding the content to the columns
+            # Adding the colum-content
             add_action("manage_{$postType}_posts_custom_column", function($column) use ($postTypeArray) {
-                // ======== Declaring Variables ========
-
                 // ======== Start of Function ========
                 if ($column == 'TiaraID') {
                     echo(get_post_meta(get_the_ID(), $postTypeArray['database_tables']['object']['ID'], true));
@@ -1692,6 +1735,72 @@ class OGSyncPostTypes {
                     echo(get_post_meta(get_the_ID(), $postTypeArray['database_tables']['object']['publicatiedatum'], true));
                 }
             });
+
+            # -- Adding/Editing filters --
+            # Getting pre_get_posts
+			add_action('pre_get_posts', function($query) use ($postType, $postTypeArray) {
+                // ======== Declaring Variables ========
+                # Globals
+                global $pagenow, $typenow;
+
+                // ======== Start of Function ========
+				# Checking if the query is for the post type
+                if ($pagenow == 'edit.php' && $typenow == $postType) {
+                    # Checking if it's a main query or whatever
+                    if ($query->is_main_query() && $query->is_search()) {
+                        # Getting the search query
+                        $searchQuery = $query->query_vars['s'];
+
+                        # Checking if the search query is empty
+                        if (!empty($searchQuery)) {
+                            # Getting the post meta
+                            $metaQuery = [
+                                'relation' => 'OR',
+                                [
+                                    'key' => $postTypeArray['database_tables']['object']['ID'],
+                                    'value' => $searchQuery,
+                                    'compare' => 'LIKE',
+                                ],
+                                [
+                                    'key' => $postTypeArray['database_tables']['object']['publicatiedatum'],
+                                    'value' => $searchQuery,
+                                    'compare' => 'LIKE',
+                                ],
+                            ];
+
+                            # Setting the meta query
+                            $query->set('meta_query', $metaQuery);
+                        }
+                    }
+                }
+            });
+			# Adding the filters
+			add_action('posts_search', function($search, $query) use ($postType, $postTypeArray) {
+				// ======== Declaring Variables ========
+				# Globals
+				global $pagenow, $typenow;
+
+				// ======== Start of Function ========
+				# Checking if the query is for the post type
+				if ($pagenow == 'edit.php' && $typenow == $postType) {
+					# Checking if it's a main query or whatever
+					if ($query->is_main_query() && $query->is_search()) {
+						// Get the search keyword
+						$search_term = get_search_query();
+
+						if (!empty($search_term)) {
+							if (is_numeric($search_term)) {
+								// Modify the search query to include custom fields
+								$search .= " OR (postmeta.meta_key = {$postTypeArray['database_tables']['object']['ID']} AND postmeta.meta_value LIKE '%$search_term%')";
+							}
+							if (!strtotime($search_term)) {
+								$search .= " OR (postmeta.meta_key = {$postTypeArray['database_tables']['object']['publicatiedatum']} AND postmeta.meta_value LIKE '%$search_term%')";
+							}
+						}
+					}
+				}
+				return $search;
+			});
 		}
 	}
     public static function checkMigrationPostTypes(): void {

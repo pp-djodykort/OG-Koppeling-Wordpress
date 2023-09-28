@@ -30,6 +30,3 @@ if (OGSiteLicense::checkActivation()) {
 $OGSitePages = new OGSiteMenus();
 
 // ============ Start of Program ============
-add_action('admin_notices', function () {
-    echo OGSiteTools::getLoadTime();
-});
