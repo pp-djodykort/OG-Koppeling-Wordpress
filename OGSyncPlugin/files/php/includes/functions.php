@@ -13,23 +13,20 @@ class OGSyncTools {
 	}
 	static function htmlAdminHeader($title): void {
 		echo("
-	<head>
-		<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
-		<link rel='stylesheet' href='".plugins_url('css/style.css', dirname(__DIR__))."'>
-	</head>
-	<header>
-		<div class='container-fluid'>
-			<!-- Having the logo and title next to each other -->
-			<img src='".plugins_url('img/pixelplus-logo.jpg', dirname(__DIR__))."' alt='Pixelplus Logo'>
-		
-            <div class='div-Header'>
-                <span class='floatLeft'><h1><b>$title</b></h1></span>
-                <span class='floatRight'><h5>".self::welcomeMessage()."</h5></span>
-            </div>
-        </div>
-	</header>
-	<hr/>
-	");
+		<head>
+			<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
+			<link rel='stylesheet' href='".plugins_url('css/style.css', dirname(__DIR__))."'>
+		</head>
+		<header>
+			<div class='container-fluid'>			
+	            <div class='div-Header'>
+	                <span class='floatLeft'><h1><b>$title</b></h1></span>
+	                <span class='floatRight'><h5>".self::welcomeMessage()."</h5></span>
+	            </div>
+	        </div>
+		</header>
+		<hr/>
+		");
 	}
 	static function htmlAdminFooter($title=''): void {
 		echo("
@@ -50,6 +47,33 @@ class OGSyncTools {
 			$welcomeMessage .= " ".$wpUser->user_login;
 		}
 		return $welcomeMessage;
+	}
+	static function adminNotice($type, $input): void {
+		if ($type == "error") {
+			add_action('admin_notices', function() use ($input) {
+				echo ("<div class='alert alert-danger' role='alert'>"); print_r($input); echo ("</div>");
+			});
+		}
+		else if ($type == "success") {
+			add_action('admin_notices', function() use ($input) {
+				echo ("<div class='alert alert-success' role='alert'>"); print_r($input); echo ("</div>");
+			});
+		}
+		else if ($type == "warning") {
+			add_action('admin_notices', function() use ($input) {
+				echo ("<div class='alert alert-warning' role='alert'>"); print_r($input); echo ("</div>");
+			});
+		}
+		else if ($type == "info") {
+			add_action('admin_notices', function() use ($input) {
+				echo ("<div class='alert alert-info' role='alert'>"); print_r($input); echo ("</div>");
+			});
+		}
+		else {
+			add_action('admin_notices', function() use ($input) {
+				echo ("<div class='alert alert-primary' role='alert'>"); print_r($input); echo ("</div>");
+			});
+		}
 	}
 
 	// ============ JS Functions ============
@@ -111,14 +135,10 @@ class OGSyncTools {
 		$time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
 		return "This page took $time seconds to load.";
 	}
-	static function removeParentheses ($string) {
+	static function removeParentheses ($string): array|string {
 		// ======== Start of Function ========
-		// Removing the parentheses from the string
-		$string = str_replace("(", "", $string);
-		$string = str_replace(")", "", $string);
-
-		// Return the string
-		return $string;
+		// Removing the parentheses from the string and returning it
+		return str_replace(")", "", str_replace("(", "", $string));
 	}
 	static function isConditional($dbString): bool {
 		// ======== Start of Function ========
@@ -132,33 +152,6 @@ class OGSyncTools {
 		}
 		else {
 			return false;
-		}
-	}
-	static function adminNotice($type, $strInput): void {
-		if ($type == "error") {
-			add_action('admin_notices', function() use ($strInput) {
-				echo ("<div class='alert alert-danger' role='alert'>"); print_r($strInput); echo ("</div>");
-			});
-		}
-		else if ($type == "success") {
-			add_action('admin_notices', function() use ($strInput) {
-				echo ("<div class='alert alert-success' role='alert'>"); print_r($strInput); echo ("</div>");
-			});
-		}
-		else if ($type == "warning") {
-			add_action('admin_notices', function() use ($strInput) {
-				echo ("<div class='alert alert-warning' role='alert'>"); print_r($strInput); echo ("</div>");
-			});
-		}
-		else if ($type == "info") {
-			add_action('admin_notices', function() use ($strInput) {
-				echo ("<div class='alert alert-info' role='alert'>"); print_r($strInput); echo ("</div>");
-			});
-		}
-		else {
-			add_action('admin_notices', function() use ($strInput) {
-				echo ("<div class='alert alert-primary' role='alert'>"); print_r($strInput); echo ("</div>");
-			});
 		}
 	}
 }

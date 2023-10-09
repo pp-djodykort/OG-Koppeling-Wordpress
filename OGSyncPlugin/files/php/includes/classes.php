@@ -69,7 +69,24 @@ class OGSyncActivationAndDeactivation {
 
 // ============ Data Classes ============
 class OGSyncPostTypeData {
-    // ============ Begin of Class ============
+    // ==== Getters ====
+	public static function getPostData($intPostID): array|null {
+        // ======== Declaring Variables ========
+        $postData = [];
+
+		// ======== Start of Function ========
+		// if post exists
+		if (get_post_status($intPostID)) {
+			# Getting the post data
+            $postData['postData'] = get_post($intPostID);
+            # Getting the post meta data
+            $postData['postMetaData'] = get_post_meta($intPostID);
+
+            return $postData;
+	    }
+        else return null;
+	}
+
     public static function customPostTypes(): array {
         // ===== Declaring Variables =====
         # Variables
@@ -81,38 +98,50 @@ class OGSyncPostTypeData {
                     // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
                         // Labels for the custom post type in the WordPress admin
-                        'name' => 'OG Wonen Objecten',
-                        'columns' => array(
-                            'cb' => '<input type="checkbox" />',
-                            'title' => 'Title',
-                            'TiaraID' => 'TiaraID',
-                            'Publicatiedatum' => 'Publicatiedatum',
-                        ),
-                        'singular_name' => 'OG Wonen Object',
+                        'name' => 'Wonen Objecten',
+                        'singular_name' => 'Wonen Object',
                         'add_new' => 'Nieuwe toevoegen',
-                        'add_new_item' => 'Nieuw OG Wonen Object toevoegen',
-                        'edit_item' => 'OG Wonen Object bewerken',
-                        'new_item' => 'Nieuw OG Wonen Object',
-                        'view_item' => 'Bekijk OG Wonen Object',
-                        'search_items' => 'Zoek naar OG Wonen Objecten',
-                        'not_found' => 'Geen OG Wonen Objecten gevonden',
-                        'not_found_in_trash' => 'Geen OG Wonen Objecten gevonden in de prullenbak',
+                        'add_new_item' => 'Nieuw Wonen Object toevoegen',
+                        'edit_item' => 'Wonen Object bewerken',
+                        'new_item' => 'Nieuw Wonen Object',
+                        'view_item' => 'Bekijk Wonen Object',
+                        'search_items' => 'Zoek naar Wonen Objecten',
+                        'not_found' => 'Geen Wonen Objecten gevonden',
+                        'not_found_in_trash' => 'Geen Wonen Objecten gevonden in de prullenbak',
                         'parent_item_colon' => '',
                         'menu_name' => 'Wonen'
                     ),
+                    'extra_columns' => array(
+                        'TiaraID' => 'ID',
+	                    'Status' => 'pixelplus_status',
+	                    'Koopprijs' => 'koopprijs',
+	                    'Huurprijs' => 'huurprijs',
+	                    'Publicatiedatum' => 'publicatiedatum',
+                    ),
+                    'capabilities' => array(
+	                    # Nobody
+	                    'edit_post'          => 'no_capability',
+	                    'read_post'          => 'read',
+	                    'delete_post'        => 'no_capability',
+	                    'edit_posts'         => 'update_core',
+	                    'edit_others_posts'  => 'read',
+	                    'delete_posts'       => 'no_capability',
+	                    'publish_posts'      => 'no_capability',
+	                    'read_private_posts' => 'no_capability'
+                    ),
                     'post_type_meta' => array(
-                        'meta_box_title' => 'OG Wonen Object',
-                        'meta_box_id' => 'og-wonen-object',
+                        'meta_box_title' => 'Wonen Object',
+                        'meta_box_id' => 'wonen-object',
                         'meta_box_context' => 'normal',
                         'meta_box_priority' => 'high',
                         'meta_box_fields' => array(
-                            'OG Wonen Object' => array(
+                            'Wonen Object' => array(
                                 'type' => 'text',
-                                'id' => 'og-wonen-object',
-                                'name' => 'og-wonen-object',
-                                'label' => 'OG Wonen Object',
-                                'placeholder' => 'OG Wonen Object',
-                                'description' => 'OG Wonen Object',
+                                'id' => 'wonen-object',
+                                'name' => 'wonen-object',
+                                'label' => 'Wonen Object',
+                                'placeholder' => 'Wonen Object',
+                                'description' => 'Wonen Object',
                                 'value' => '',
                                 'required' => true
                             )
@@ -127,7 +156,7 @@ class OGSyncPostTypeData {
                     'capability_type' => 'post',
                     'hierarchical' => false,
                     'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'show_in_menu' => OGSyncSettingsData::$settingPrefix.'aanbod',
                     'taxonomies' => array('category', 'post_tag')
                 ),
                 'database_tables' => array(
@@ -158,6 +187,9 @@ class OGSyncPostTypeData {
                         'datum_toegevoegd' => 'datum_toegevoegd',                   // Mapped value - Default: datum_toegevoegd     ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'object_ObjectCode',                        // Mapped value - Default: object_ObjectCode    ; Default value is only for objects without a mapping table within the database
                         'publicatiedatum' => 'publicatiedatum',
+                        'koopprijs' => 'objectDetails_Koop_Koopprijs',
+                        'huurprijs' => 'objectDetails_Huur_Huurprijs',
+                        'pixelplus_status' => OGSyncSettingsData::$settingPrefix.'ObjectStatus',
 
                         # Post fields
                         'media' => array(
@@ -198,24 +230,42 @@ class OGSyncPostTypeData {
                     // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
                         // Labels for the custom post type in the WordPress admin
-                        'name' => 'OG BOG Objecten',
+                        'name' => 'BOG Objecten',
                         'columns' => array(
 	                        'cb' => '<input type="checkbox" />',
 	                        'title' => 'Title',
 	                        'TiaraID' => 'TiaraID',
 	                        'Publicatiedatum' => 'Publicatiedatum',
                         ),
-                        'singular_name' => 'OG BOG Object',
+                        'singular_name' => 'BOG Object',
                         'add_new' => 'Nieuwe toevoegen',
-                        'add_new_item' => 'Nieuw OG BOG Object toevoegen',
-                        'edit_item' => 'OG BOG Object bewerken',
-                        'new_item' => 'Nieuw OG BOG Object',
-                        'view_item' => 'Bekijk OG BOG Object',
-                        'search_items' => 'Zoek naar OG BOG Objecten',
-                        'not_found' => 'Geen OG BOG Objecten gevonden',
-                        'not_found_in_trash' => 'Geen OG BOG Objecten gevonden in de prullenbak',
+                        'add_new_item' => 'Nieuw BOG Object toevoegen',
+                        'edit_item' => 'BOG Object bewerken',
+                        'new_item' => 'Nieuw BOG Object',
+                        'view_item' => 'Bekijk BOG Object',
+                        'search_items' => 'Zoek naar BOG Objecten',
+                        'not_found' => 'Geen BOG Objecten gevonden',
+                        'not_found_in_trash' => 'Geen BOG Objecten gevonden in de prullenbak',
                         'parent_item_colon' => '',
                         'menu_name' => 'BOG'
+                    ),
+                    'capabilities' => array(
+	                    # Nobody
+	                    'edit_post'          => 'no_capability',
+	                    'read_post'          => 'read',
+	                    'delete_post'        => 'no_capability',
+	                    'edit_posts'         => 'update_core',
+	                    'edit_others_posts'  => 'read',
+	                    'delete_posts'       => 'no_capability',
+	                    'publish_posts'      => 'no_capability',
+	                    'read_private_posts' => 'no_capability'
+                    ),
+                    'extra_columns' => array(
+	                    'TiaraID' => 'ID',
+	                    'Status' => 'pixelplus_status',
+	                    'Koopprijs' => 'koopprijs',
+	                    'Huurprijs' => 'huurprijs',
+	                    'Publicatiedatum' => 'publicatiedatum',
                     ),
                     'public' => true,
                     'rewrite' => false,             // Mapped value
@@ -225,7 +275,7 @@ class OGSyncPostTypeData {
                     'capability_type' => 'post',
                     'hierarchical' => false,
                     'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'show_in_menu' => OGSyncSettingsData::$settingPrefix.'aanbod',
                     'taxonomies' => array('category', 'post_tag')
                 ),
                 'database_tables' => array(
@@ -256,6 +306,9 @@ class OGSyncPostTypeData {
                         'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value - Default: datum_toegevoegd    ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'object_ObjectCode',                // Mapped value - Default: object_ObjectCode    ; Default value is only for objects without a mapping table within the database
                         'publicatiedatum' => 'publicatiedatum',
+                        'koopprijs' => 'objectDetails_Koop_PrijsSpecificatie_Prijs',
+                        'huurprijs' => 'objectDetails_Huur_PrijsSpecificatie_Prijs',
+                        'pixelplus_status' => OGSyncSettingsData::$settingPrefix.'ObjectStatus',
 
                         # Post fields
                         'media' => array(
@@ -296,24 +349,46 @@ class OGSyncPostTypeData {
                     // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
                         // Labels for the custom post type in the WordPress admin
-                        'name' => 'OG Nieuwbouw Objecten',
+                        'name' => 'Nieuwbouw Objecten',
                         'columns' => array(
 	                        'cb' => '<input type="checkbox" />',
 	                        'title' => 'Title',
-	                        'TiaraID' => 'TiaraID',
+	                        'TiaraID' => '',
 	                        'Publicatiedatum' => 'Publicatiedatum',
                         ),
-                        'singular_name' => 'OG Nieuwbouw Object',
+                        'singular_name' => 'Nieuwbouw Object',
                         'add_new' => 'Nieuwe toevoegen',
-                        'add_new_item' => 'Nieuw OG Nieuwbouw Object toevoegen',
-                        'edit_item' => 'OG Nieuwbouw Object bewerken',
-                        'new_item' => 'Nieuw OG Nieuwbouw Object',
-                        'view_item' => 'Bekijk OG Nieuwbouw Object',
-                        'search_items' => 'Zoek naar OG Nieuwbouw Objecten',
-                        'not_found' => 'Geen OG Nieuwbouw Objecten gevonden',
-                        'not_found_in_trash' => 'Geen OG Nieuwbouw Objecten gevonden in de prullenbak',
+                        'add_new_item' => 'Nieuw Nieuwbouw Object toevoegen',
+                        'edit_item' => 'Nieuwbouw Object bewerken',
+                        'new_item' => 'Nieuw Nieuwbouw Object',
+                        'view_item' => 'Bekijk Nieuwbouw Object',
+                        'search_items' => 'Zoek naar Nieuwbouw Objecten',
+                        'not_found' => 'Geen Nieuwbouw Objecten gevonden',
+                        'not_found_in_trash' => 'Geen Nieuwbouw Objecten gevonden in de prullenbak',
                         'parent_item_colon' => '',
                         'menu_name' => 'Nieuwbouw'
+                    ),
+                    'extra_columns' => array(
+	                    'TiaraID' => 'ID',
+	                    'Status' => 'pixelplus_status',
+	                    'Koopprijs' => 'koopprijs',
+	                    'Huurprijs' => 'huurprijs',
+	                    'Koopprijs van' => 'koopprijs van',
+	                    'Koopprijs tot' => 'koopprijs tot',
+	                    'Huurprijs van' => 'huurprijs van',
+	                    'Huurprijs tot' => 'huurprijs tot',
+	                    'Publicatiedatum' => 'publicatiedatum',
+                    ),
+                    'capabilities' => array(
+	                    # Nobody
+	                    'edit_post'          => 'no_capability',
+	                    'read_post'          => 'read',
+	                    'delete_post'        => 'no_capability',
+	                    'edit_posts'         => 'update_core',
+	                    'edit_others_posts'  => 'read',
+	                    'delete_posts'       => 'no_capability',
+	                    'publish_posts'      => 'no_capability',
+	                    'read_private_posts' => 'no_capability'
                     ),
                     'public' => true,
                     'rewrite' => false,             // Mapped value
@@ -323,7 +398,7 @@ class OGSyncPostTypeData {
                     'capability_type' => 'post',
                     'hierarchical' => false,
                     'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-                    'show_in_menu' => 'pixelplus-og-plugin-aanbod',
+                    'show_in_menu' => OGSyncSettingsData::$settingPrefix.'aanbod',
                     'taxonomies' => array('category', 'post_tag')
                 ),
                 'database_tables' => array(
@@ -356,6 +431,7 @@ class OGSyncPostTypeData {
                         'objectCode' => 'project_ObjectCode',                                       // Mapped value
                         'type' => 'project',                                                        // Standard value don't change
                         'publicatiedatum' => 'publicatiedatum',
+                        'pixelplus_status' => OGSyncSettingsData::$settingPrefix.'ObjectStatus',
 
                         # Post fields
                         'media' => array(
@@ -411,6 +487,12 @@ class OGSyncPostTypeData {
                         'datum_gewijzigd_unmapped' => 'datum_gewijzigd',                            // NON Mapped value - Default: datum_gewijzigd ; The extra field is needed so the plugin can filter on the date for less memory usage
                         'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value - Default: datum_toegevoegd                 ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'bouwType_ObjectCode',                                      // Mapped value - Default: bouwType_ObjectCode              ; Default value is only for objects without a mapping table within the database
+                        'pixelplus_status' => OGSyncSettingsData::$settingPrefix.'ObjectStatus',    // Mapped value - Default: OGSyncSettingsData::$settingPrefix.'ObjectStatus                         ; Default value is only for objects without a mapping table within the database
+	                    'koopprijs van' => 'bouwType_BouwTypeDetails_KoopAanneemsom_Van',
+	                    'koopprijs tot' => 'bouwType_BouwTypeDetails_KoopAanneemsom_TotEnMet',
+                        'huurprijs van' => 'bouwType_BouwTypeDetails_Huurprijs_Van',
+                        'huurprijs tot' => 'bouwType_BouwTypeDetails_Huurprijs_TotEnMet',
+
                         'type' => 'bouwtype',                                                       // Standard value - Default: bouwtype                       ; DO NOT CHANGE
 
                         # Post fields
@@ -453,6 +535,10 @@ class OGSyncPostTypeData {
                         'datum_gewijzigd_unmapped' => 'datum_gewijzigd',                                        // NON Mapped value - Default: datum_gewijzigd ; The extra field is needed so the plugin can filter on the date for less memory usage
                         'datum_toegevoegd' => 'datum_toegevoegd',                                               // Mapped value - Default: datum_toegevoegd         ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'bouwNummer_ObjectCode',                                                // Mapped value - Default: bouwNummer_ObjectCode    ; Default value is only for objects without a mapping table within the database
+                        'pixelplus_status' => OGSyncSettingsData::$settingPrefix.'ObjectStatus',
+                        'koopprijs' => 'Financieel_Koop_Koopprijs',
+                        'huurprijs' => 'Financieel_Huur_Huurprijs',
+
                         'type' => 'bouwnummer',                                                                 // Standard value - Default: bouwnummer             ; DO NOT CHANGE
 
                         # Post fields
@@ -582,6 +668,7 @@ class OGSyncPostTypeData {
         // Returning the array
         return $customPostTypes;
     }
+
 }
 class OGSyncColorScheme {
     // ============ Declaring Variables ============
@@ -636,6 +723,7 @@ class OGSyncSettingsData {
 	public static string $settingPrefix = 'ppOGSync_'; // This is the prefix for all the settings used within the OG Plugin
 	public static string $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
     public static string $cronjobTableName = 'cronjobs'; // This is the table name where all the cronjobs are stored within the database
+    public static string $aanbodEditorSlug = 'aanbodEditor';
 
 	# Arrays
 	private static array $apiURLs = [
@@ -673,6 +761,16 @@ class OGSyncSettingsData {
 			]
 		],
 	];
+	private static array $pixelplusVariables = [
+        'ObjectStatus' => [
+            'name' => 'Eigen status',
+	        'options' => [
+		        'Niet van toepassing',
+		        'Ingetrokken',
+		        'Beschikbaar'
+	        ]
+        ],
+    ];
 
 	# Bools
 	public static bool $boolGiveLastCron = False;
@@ -695,6 +793,9 @@ class OGSyncSettingsData {
 	public static function adminSettings(): array {
 		return self::$adminSettings;
 	}
+    public static function pixelplusVariables(): array {
+        return self::$pixelplusVariables;
+    }
 
 	// ============ PHP Functions ============
 	// ==== Sanitize Functions ====
@@ -1264,17 +1365,17 @@ class OGSyncMenus
             'Admin Settings',
             'OG Sync Settings',
             'manage_options',
-            'ppOGSync-plugin-settings',
+            OGSyncSettingsData::$settingPrefix.'pluginSettings',
             [__CLASS__, 'HTMLOGAdminSettings'],
             'dashicons-admin-generic',
             101
         );
         add_submenu_page(
-            'pixelplus-og-plugin-settings',
+	        OGSyncSettingsData::$settingPrefix.'pluginSettings',
             'Algemeen',
             'Algemeen',
             'manage_options',
-            'ppOGSync-plugin-settings',
+            OGSyncSettingsData::$settingPrefix.'pluginSettings',
             [__CLASS__, 'HTMLOGAdminSettings']
         );
 
@@ -1288,11 +1389,11 @@ class OGSyncMenus
                     $name = $postTypeArray['post_type_args']['labels']['menu_name'];
                     // Creating submenu for in the OG Settings
                     add_submenu_page(
-                        'pixelplus-og-plugin-settings',
+	                    OGSyncSettingsData::$settingPrefix.'pluginSettings',
                         $name,
                         $name,
                         'manage_options',
-                        'pixelplus-og-plugin-settings-' . strtolower($name),
+	                    OGSyncSettingsData::$settingPrefix.'settings-' . strtolower($name),
                         [__CLASS__, 'HTMLOGAdminSettings'.$name]
                     );
                 }
@@ -1304,39 +1405,49 @@ class OGSyncMenus
                 'Admin Dashboard',
                 'OG Admin Dashboard',
                 'manage_options',
-                'pixelplus-og-plugin',
+	            OGSyncSettingsData::$settingPrefix.'OGAdminDashboard',
                 [__CLASS__, 'HTMLOGAdminDashboard'],
                 'dashicons-plus-alt',
                 100);
             // First sub-menu item for name change
             add_submenu_page(
-                'pixelplus-og-plugin',
+	            OGSyncSettingsData::$settingPrefix.'OGAdminDashboard',
                 'Admin Dashboard',
                 'Dashboard',
                 'manage_options',
-                'pixelplus-og-plugin',
+	            OGSyncSettingsData::$settingPrefix.'OGAdminDashboard',
                 [__CLASS__, 'HTMLOGAdminDashboard']);
 
             // ==== Items OG Aanbod ====
             // Menu Item: OG Aanbod Dashboard
             add_menu_page(
-                'OG Aanbod',
-                'OG Aanbod',
+                'Aanbod',
+                'Aanbod',
                 'manage_options',
-                'pixelplus-og-plugin-aanbod',
+	            OGSyncSettingsData::$settingPrefix.'aanbod',
                 [__CLASS__, 'HTMLOGAanbodDashboard'],
                 'dashicons-admin-multisite',
                 40);
             // First sub-menu item for name change
             add_submenu_page(
-                'pixelplus-og-plugin-aanbod',
+	            OGSyncSettingsData::$settingPrefix.'aanbod',
                 'Aanbod Dashboard',
                 'Dashboard',
                 'manage_options',
-                'pixelplus-og-plugin-aanbod',
+	            OGSyncSettingsData::$settingPrefix.'aanbodDashboard',
                 [__CLASS__, 'HTMLOGAanbodDashboard'],
                 0
             );
+
+	        // ==== Aanbod editor ====
+	        add_submenu_page(
+		        ' ',
+		        'Aanbod Editor',
+		        'Aanbod Editor',
+		        'manage_options',
+		        OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug,
+		        [__CLASS__, 'PHPOGAanbodEditor']
+	        );
         }
     }
 
@@ -1444,7 +1555,7 @@ class OGSyncMenus
                 $('#{$fieldArray['fieldID']}_upload').click(function(e) {
                     e.preventDefault();
                     const custom_uploader = wp.media({
-                        title: 'Custom Image',
+                        title: 'Custom image',
                         button: {
                             text: 'Use this image'
                         },
@@ -1547,6 +1658,15 @@ class OGSyncMenus
 		}
 	}
 
+	// ============ PHP ============
+	static function PHPOGAanbodEditor(): void {
+		// ======== Declaring Variables ========
+		$GET_postID = $_GET['postID'] ?? null;
+
+		// ======== Start of Function ========
+		OGSyncAanbod::aanbodEditor($GET_postID);
+    }
+
     // ============ HTML ============
     // OG Sync Admin
     static function HTMLOGAdminDashboard(): void {
@@ -1608,7 +1728,7 @@ class OGSyncMenus
         ");
         OGSyncTools::htmlAdminFooter('OG Admin Dashboard');}
     // OG Site Admin Settings
-    static function HTMLOGAdminSettings(): void {OGSyncTools::htmlAdminHeader('OG Admin Settings - Algemeen'); ?>
+    static function HTMLOGAdminSettings(): void {OGSyncTools::htmlAdminHeader('Admin Settings - Algemeen'); ?>
         <form method="post" action="options.php">
             <?php settings_fields(OGSyncSettingsData::$settingPrefix.'adminOptions');
             do_settings_sections('ppOGSync-plugin-settings');
@@ -1618,8 +1738,8 @@ class OGSyncMenus
         </form>
     <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Algemeen');}
     // OG Aanbod
-    static function HTMLOGAanbodDashboard(): void { OGSyncTools::htmlAdminHeader('OG Aanbod Dashboard'); ?>
-        <p>dingdong bishass</p>
+    static function HTMLOGAanbodDashboard(): void { OGSyncTools::htmlAdminHeader('Aanbod Dashboard'); ?>
+        <p>Onder constructie</p>
         <?php OGSyncTools::htmlAdminFooter('OG Aanbod Dashboard');}
     // OG Detailpage
     function HTMLOGDetailPageWonen() { ?>
@@ -1628,8 +1748,10 @@ class OGSyncMenus
 }
 
 // ========== Fully Licensed ==========
+
 class OGSyncPostTypes {
 	// ======== Declaring Variables ========
+    static array $postTypeExtraColumns = [];
 
 	// ======== Start of Class ========
 	function __construct() {
@@ -1653,155 +1775,169 @@ class OGSyncPostTypes {
             # Creating the post type
 			register_post_type($postType, $postTypeArray['post_type_args']);
 
-            # -- Styling --
-            # Header
-            add_action('admin_notices', function() use ($postType) {
-                // ======== Declaring Variables ========
-                # Globals
-                global $pagenow, $typenow;
-
-                # Vars
-                $boolIsPost = $pagenow == 'post.php' && $typenow == $postType;
-                $boolIsEdit = $pagenow == 'edit.php' && $typenow == $postType;
-                // ======== Start of Function ========
-                if ($boolIsEdit || $boolIsPost) {
-                    // ==== Declaring Variables ====
-                    if ($boolIsPost) {
-                        $marginTop = '50px';
-                    }
-                    else{
-                        $marginTop = '20px';
-                    }
-
-                    // ==== Start of IF ====
-                    # Creating the header
-                    if ($boolIsEdit) OGSyncTools::htmlAdminHeader("OG {$postType} Objecten");
-                    echo("
-                        <script>
-                            document.onreadystatechange = function() {
-                                // ==== Start of Function ====
-                                if (document.readyState === 'complete') {
-                                     document.querySelector('.wp-heading-inline').remove();
-                                     document.querySelector('.page-title-action').remove();
-                                    // Making space to let it look better
-                                    document.querySelector('.wrap').style.marginTop = '{$marginTop}';
-                                }
-                            }
-                        </script>
-                    ");
-                }
-            });
-            # Footer
-			add_action('admin_footer', function() use ($postType) {
-				global $pagenow, $typenow;
-
-				if (($pagenow == 'edit.php' || $pagenow == 'post.php') && $typenow == $postType) {
-					OGSyncTools::htmlAdminFooter('OG Aanbod Dashboard');
-				}
-			});
-
-            # -- Adding/Editing columns --
-            # Adding the column-names
-            add_filter("manage_{$postType}_posts_columns", function($columns) use ($postTypeArray) {
-                // ======== Declaring Variables ========
-                # Vars
-                $newColumns = [];
-
-                // ======== Start of Function ========
-                # Looping through the columns
-                foreach ($columns as $key => $value) {
-                    # Checking if the key is the title
-                    if ($key == 'title') {
-                        # Adding the new columns
-                        foreach ($postTypeArray['post_type_args']['labels']['columns'] as $columnKey => $columnValue) {
-                            $newColumns[$columnKey] = $columnValue;
-                        }
-                    }
-
-                    # Adding the old columns
-                    $newColumns[$key] = $value;
-                }
-
-                # Returning the new columns
-                return $newColumns;
-            });
-            # Adding the colum-content
-            add_action("manage_{$postType}_posts_custom_column", function($column) use ($postTypeArray) {
-                // ======== Start of Function ========
-                if ($column == 'TiaraID') {
-                    echo(get_post_meta(get_the_ID(), $postTypeArray['database_tables']['object']['ID'], true));
-                }
-                if ($column == 'Publicatiedatum') {
-                    echo(get_post_meta(get_the_ID(), $postTypeArray['database_tables']['object']['publicatiedatum'], true));
-                }
-            });
-
-            # -- Adding/Editing filters --
-            # Getting pre_get_posts
-			add_action('pre_get_posts', function($query) use ($postType, $postTypeArray) {
-                // ======== Declaring Variables ========
-                # Globals
-                global $pagenow, $typenow;
-
-                // ======== Start of Function ========
-				# Checking if the query is for the post type
-                if ($pagenow == 'edit.php' && $typenow == $postType) {
-                    # Checking if it's a main query or whatever
-                    if ($query->is_main_query() && $query->is_search()) {
-                        # Getting the search query
-                        $searchQuery = $query->query_vars['s'];
-
-                        # Checking if the search query is empty
-                        if (!empty($searchQuery)) {
-                            # Getting the post meta
-                            $metaQuery = [
-                                'relation' => 'OR',
-                                [
-                                    'key' => $postTypeArray['database_tables']['object']['ID'],
-                                    'value' => $searchQuery,
-                                    'compare' => 'LIKE',
-                                ],
-                                [
-                                    'key' => $postTypeArray['database_tables']['object']['publicatiedatum'],
-                                    'value' => $searchQuery,
-                                    'compare' => 'LIKE',
-                                ],
-                            ];
-
-                            # Setting the meta query
-                            $query->set('meta_query', $metaQuery);
-                        }
-                    }
-                }
-            });
-			# Adding the filters
-			add_action('posts_search', function($search, $query) use ($postType, $postTypeArray) {
+			# Adding extra columns to the post type overview
+			add_filter("manage_{$postType}_posts_columns", function($columns) use ($postTypeArray) {
 				// ======== Declaring Variables ========
-				# Globals
-				global $pagenow, $typenow;
+				self::$postTypeExtraColumns = $postTypeArray['post_type_args']['extra_columns'] ?? [];
 
 				// ======== Start of Function ========
-				# Checking if the query is for the post type
-				if ($pagenow == 'edit.php' && $typenow == $postType) {
-					# Checking if it's a main query or whatever
-					if ($query->is_main_query() && $query->is_search()) {
-						// Get the search keyword
-						$search_term = get_search_query();
-
-						if (!empty($search_term)) {
-							if (is_numeric($search_term)) {
-								// Modify the search query to include custom fields
-								$search .= " OR (postmeta.meta_key = {$postTypeArray['database_tables']['object']['ID']} AND postmeta.meta_value LIKE '%$search_term%')";
-							}
-							if (!strtotime($search_term)) {
-								$search .= " OR (postmeta.meta_key = {$postTypeArray['database_tables']['object']['publicatiedatum']} AND postmeta.meta_value LIKE '%$search_term%')";
-							}
-						}
-					}
+				# Looping through the extra columns
+				foreach (self::$postTypeExtraColumns as $columnName => $columnSearchKey) {
+					# Adding the extra column to the columns array
+					$columns[$columnName] = $columnName;
 				}
-				return $search;
-			});
+
+				# Returning the columns array
+				return $columns;
+			}, 10, 2);
+
+            # If the post_type is nieuwbouw
+            if ($postType == 'nieuwbouw') {
+                # Adding the content to the extra columns
+                add_action("manage_{$postType}_posts_custom_column", function($column, $post_id) use ($postTypeArray) {
+                    // ========= Declaring Variables =========
+                    $postNieuwbouwType = get_post_meta($post_id, 'type', true) ?? '';
+	                $columnSearchKey = self::$postTypeExtraColumns[$column] ?? false;
+
+                    // ========= Start of Function =========
+                    switch ($postNieuwbouwType) {
+                        case 'project':
+                            # Getting the value of the column
+                            $key = $postTypeArray['database_tables']['projecten'][$columnSearchKey] ?? false;
+//                            if ($key) echo(get_post_meta($post_id, $key, true));
+                            echo('project');
+                            break;
+                        case 'bouwtype':
+                            $key = $postTypeArray['database_tables']['bouwTypes'][$columnSearchKey] ?? false;
+                            # Getting the value of the column
+//                            if ($key) echo(get_post_meta($post_id, $key, true));
+                            echo('bouwtype');
+                            break;
+                        case 'bouwnummer':
+                            # Getting the value of the column
+                            $key = $postTypeArray['database_tables']['bouwNummers'][$columnSearchKey] ?? false;
+//                            if ($key) echo(get_post_meta($post_id, $key, true));
+                            echo('bouwnummer');
+                            break;
+
+                        default:
+                            break;
+                    }
+
+
+                }, 10, 2);
+
+            }
+            else {
+	            # Adding the content to the extra columns
+	            add_action("manage_{$postType}_posts_custom_column", function($column, $post_id) use ($postTypeArray) {
+		            // ======== Start of Function ========
+		            # Getting the value of the column
+		            $columnSearchKey = self::$postTypeExtraColumns[$column] ?? false;
+		            $columnValue = get_post_meta($post_id, $postTypeArray['database_tables']['object'][$columnSearchKey], true) ?? '';
+		            echo($columnValue);
+	            }, 10 , 2);
+
+	            # Adding the sorting capability to the extra columns
+	            # Filter
+	            add_filter("manage_edit-{$postType}_sortable_columns", function($columns) use ($postTypeArray) {
+		            // ======== Declaring Variables ========
+		            self::$postTypeExtraColumns = $postTypeArray['post_type_args']['extra_columns'] ?? [];
+
+		            // ======== Start of Function ========
+		            # Looping through the extra columns
+		            foreach (self::$postTypeExtraColumns as $columnName => $columnSearchKey) {
+			            # Adding the extra column to the columns array
+			            $columns[$columnName] = $columnSearchKey;
+		            }
+
+		            # Returning the columns array
+		            return $columns;
+	            }, 10, 2);
+	            # Query modification
+	            add_action( 'pre_get_posts', function ( $query ) use ($postTypeArray) {
+
+	            });
+            }
 		}
+
+        # -- Extra post Row Actions --
+		add_action('post_row_actions', function($actions) {
+			// ======== Declaring Variables ========
+			# Globals
+			global $typenow, $pagenow;
+
+			# Vars
+			$currentPostType = OGSyncPostTypeData::customPostTypes()[$typenow] ?? false;
+			$boolIsOurEdit = $pagenow == 'edit.php' && $currentPostType != false;
+
+			// ======== Start of Function ========
+			if ($boolIsOurEdit) {
+				# Creating a new button
+				$actions[] = '<a href="admin.php?page='.OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug.'&postID='.get_the_ID().'"> <img alt="" height="12px" src="'.plugins_url('img/pixelplus-logo.svg', dirname(__DIR__)).'"> Aanbod Editor</a>';
+			}
+			return $actions;
+		}, 10, 1);
+
+		# -- Styling --
+		# Header
+		add_action('admin_notices', function() {
+			// ======== Declaring Variables ========
+            # Globals
+            global $pagenow, $typenow;
+    		# Vars
+            $currentPostType = OGSyncPostTypeData::customPostTypes()[$typenow] ?? false;
+
+			$boolIsOurPost = $pagenow == 'post.php' && $currentPostType != false;
+			$boolIsOurEdit = $pagenow == 'edit.php' && $currentPostType != false;
+
+			// ======== Start of Function ========
+			if ($boolIsOurEdit || $boolIsOurPost) {
+				// ==== Declaring Variables ====
+				if ($boolIsOurPost) {
+					$marginTop = '50px';
+				}
+				else{
+					$marginTop = '20px';
+				}
+
+				// ==== Start of IF ====
+				# Creating the header
+                if ($boolIsOurEdit) OGSyncTools::htmlAdminHeader(ucfirst($typenow).' Objecten');
+				echo("
+                    <script>
+                        document.onreadystatechange = function() {
+                            // ==== Start of Function ====
+                            if (document.readyState === 'complete') {
+                                document.querySelector('.wp-heading-inline').remove();
+                                document.querySelector('.page-title-action').remove();
+                                // Making space to let it look better
+                                document.querySelector('.wrap').style.marginTop = '{$marginTop}';
+                                document.querySelectorAll('.title strong span').forEach(function(element) {
+                                    element.style.color = '#0d6efd';
+                                    element.style.fontWeight = '600';
+                                });
+                            }
+                        }
+                    </script>
+                ");
+			}
+		});
+		# Footer
+		add_action('admin_footer', function() {
+			// ======== Declaring Variables ========
+			# Globals
+			global $pagenow, $typenow;
+
+            # Vars
+			$currentPostType = OGSyncPostTypeData::customPostTypes()[$typenow] ?? false;
+			$boolIsPost = $pagenow == 'post.php' && $currentPostType != false;
+			$boolIsEdit = $pagenow == 'edit.php' && $currentPostType != false;
+
+			if ($boolIsEdit || $boolIsPost) {
+				OGSyncTools::htmlAdminFooter();
+			}
+		});
 	}
     public static function checkMigrationPostTypes(): void {
         // ==== Declaring Variables ====
@@ -2243,7 +2379,7 @@ class OGSyncOffers {
 			$OGBouwnummer = OGSyncMapping::mapMetaData($OGBouwnummer, ($databaseKeys[2]['mapping'] ?? []), self::getLocationCodes(), $databaseKeys);
 
 			# Adding the 'type' meta data
-			$OGBouwnummer->type = $databaseKeys[1]['type'];
+			$OGBouwnummer->type = $databaseKeys[2]['type'];
 
 			# Post - Bouwnummer
 			$postData = new WP_Query([
@@ -2598,4 +2734,83 @@ class OGSyncOffers {
 			}
 		}
 	}
+}
+class OGSyncAanbod {
+	// ============ Declaring Variables ============
+    # Arrays
+    private static ?array $arrPostData = null;
+
+	// =============== Functions ===============
+    public static function aanbodEditor($GET_postID): void {
+        // ======== Declaring Variables ========
+        self::$arrPostData = OGSyncPostTypeData::getPostData($GET_postID);
+
+        // ======== Start of Function ========
+	    OGSyncTools::htmlAdminHeader(self::$arrPostData['postData']->post_title);
+        if (self::$arrPostData) {
+            // ======== Start of Function ========
+            # Showing the first attatchment based off menu_order of this post type
+            $postThumbnail = new WP_Query([
+                'post_type' => 'attachment',
+                'posts_per_page' => 1,
+                'post_status' => 'any',
+                'post_parent' => self::$arrPostData['postData']->ID,
+                'post_excerpt' => 'HOOFDFOTO'
+            ]);
+            if ($postThumbnail->have_posts()) {
+                // ==== Start of Function ====
+                # Making it thumbnail sized
+                $imgSource = wp_get_attachment_image_src($postThumbnail->post->ID, 'thumbnail')[0] ?? '';
+                echo("<img src='{$imgSource}' width='550' alt='⠀Error: Hoofdfoto niet gevonden.'/>");
+            }
+            self::createForm();
+        }
+        else {
+            die('Post is niet gevonden');
+        }
+	    OGSyncTools::htmlAdminFooter('Aanbod Editor');
+    }
+    private static function createForm(): void {
+        // ======== Declaring Variables ========
+        # POST Request
+        if (!empty($_POST)) {
+            foreach (OGSyncSettingsData::pixelplusVariables() as $settingName => $arrSettings) {
+                // ==== Start of Function ====
+                if (isset($_POST[OGSyncSettingsData::$settingPrefix . $settingName])) {
+                    # Checking if the value is valid and not brute forced
+                    if (in_array($_POST[OGSyncSettingsData::$settingPrefix . $settingName], $arrSettings['options'])) {
+	                    update_post_meta(self::$arrPostData['postData']->ID, OGSyncSettingsData::$settingPrefix . $settingName, $_POST[OGSyncSettingsData::$settingPrefix . $settingName]);
+                    }
+                }
+            }
+
+            // ==== Start of Function ====
+            # IF there are no errors
+            echo("<div class='notice notice-success is-dismissible'><p>De aanpassingen zijn opgeslagen.</p></div>");
+        }
+        // ======== Start of Function ======== ?>
+        <form method='post'>
+            <table class='mt-3'>
+                <?php foreach (OGSyncSettingsData::pixelplusVariables() as $settingName => $arrSettings): ?>
+                    <?php
+                    // ==== Declaring Variables ====
+                    $settingName = OGSyncSettingsData::$settingPrefix . $settingName;
+                    ?>
+                    <tr>
+                        <th class='pt-2' style='width: 200px; font-weight: 600;'>
+                            <label for='id_<?= $settingName ?>'><?= $arrSettings['name'] ?></label>
+                        </th>
+                        <td class='pt-2'>
+                            <select name='<?= $settingName ?>' id='id_<?= $settingName ?>'>
+			                    <?php foreach ($arrSettings['options'] as $option): ?>
+                                    <option value='<?= $option ?>' <?= selected($option, self::$arrPostData['postData']->{$settingName}, false) ?>><?= $option ?></option>
+			                    <?php endforeach; ?>
+                            </select>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php submit_button('Opslaan'); ?>
+        </form> <?php
+    }
 }
