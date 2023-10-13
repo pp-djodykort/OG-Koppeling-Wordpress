@@ -21,7 +21,6 @@ class OGSyncTools {
 			<div class='container-fluid'>			
 	            <div class='div-Header'>
 	                <span class='floatLeft'><h1><b>$title</b></h1></span>
-	                <span class='floatRight'><h5>".self::welcomeMessage()."</h5></span>
 	            </div>
 	        </div>
 		</header>
@@ -152,6 +151,45 @@ class OGSyncTools {
 		}
 		else {
 			return false;
+		}
+	}
+	static function isNumericBasedOffMetaKey($meta_key): bool {
+		// ======== Declaring Variables ========
+		# Globals
+		global $wpdb;
+
+		// ======== Start of Function ========
+		$meta_values = $wpdb->get_col($wpdb->prepare("SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = %s", $meta_key));
+		foreach ($meta_values as $meta_value) {
+			if (!is_numeric($meta_value)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+	static function getThumbnailOfPost($postID) {
+		$postThumbnail = new WP_Query([
+			'post_type' => 'attachment',
+			'posts_per_page' => 1,
+			'post_status' => 'any',
+			'post_parent' => $postID,
+			'post_excerpt' => 'HOOFDFOTO'
+		]);
+		if ($postThumbnail->have_posts()) {
+			// ==== Start of Function ====
+			# Making it thumbnail sized
+			return wp_get_attachment_image_src($postThumbnail->post->ID, 'thumbnail')[0] ?? '';
+		}
+		return '';
+	}
+	static function checkIfAanbodColumnThumbnail($column, $post_id): void {
+		if (strtolower($column) == 'thumbnail') {
+			$imgSource = OGSyncTools::getThumbnailOfPost($post_id);
+			if (!empty($imgSource)) {
+				echo("<img style='width: ".'-webkit-fill-available'.";' src='$imgSource' alt='Thumbnail niet beschikbaar'/>");
+			}
+
 		}
 	}
 }

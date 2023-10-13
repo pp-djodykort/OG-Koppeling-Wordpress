@@ -98,25 +98,38 @@ class OGSyncPostTypeData {
                     // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
                         // Labels for the custom post type in the WordPress admin
-                        'name' => 'Wonen Objecten',
-                        'singular_name' => 'Wonen Object',
+                        'name' => 'Wonen objecten',
+                        'singular_name' => 'Woning',
                         'add_new' => 'Nieuwe toevoegen',
-                        'add_new_item' => 'Nieuw Wonen Object toevoegen',
-                        'edit_item' => 'Wonen Object bewerken',
-                        'new_item' => 'Nieuw Wonen Object',
-                        'view_item' => 'Bekijk Wonen Object',
-                        'search_items' => 'Zoek naar Wonen Objecten',
-                        'not_found' => 'Geen Wonen Objecten gevonden',
-                        'not_found_in_trash' => 'Geen Wonen Objecten gevonden in de prullenbak',
+                        'add_new_item' => 'Nieuw wonen object toevoegen',
+                        'edit_item' => 'Woning bewerken',
+                        'new_item' => 'Nieuw wonen item',
+                        'view_item' => 'Bekijk wonen item',
+                        'search_items' => 'Zoeken',
+                        'not_found' => 'Geen woon objecten gevonden',
+                        'not_found_in_trash' => 'Geen woon objecten gevonden in de prullenbak',
                         'parent_item_colon' => '',
                         'menu_name' => 'Wonen'
                     ),
                     'extra_columns' => array(
-                        'TiaraID' => 'ID',
-	                    'Status' => 'pixelplus_status',
-	                    'Koopprijs' => 'koopprijs',
-	                    'Huurprijs' => 'huurprijs',
-	                    'Publicatiedatum' => 'publicatiedatum',
+	                    /* array('Name of extra column', True/False (Sortable of niet)) */
+                        'Thumbnail' => ['thumbnail', false],
+	                    'Publicatiedatum' => ['publicatiedatum', true],
+                        'TiaraID' => ['ID', true],
+	                    'Realworks status' => ['ObjectStatus_database', true],
+                        'Eigen status' => ['pixelplus_status', true],
+	                    'Koopprijs' => ['koopprijs', true],
+	                    'Huurprijs' => ['huurprijs', true],
+                    ),
+                    'delete_columns' => array(
+                        'author',
+                        'categories',
+                        'tags',
+                        'comments',
+                        'date'
+                    ),
+                    'edit_columns' => array(
+                        'title' => 'Adres'
                     ),
                     'capabilities' => array(
 	                    # Nobody
@@ -186,6 +199,7 @@ class OGSyncPostTypeData {
                         'datum_gewijzigd_unmapped' => 'datum_gewijzigd',            // NON Mapped value - Default: datum_gewijzigd  ; The extra field is needed so the plugin can filter on the date for less memory usage
                         'datum_toegevoegd' => 'datum_toegevoegd',                   // Mapped value - Default: datum_toegevoegd     ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'object_ObjectCode',                        // Mapped value - Default: object_ObjectCode    ; Default value is only for objects without a mapping table within the database
+                        'ObjectStatus_database' => 'objectDetails_StatusBeschikbaarheid_Status',
                         'publicatiedatum' => 'publicatiedatum',
                         'koopprijs' => 'objectDetails_Koop_Koopprijs',
                         'huurprijs' => 'objectDetails_Huur_Huurprijs',
@@ -230,22 +244,16 @@ class OGSyncPostTypeData {
                     // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
                         // Labels for the custom post type in the WordPress admin
-                        'name' => 'BOG Objecten',
-                        'columns' => array(
-	                        'cb' => '<input type="checkbox" />',
-	                        'title' => 'Title',
-	                        'TiaraID' => 'TiaraID',
-	                        'Publicatiedatum' => 'Publicatiedatum',
-                        ),
-                        'singular_name' => 'BOG Object',
+                        'name' => 'BOG objecten',
+                        'singular_name' => 'BOG object',
                         'add_new' => 'Nieuwe toevoegen',
-                        'add_new_item' => 'Nieuw BOG Object toevoegen',
-                        'edit_item' => 'BOG Object bewerken',
-                        'new_item' => 'Nieuw BOG Object',
-                        'view_item' => 'Bekijk BOG Object',
-                        'search_items' => 'Zoek naar BOG Objecten',
-                        'not_found' => 'Geen BOG Objecten gevonden',
-                        'not_found_in_trash' => 'Geen BOG Objecten gevonden in de prullenbak',
+                        'add_new_item' => 'Nieuw BOG object toevoegen',
+                        'edit_item' => 'BOG object bewerken',
+                        'new_item' => 'Nieuw BOG object',
+                        'view_item' => 'Bekijk BOG object',
+                        'search_items' => 'Zoeken',
+                        'not_found' => 'Geen BOG objecten gevonden',
+                        'not_found_in_trash' => 'Geen BOG objecten gevonden in de prullenbak',
                         'parent_item_colon' => '',
                         'menu_name' => 'BOG'
                     ),
@@ -261,11 +269,24 @@ class OGSyncPostTypeData {
 	                    'read_private_posts' => 'no_capability'
                     ),
                     'extra_columns' => array(
-	                    'TiaraID' => 'ID',
-	                    'Status' => 'pixelplus_status',
-	                    'Koopprijs' => 'koopprijs',
-	                    'Huurprijs' => 'huurprijs',
-	                    'Publicatiedatum' => 'publicatiedatum',
+                        /* array('Name of extra column', True/False (Sortable of niet)) */
+	                    'Thumbnail' => ['thumbnail', false],
+	                    'Publicatiedatum' => ['publicatiedatum', true],
+	                    'TiaraID' => ['ID', true],
+	                    'Realworks status' => ['ObjectStatus_database', true],
+	                    'Eigen status' => ['pixelplus_status', true],
+	                    'Koopprijs' => ['koopprijs', true],
+	                    'Huurprijs' => ['huurprijs', true],
+                    ),
+                    'delete_columns' => array(
+	                    'author',
+	                    'categories',
+	                    'tags',
+	                    'comments',
+	                    'date'
+                    ),
+                    'edit_columns' => array(
+	                    'title' => 'Adres'
                     ),
                     'public' => true,
                     'rewrite' => false,             // Mapped value
@@ -304,6 +325,7 @@ class OGSyncPostTypeData {
                         'datum_gewijzigd' => 'datum_gewijzigd',             // Mapped value - Default: datum_gewijzigd      ; Default value is only for objects without a mapping table within the database
                         'datum_gewijzigd_unmapped' => 'datum_gewijzigd',    // NON Mapped value - Default: datum_gewijzigd ; The extra field is needed so the plugin can filter on the date for less memory usage
                         'datum_toegevoegd' => 'datum_toegevoegd',           // Mapped value - Default: datum_toegevoegd    ; Default value is only for objects without a mapping table within the database
+                        'ObjectStatus_database' => 'objectDetails_Status_StatusType',
                         'objectCode' => 'object_ObjectCode',                // Mapped value - Default: object_ObjectCode    ; Default value is only for objects without a mapping table within the database
                         'publicatiedatum' => 'publicatiedatum',
                         'koopprijs' => 'objectDetails_Koop_PrijsSpecificatie_Prijs',
@@ -349,35 +371,36 @@ class OGSyncPostTypeData {
                     // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
                         // Labels for the custom post type in the WordPress admin
-                        'name' => 'Nieuwbouw Objecten',
-                        'columns' => array(
-	                        'cb' => '<input type="checkbox" />',
-	                        'title' => 'Title',
-	                        'TiaraID' => '',
-	                        'Publicatiedatum' => 'Publicatiedatum',
-                        ),
-                        'singular_name' => 'Nieuwbouw Object',
+                        'name' => 'Nieuwbouw objecten',
+                        'singular_name' => 'Nieuwbouw object',
                         'add_new' => 'Nieuwe toevoegen',
-                        'add_new_item' => 'Nieuw Nieuwbouw Object toevoegen',
-                        'edit_item' => 'Nieuwbouw Object bewerken',
-                        'new_item' => 'Nieuw Nieuwbouw Object',
-                        'view_item' => 'Bekijk Nieuwbouw Object',
-                        'search_items' => 'Zoek naar Nieuwbouw Objecten',
-                        'not_found' => 'Geen Nieuwbouw Objecten gevonden',
-                        'not_found_in_trash' => 'Geen Nieuwbouw Objecten gevonden in de prullenbak',
+                        'add_new_item' => 'Nieuwbouw object toevoegen',
+                        'edit_item' => 'Nieuwbouw object bewerken',
+                        'new_item' => 'Nieuwbouw object',
+                        'view_item' => 'Bekijk Nieuwbouw object',
+                        'search_items' => 'Zoeken',
+                        'not_found' => 'Geen Nieuwbouw objecten gevonden',
+                        'not_found_in_trash' => 'Geen Nieuwbouw objecten gevonden in de prullenbak',
                         'parent_item_colon' => '',
                         'menu_name' => 'Nieuwbouw'
                     ),
                     'extra_columns' => array(
-	                    'TiaraID' => 'ID',
-	                    'Status' => 'pixelplus_status',
-	                    'Koopprijs' => 'koopprijs',
-	                    'Huurprijs' => 'huurprijs',
-	                    'Koopprijs van' => 'koopprijs van',
-	                    'Koopprijs tot' => 'koopprijs tot',
-	                    'Huurprijs van' => 'huurprijs van',
-	                    'Huurprijs tot' => 'huurprijs tot',
-	                    'Publicatiedatum' => 'publicatiedatum',
+	                    /* array('Name of extra column', True/False (Sortable of niet)) */
+	                    'Thumbnail' => ['thumbnail', false],
+	                    'Publicatiedatum' => ['publicatiedatum', true],
+	                    'TiaraID' => ['ID', true],
+                        'Realworks status' => ['ObjectStatus_database', true],
+	                    'Eigen status' => ['pixelplus_status', true],
+                    ),
+                    'delete_columns' => array(
+	                    'author',
+	                    'categories',
+	                    'tags',
+	                    'comments',
+	                    'date'
+                    ),
+                    'edit_columns' => array(
+	                    'title' => 'Adres'
                     ),
                     'capabilities' => array(
 	                    # Nobody
@@ -488,10 +511,8 @@ class OGSyncPostTypeData {
                         'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value - Default: datum_toegevoegd                 ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'bouwType_ObjectCode',                                      // Mapped value - Default: bouwType_ObjectCode              ; Default value is only for objects without a mapping table within the database
                         'pixelplus_status' => OGSyncSettingsData::$settingPrefix.'ObjectStatus',    // Mapped value - Default: OGSyncSettingsData::$settingPrefix.'ObjectStatus                         ; Default value is only for objects without a mapping table within the database
-	                    'koopprijs van' => 'bouwType_BouwTypeDetails_KoopAanneemsom_Van',
-	                    'koopprijs tot' => 'bouwType_BouwTypeDetails_KoopAanneemsom_TotEnMet',
-                        'huurprijs van' => 'bouwType_BouwTypeDetails_Huurprijs_Van',
-                        'huurprijs tot' => 'bouwType_BouwTypeDetails_Huurprijs_TotEnMet',
+	                    'koopprijs' => 'bouwType_BouwTypeDetails_KoopAanneemsom_Van|bouwType_BouwTypeDetails_KoopAanneemsom_TotEnMet',
+                        'huurprijs' => 'bouwType_BouwTypeDetails_Huurprijs_Van|bouwType_BouwTypeDetails_Huurprijs_TotEnMet',
 
                         'type' => 'bouwtype',                                                       // Standard value - Default: bouwtype                       ; DO NOT CHANGE
 
@@ -530,7 +551,7 @@ class OGSyncPostTypeData {
                         'post_title' => 'Adres_Straatnaam;Adres_Huisnummer;Adres_Postcode;Adres_Woonplaats;Adres_HuisnummerToevoeging;bouwNummer_ObjectCode',   // Mapped value - Default: Straat;Huisnummer;Postcode;Woonplaats;Huisnummertoevoeging;ObjectCode
                         'post_name' => 'Adres_Straatnaam-Adres_Huisnummer-Adres_Postcode-Adres_Woonplaats-Adres_HuisnummerToevoeging-bouwNummer_ObjectCode',    // Mapped value - Default: Straat-Huisnummer-Postcode-Woonplaats-Huisnummertoevoeging-ObjectCode
                         'post_content' => 'Aanbiedingstekst',                                                   // Mapped value - Default: De aanbiedingstekst      ; Default value is only for objects without a mapping table within the database
-                        'ObjectStatus_database' => 'bouwNummer_ObjectCode',                                     // Mapped value - Default: ObjectCode               ; Default value is only for objects without a mapping table within the database
+                        'ObjectStatus_database' => 'Status_ObjectStatus',                                       // Mapped value - Default: ObjectCode               ; Default value is only for objects without a mapping table within the database
                         'datum_gewijzigd' => 'datum_gewijzigd',                                                 // Mapped value - Default: datum_gewijzigd          ; Default value is only for objects without a mapping table within the database
                         'datum_gewijzigd_unmapped' => 'datum_gewijzigd',                                        // NON Mapped value - Default: datum_gewijzigd ; The extra field is needed so the plugin can filter on the date for less memory usage
                         'datum_toegevoegd' => 'datum_toegevoegd',                                               // Mapped value - Default: datum_toegevoegd         ; Default value is only for objects without a mapping table within the database
@@ -1555,7 +1576,7 @@ class OGSyncMenus
                 $('#{$fieldArray['fieldID']}_upload').click(function(e) {
                     e.preventDefault();
                     const custom_uploader = wp.media({
-                        title: 'Custom image',
+                        title: 'Eigen afbeelding',
                         button: {
                             text: 'Use this image'
                         },
@@ -1695,6 +1716,7 @@ class OGSyncMenus
 
         # HTML
         OGSyncTools::htmlAdminHeader('OG Admin Dashboard');
+        echo("<img width=50px src='".plugins_url('img/pixelplus-logo.jpg', dirname(__DIR__))."' />");
         echo("
             <div class='container-fluid'>
                 <div class='row'>
@@ -1727,6 +1749,8 @@ class OGSyncMenus
             </div>
         ");
         OGSyncTools::htmlAdminFooter('OG Admin Dashboard');}
+
+
     // OG Site Admin Settings
     static function HTMLOGAdminSettings(): void {OGSyncTools::htmlAdminHeader('Admin Settings - Algemeen'); ?>
         <form method="post" action="options.php">
@@ -1737,10 +1761,14 @@ class OGSyncMenus
             ?>
         </form>
     <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Algemeen');}
+
+
     // OG Aanbod
     static function HTMLOGAanbodDashboard(): void { OGSyncTools::htmlAdminHeader('Aanbod Dashboard'); ?>
         <p>Onder constructie</p>
         <?php OGSyncTools::htmlAdminFooter('OG Aanbod Dashboard');}
+
+
     // OG Detailpage
     function HTMLOGDetailPageWonen() { ?>
 
@@ -1775,17 +1803,30 @@ class OGSyncPostTypes {
             # Creating the post type
 			register_post_type($postType, $postTypeArray['post_type_args']);
 
-			# Adding extra columns to the post type overview
+			# Adding, deleting and editing columns
 			add_filter("manage_{$postType}_posts_columns", function($columns) use ($postTypeArray) {
 				// ======== Declaring Variables ========
 				self::$postTypeExtraColumns = $postTypeArray['post_type_args']['extra_columns'] ?? [];
 
 				// ======== Start of Function ========
+                # ==== Adding ====
 				# Looping through the extra columns
 				foreach (self::$postTypeExtraColumns as $columnName => $columnSearchKey) {
 					# Adding the extra column to the columns array
 					$columns[$columnName] = $columnName;
 				}
+
+                # ==== Deleting ====
+                foreach ($postTypeArray['post_type_args']['delete_columns'] ?? [] as $columnName) {
+                    # Removing the column from the columns array
+                    unset($columns[$columnName]);
+                }
+
+                # ==== Editing ====
+                foreach ($postTypeArray['post_type_args']['edit_columns'] ?? [] as $columnName => $columnNewName) {
+                    # Changing the column name
+                    $columns[$columnName] = $columnNewName;
+                }
 
 				# Returning the columns array
 				return $columns;
@@ -1796,37 +1837,24 @@ class OGSyncPostTypes {
                 # Adding the content to the extra columns
                 add_action("manage_{$postType}_posts_custom_column", function($column, $post_id) use ($postTypeArray) {
                     // ========= Declaring Variables =========
-                    $postNieuwbouwType = get_post_meta($post_id, 'type', true) ?? '';
 	                $columnSearchKey = self::$postTypeExtraColumns[$column] ?? false;
 
+	                OGSyncTools::checkIfAanbodColumnThumbnail($column, $post_id);
+                    $postTypeArrayExists = $postTypeArray['database_tables']['projecten'][$columnSearchKey[0]] ?? false;
+
                     // ========= Start of Function =========
-                    switch ($postNieuwbouwType) {
-                        case 'project':
-                            # Getting the value of the column
-                            $key = $postTypeArray['database_tables']['projecten'][$columnSearchKey] ?? false;
-//                            if ($key) echo(get_post_meta($post_id, $key, true));
-                            echo('project');
-                            break;
-                        case 'bouwtype':
-                            $key = $postTypeArray['database_tables']['bouwTypes'][$columnSearchKey] ?? false;
-                            # Getting the value of the column
-//                            if ($key) echo(get_post_meta($post_id, $key, true));
-                            echo('bouwtype');
-                            break;
-                        case 'bouwnummer':
-                            # Getting the value of the column
-                            $key = $postTypeArray['database_tables']['bouwNummers'][$columnSearchKey] ?? false;
-//                            if ($key) echo(get_post_meta($post_id, $key, true));
-                            echo('bouwnummer');
-                            break;
+                    # Getting the value of the column
+                    $columnValue = ($columnSearchKey && $postTypeArrayExists) ? get_post_meta($post_id, $postTypeArray['database_tables']['projecten'][$columnSearchKey[0]], true) : '';
 
-                        default:
-                            break;
+                    # Check if date
+                    if (DateTime::createFromFormat('Y-m-d', $columnValue)) {
+                        # Echo it like the user has set it in WordPress
+                        echo(date(get_option('date_format'), strtotime($columnValue)));
                     }
-
-
+                    else {
+                        echo($columnValue);
+                    }
                 }, 10, 2);
-
             }
             else {
 	            # Adding the content to the extra columns
@@ -1834,32 +1862,129 @@ class OGSyncPostTypes {
 		            // ======== Start of Function ========
 		            # Getting the value of the column
 		            $columnSearchKey = self::$postTypeExtraColumns[$column] ?? false;
-		            $columnValue = get_post_meta($post_id, $postTypeArray['database_tables']['object'][$columnSearchKey], true) ?? '';
-		            echo($columnValue);
+
+                    OGSyncTools::checkIfAanbodColumnThumbnail($column, $post_id);
+                    $postTypeArrayExists = $postTypeArray['database_tables']['object'][$columnSearchKey[0]] ?? false;
+                    $columnValue = ($columnSearchKey && $postTypeArrayExists) ? get_post_meta($post_id, $postTypeArray['database_tables']['object'][$columnSearchKey[0]], true) : '';
+
+                    # Check if date
+                    if (DateTime::createFromFormat('Y-m-d', $columnValue)) {
+                        # Echo it like the user has set it in WordPress
+                        echo(date(get_option('date_format'), strtotime($columnValue)));
+                    }
+                    # Check if koopprijs or huurprijs
+                    elseif (strtolower($column) == 'koopprijs' or strtolower($column) == 'huurprijs') {
+                        # Echo it like the user has set it in WordPress
+                        if (empty($columnValue)) echo('N.v.t.');
+                        else echo('€ '.number_format($columnValue, 0, ',', '.'));
+                    }
+                    else {
+                        echo($columnValue);
+                    }
+
 	            }, 10 , 2);
-
-	            # Adding the sorting capability to the extra columns
-	            # Filter
-	            add_filter("manage_edit-{$postType}_sortable_columns", function($columns) use ($postTypeArray) {
-		            // ======== Declaring Variables ========
-		            self::$postTypeExtraColumns = $postTypeArray['post_type_args']['extra_columns'] ?? [];
-
-		            // ======== Start of Function ========
-		            # Looping through the extra columns
-		            foreach (self::$postTypeExtraColumns as $columnName => $columnSearchKey) {
-			            # Adding the extra column to the columns array
-			            $columns[$columnName] = $columnSearchKey;
-		            }
-
-		            # Returning the columns array
-		            return $columns;
-	            }, 10, 2);
-	            # Query modification
-	            add_action( 'pre_get_posts', function ( $query ) use ($postTypeArray) {
-
-	            });
             }
+
+			# Filter for making the columns sortable
+			add_filter("manage_edit-{$postType}_sortable_columns", function($columns) use ($postTypeArray) {
+				// ======== Declaring Variables ========
+				self::$postTypeExtraColumns = $postTypeArray['post_type_args']['extra_columns'] ?? [];
+
+				// ======== Start of Function ========
+				# Looping through the extra columns
+				foreach (self::$postTypeExtraColumns as $columnName => $columnNewArray) {
+					# Adding the extra column to the columns array
+                    if ($columnNewArray[1] === true) $columns[$columnName] = $columnNewArray[0];
+				}
+
+				# Returning the columns array
+				return $columns;
+			}, 10, 2);
 		}
+
+		# Modifying the query
+		add_action('pre_get_posts', function($query) {
+            if (!is_admin() || !$query->is_main_query()) return;
+			// ======== Declaring Variables ========
+			# Globals
+			global $typenow, $pagenow, $wpdb;
+
+			# Arrays
+			$meta_query = [];
+
+			// ======== Start of Function ========
+            # Checking the Media Library
+            if ($pagenow === 'upload.php') {
+                $meta_query[] = [
+	                'post' => 'meta_value',
+	                'value' => '%cloudinary%',
+	                'compare' => 'NOT LIKE'
+                ];
+            }
+            # Checking the post types
+			elseif (strtolower($typenow) === 'nieuwbouw') {
+				$query->set('post_parent', 0);
+
+				# Checking the orderby
+				if ($query->get('orderby') != '') {
+					# Getting the meta key
+					$meta_key = OGSyncPostTypeData::customPostTypes()[$typenow]['database_tables']['projecten'][$query->get('orderby')] ?? false;
+					if ($meta_key) {
+						$meta_query[] = [
+							'key' => $meta_key,
+						];
+
+						# Getting meta values to check if they are numeric
+						$isNumeric = OGSyncTools::isNumericBasedOffMetaKey($meta_key);
+
+						# Setting the orderby
+						$query->set('orderby', $isNumeric ? 'meta_value_num' : 'meta_value');
+						$query->set('order', $query->get('order'));
+					}
+				}
+			}
+			else {
+				# Checking the orderby
+				if ($query->get('orderby') != '') {
+					# Getting the meta key
+					$meta_key = OGSyncPostTypeData::customPostTypes()[$typenow]['database_tables']['object'][$query->get('orderby')] ?? false;
+					if ($meta_key) {
+						$meta_query[] = [
+							'key' => $meta_key,
+						];
+
+						# Getting meta values to check if they are numeric
+						$isNumeric = OGSyncTools::isNumericBasedOffMetaKey($meta_key);
+
+						# Setting the orderby
+						$query->set('orderby', $isNumeric ? 'meta_value_num' : 'meta_value');
+						$query->set('order', $query->get('order'));
+					}
+				}
+
+				if ($query->get('s') != '') {
+					// ======== Declaring Variables ========
+					$extraColumns = OGSyncPostTypeData::customPostTypes()[$typenow]['post_type_args']['extra_columns'] ?? [];
+
+					// ======== Start of Function ========
+					# Looping through the extra columns
+					foreach ($extraColumns as $columnName => $columnSearchKey) {
+						$metaSearchKey = OGSyncPostTypeData::customPostTypes()[ $typenow ]['database_tables']['object'][ $columnSearchKey ] ?? false;
+						echo("{$metaSearchKey}<br/>");
+
+						$meta_query[] = [
+							'key' => ['publicatiedatum', 'object_ObjectTiaraID', 'objectDetails_StatusBeschikbaarheid_Status', 'ppOGSync_ObjectStatus', 'objectDetails_Koop_Koopprijs', 'objectDetails_Huur_Huurprijs'],
+							'value' => '4751175',
+							'compare' => 'LIKE'
+						];
+					}
+					echo('<br/>');
+                }
+			}
+
+			# Doing the meta query
+			$query->set('meta_query', $meta_query);
+		});
 
         # -- Extra post Row Actions --
 		add_action('post_row_actions', function($actions) {
@@ -1874,7 +1999,7 @@ class OGSyncPostTypes {
 			// ======== Start of Function ========
 			if ($boolIsOurEdit) {
 				# Creating a new button
-				$actions[] = '<a href="admin.php?page='.OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug.'&postID='.get_the_ID().'"> <img alt="" height="12px" src="'.plugins_url('img/pixelplus-logo.svg', dirname(__DIR__)).'"> Aanbod Editor</a>';
+				$actions[] = '<a href="admin.php?page='.OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug.'&postID='.get_the_ID().'">Beheren</a>';
 			}
 			return $actions;
 		}, 10, 1);
@@ -1903,7 +2028,7 @@ class OGSyncPostTypes {
 
 				// ==== Start of IF ====
 				# Creating the header
-                if ($boolIsOurEdit) OGSyncTools::htmlAdminHeader(ucfirst($typenow).' Objecten');
+                if ($boolIsOurEdit) OGSyncTools::htmlAdminHeader("Aanbod &raquo ".($typenow == 'bog' ? strtoupper($typenow) : ucfirst($typenow)));
 				echo("
                     <script>
                         document.onreadystatechange = function() {
@@ -1916,6 +2041,9 @@ class OGSyncPostTypes {
                                 document.querySelectorAll('.title strong span').forEach(function(element) {
                                     element.style.color = '#0d6efd';
                                     element.style.fontWeight = '600';
+                                });
+                                document.querySelectorAll('.manage-column').forEach(function(element) {
+                                    element.style.color = '#0d6efd';
                                 });
                             }
                         }
@@ -2538,6 +2666,9 @@ class OGSyncOffers {
                 # Remapping the object
                 $OGProject = OGSyncMapping::mapMetaData($OGProject, ($databaseKeys[0]['mapping'] ?? []), self::getLocationCodes(), $databaseKeys);
 
+	            # Adding the 'type' meta data
+	            $OGProject->type = $databaseKeys[0]['type'];
+
                 # Post - Project
                 $postData = new WP_Query([
                     'post_type' => $postTypeName,
@@ -2750,19 +2881,10 @@ class OGSyncAanbod {
         if (self::$arrPostData) {
             // ======== Start of Function ========
             # Showing the first attatchment based off menu_order of this post type
-            $postThumbnail = new WP_Query([
-                'post_type' => 'attachment',
-                'posts_per_page' => 1,
-                'post_status' => 'any',
-                'post_parent' => self::$arrPostData['postData']->ID,
-                'post_excerpt' => 'HOOFDFOTO'
-            ]);
-            if ($postThumbnail->have_posts()) {
-                // ==== Start of Function ====
-                # Making it thumbnail sized
-                $imgSource = wp_get_attachment_image_src($postThumbnail->post->ID, 'thumbnail')[0] ?? '';
-                echo("<img src='{$imgSource}' width='550' alt='⠀Error: Hoofdfoto niet gevonden.'/>");
+            if ($imgSource = OGSyncTools::getThumbnailOfPost(self::$arrPostData['postData']->ID)) {
+	            echo("<img src='{$imgSource}' width='550' alt='⠀Error: Hoofdfoto niet gevonden.'/>");
             }
+
             self::createForm();
         }
         else {

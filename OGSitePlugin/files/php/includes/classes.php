@@ -885,7 +885,7 @@ class OGSiteMenus {
                 $('#{$fieldArray['fieldID']}_upload').click(function(e) {
                     e.preventDefault();
                     const custom_uploader = wp.media({
-                        title: 'Custom Image',
+                        title: 'Eigen afbeelding',
                         button: {
                             text: 'Use this image'
                         },
