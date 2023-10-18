@@ -1724,14 +1724,13 @@ class OGSyncMenus
     
                     </div>
                     <div class='col'>
-                        <h2 class='text-center'>Statistieken</h2>
-    
+  
                         <!-- Table to show when the last syncs have been -->
                         <table class='table table-striped table-bordered'>
                             <thead class='thead-dark'>
                                 <tr>
-                                    <th scope='col'>Post Type</th>
-                                    <th scope='col'>Laatste Sync</th>
+                                    <th scope='col'>OG type</th>
+                                    <th scope='col'>Laatste synchronisatie</th>
                                 </tr>
                             </thead>
                             <tbody>");
@@ -1999,7 +1998,7 @@ class OGSyncPostTypes {
 			// ======== Start of Function ========
 			if ($boolIsOurEdit) {
 				# Creating a new button
-				$actions[] = '<a href="admin.php?page='.OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug.'&postID='.get_the_ID().'">Beheren</a>';
+				$actions[] = '<a href="admin.php?page='.OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug.'&postID='.get_the_ID().'&post_type='.$typenow.'">Beheren</a>';
 			}
 			return $actions;
 		}, 10, 1);
@@ -2028,7 +2027,7 @@ class OGSyncPostTypes {
 
 				// ==== Start of IF ====
 				# Creating the header
-                if ($boolIsOurEdit) OGSyncTools::htmlAdminHeader("Aanbod &raquo ".($typenow == 'bog' ? strtoupper($typenow) : ucfirst($typenow)));
+                if ($boolIsOurEdit) OGSyncTools::htmlAdminHeader(OGSyncTools::getAanbodTitle($typenow));
 				echo("
                     <script>
                         document.onreadystatechange = function() {
@@ -2037,7 +2036,7 @@ class OGSyncPostTypes {
                                 document.querySelector('.wp-heading-inline').remove();
                                 document.querySelector('.page-title-action').remove();
                                 // Making space to let it look better
-                                document.querySelector('.wrap').style.marginTop = '{$marginTop}';
+                                document.querySelector('.wrap').style.marginTop = '$marginTop';
                                 document.querySelectorAll('.title strong span').forEach(function(element) {
                                     element.style.color = '#0d6efd';
                                     element.style.fontWeight = '600';
@@ -2075,13 +2074,13 @@ class OGSyncPostTypes {
 
         # Variables
         $defaultPrefix = "wp_cpt_";
-        $sqlCheck = "SHOW TABLES LIKE '{$defaultPrefix}";
+        $sqlCheck = "SHOW TABLES LIKE '$defaultPrefix";
 
         // ==== Start of Function ====
         // Checking
         foreach ($postTypeData as $postType => $postTypeArray) {
             // Preparing the statement
-            $result = $wpdb->get_results("{$sqlCheck}{$postType}'");
+            $result = $wpdb->get_results("$sqlCheck$postType'");
 
             if (empty($result)) {
                 // Migrating the data
@@ -2399,15 +2398,15 @@ class OGSyncOffers {
 			$mediaTiaraID = $mediaObject->{$mediaTiaraIDName};
 			$boolIsConnectedPartner = $mediaObject->{$databaseKeysMedia['media_Groep']} == 'Connected_partner';
 			$post_mime_type = $mime_type_map[$mediaObject->{'bestands_extensie'}] ?? $mime_type_map2[$mediaObject->{$databaseKeysMedia['media_Groep']}] ?? 'unknown';
-			$media_url = "og_media/{$postTypeName}_{$OGobject->{$databaseKeysMedia['object_keys']['objectVestiging']}}_{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}/{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}_{$mediaTiaraID}.$mediaObject->bestands_extensie";
+			$media_url = "og_media/{$postTypeName}_{$OGobject->{$databaseKeysMedia['object_keys']['objectVestiging']}}_{$databaseKeysMedia['object_keys']['objectTiara']}/{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}_$mediaTiaraID.$mediaObject->bestands_extensie";
 			$post_data = [
 				'post_content' => '',
-				'post_title' => "{$mediaObject->{$mediaTiaraIDName}}-$mediaObject->bestandsnaam",
+				'post_title' => "$mediaTiaraIDName-$mediaObject->bestandsnaam",
 				'post_excerpt' => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
 				'post_status' => 'inherit',
 				'comment_status' => 'open',
 				'ping_status' => 'closed',
-				'post_name' => "{$mediaObject->{$mediaTiaraIDName}}-$mediaObject->bestandsnaam",
+				'post_name' => "$mediaTiaraIDName-$mediaObject->bestandsnaam",
 				'post_parent' => $postID,
 				'guid' => $boolIsConnectedPartner ? $mediaObject->media_URL : "$guid_url/$media_url",
 				'menu_order' => $mediaObject->{'media_volgorde'},
@@ -2601,13 +2600,13 @@ class OGSyncOffers {
 				if ($dateUpdatedPost != $dateUpdatedObject) {
 					// Updating/overwriting the post
 					self::updatePost($postTypeName, $postID, $OGBouwtype, $databaseKeys[1], $parentPostID);
-					echo("Updated Nieuwbouw bouwtype: {$postID}<br/>");
+					echo("Updated Nieuwbouw bouwtype: $postID<br/>");
 				}
 			}
 			else {
 				// Creating the post
 				$postID = self::createPost($postTypeName, $OGBouwtype, $databaseKeys[1], $parentPostID);
-				echo("Created Nieuwbouw bouwtype: {$postID}<br/>");
+				echo("Created Nieuwbouw bouwtype: $postID<br/>");
 			}
 
 			# Adding the postID to the array
@@ -2643,7 +2642,7 @@ class OGSyncOffers {
 				// ======== Rest of loop ========
 				# Creating the post
 				$postID = self::createPost($postTypeName, $OGProject, $databaseKeys[0]);
-				echo("Created Nieuwbouw project: {$postID}<br/>");
+				echo("Created Nieuwbouw project: $postID<br/>");
 
 				# Updating the count
 				OGSyncSettingsData::$intObjectsCreated++;
@@ -2693,13 +2692,13 @@ class OGSyncOffers {
                     if ($dateUpdatedPost != $dateUpdatedObject) {
                         // Updating/overwriting the post
                         self::updatePost($postTypeName, $postID, $OGProject, $databaseKeys[0]);
-                        echo("Updated Nieuwbouw project: {$postID}<br/>");
+                        echo("Updated Nieuwbouw project: $postID<br/>");
                     }
                 }
                 else {
                     // Creating the post
                     $postID = self::createPost($postTypeName, $OGProject, $databaseKeys[0]);
-                    echo("Created Nieuwbouw project: {$postID}<br/>");
+                    echo("Created Nieuwbouw project: $postID<br/>");
                 }
 
                 # Adding the postID to the array
@@ -2738,7 +2737,7 @@ class OGSyncOffers {
 				// ======== Rest of loop ========
 				# Creating the post
 				$postID = self::createPost($postTypeName, $OGobject, $databaseKey);
-				echo("Created {$postTypeName} object: {$postID}<br/>");
+				echo("Created $postTypeName object: $postID<br/>");
 
 				# Updating the count
 				OGSyncSettingsData::$intObjectsCreated++;
@@ -2785,7 +2784,7 @@ class OGSyncOffers {
                     if ($dateUpdatedPost != $dateUpdatedObject) {
                         // Updating/overwriting the post
                         self::updatePost($postTypeName, $postData->post->ID, $OGobject, $databaseKey);
-                        echo("Updated {$postTypeName} object: {$postData->post->ID}<br/>");
+                        echo("Updated $postTypeName object: {$postData->post->ID}<br/>");
 
                         // Updating the count
                         OGSyncSettingsData::$intObjectsUpdated++;
@@ -2794,7 +2793,7 @@ class OGSyncOffers {
                 else {
                     // Creating the post
                     $postID = self::createPost($postTypeName, $OGobject, $databaseKey);
-                    echo("Created {$postTypeName} object: {$postID}<br/>");
+                    echo("Created $postTypeName object: $postID<br/>");
 
                     // Updating the count
                     OGSyncSettingsData::$intObjectsCreated++;
@@ -2870,48 +2869,57 @@ class OGSyncAanbod {
 	// ============ Declaring Variables ============
     # Arrays
     private static ?array $arrPostData = null;
+    # Strings
+    private static string $formID = '';
 
 	// =============== Functions ===============
     public static function aanbodEditor($GET_postID): void {
         // ======== Declaring Variables ========
-        self::$arrPostData = OGSyncPostTypeData::getPostData($GET_postID);
+        # ==== GET Variables ====
+	    $postType = $_GET['post_type'];
+
+	    # ==== Vars ====
+        # Static
+	    self::$arrPostData = OGSyncPostTypeData::getPostData($GET_postID);
+	    self::$formID = OGSyncSettingsData::$settingPrefix . 'id-formAanbodEditor';
+
+        # Strings
+	    $htmlSucceedNotice = '';
+        $htmlTitle = "
+            <h2>".OGSyncTools::getAanbodTitle($postType)."</h2><br/>
+            <h3><b>".self::$arrPostData['postData']->post_title."</b></h3>
+        ";
+	    $htmlButtons = "
+            <!-- Back button (secondary) -->
+            <a href='edit.php?post_type={}' class='button button-secondary'>Terug</a>
+            <!-- Submit button (primary) -->
+            <input type='submit' name='submit' id='submit' form='".self::$formID."' class='button button-primary' value='Opslaan'>";
+
+        # ==== POST Request ====
+	    if (!empty($_POST)) {
+		    foreach (OGSyncSettingsData::pixelplusVariables() as $settingName => $arrSettings) {
+			    // ==== Start of Function ====
+			    if (isset($_POST[OGSyncSettingsData::$settingPrefix . $settingName])) {
+				    # Checking if the value is valid and not brute forced
+				    if (in_array($_POST[OGSyncSettingsData::$settingPrefix . $settingName], $arrSettings['options'])) {
+					    update_post_meta(self::$arrPostData['postData']->ID, OGSyncSettingsData::$settingPrefix . $settingName, $_POST[OGSyncSettingsData::$settingPrefix . $settingName]);
+					    $htmlSucceedNotice = "<div class='notice notice-success is-dismissible'><p>De aanpassingen zijn opgeslagen.</p></div>";
+				    }
+			    }
+		    }
+	    }
 
         // ======== Start of Function ========
-	    OGSyncTools::htmlAdminHeader(self::$arrPostData['postData']->post_title);
+	    OGSyncTools::htmlAanbodEditorHeader($htmlTitle, $htmlButtons, $htmlSucceedNotice);
+
         if (self::$arrPostData) {
             // ======== Start of Function ========
             # Showing the first attatchment based off menu_order of this post type
             if ($imgSource = OGSyncTools::getThumbnailOfPost(self::$arrPostData['postData']->ID)) {
-	            echo("<img src='{$imgSource}' width='550' alt='⠀Error: Hoofdfoto niet gevonden.'/>");
+	            echo("<img src='$imgSource' width='550' alt='⠀Error: Hoofdfoto niet gevonden.'/>");
             }
-
-            self::createForm();
-        }
-        else {
-            die('Post is niet gevonden');
-        }
-	    OGSyncTools::htmlAdminFooter('Aanbod Editor');
-    }
-    private static function createForm(): void {
-        // ======== Declaring Variables ========
-        # POST Request
-        if (!empty($_POST)) {
-            foreach (OGSyncSettingsData::pixelplusVariables() as $settingName => $arrSettings) {
-                // ==== Start of Function ====
-                if (isset($_POST[OGSyncSettingsData::$settingPrefix . $settingName])) {
-                    # Checking if the value is valid and not brute forced
-                    if (in_array($_POST[OGSyncSettingsData::$settingPrefix . $settingName], $arrSettings['options'])) {
-	                    update_post_meta(self::$arrPostData['postData']->ID, OGSyncSettingsData::$settingPrefix . $settingName, $_POST[OGSyncSettingsData::$settingPrefix . $settingName]);
-                    }
-                }
-            }
-
-            // ==== Start of Function ====
-            # IF there are no errors
-            echo("<div class='notice notice-success is-dismissible'><p>De aanpassingen zijn opgeslagen.</p></div>");
-        }
-        // ======== Start of Function ======== ?>
-        <form method='post'>
+            ?>
+            <form method='post' id='<?php echo(self::$formID) ?>'>
             <table class='mt-3'>
                 <?php foreach (OGSyncSettingsData::pixelplusVariables() as $settingName => $arrSettings): ?>
                     <?php
@@ -2932,7 +2940,13 @@ class OGSyncAanbod {
                     </tr>
                 <?php endforeach; ?>
             </table>
-            <?php submit_button('Opslaan'); ?>
+
         </form> <?php
+        }
+        else {
+            die('Post is niet gevonden');
+        }
+
+	    OGSyncTools::htmlAdminFooter('Aanbod Editor');
     }
 }

@@ -16,11 +16,33 @@ class OGSyncTools {
 		<head>
 			<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
 			<link rel='stylesheet' href='".plugins_url('css/style.css', dirname(__DIR__))."'>
-		</head>
+		</head>	
+				<!-- Showing the header -->
 		<header>
-			<div class='container-fluid'>			
+			<div class='container-fluid'>
 	            <div class='div-Header'>
-	                <span class='floatLeft'><h1><b>$title</b></h1></span>
+	                <div class='floatLeft'><h1><b>$title</b></h1></div>
+	            </div>
+	        </div>
+		</header>
+		<hr/>
+		");
+	}
+	static function htmlAanbodEditorHeader($leftSideHTML, $rightSideHTML, $extraHTMLNotice=''): void {
+		echo("
+		<head>
+			<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
+			<link rel='stylesheet' href='".plugins_url('css/style.css', dirname(__DIR__))."'>
+		</head>
+		<!-- Showing the notice -->
+		$extraHTMLNotice	
+		
+		<!-- Showing the header -->
+		<header>
+			<div class='container-fluid'>
+	            <div class='div-Header'>
+	                <div class='floatLeft'>$leftSideHTML</div>
+	                <div class='floatRight'>$rightSideHTML</div>
 	            </div>
 	        </div>
 		</header>
@@ -34,18 +56,6 @@ class OGSyncTools {
 	<!-- JQuery -->
 	<script src='".plugins_url('js/jquery-3.7.0.min.js', dirname(__DIR__))."'></script>
 	");
-	}
-	static function welcomeMessage(): string {
-		$welcomeMessage = "Welkom";
-		$wpUser = _wp_get_current_user();
-
-		if ($wpUser->user_firstname != "") {
-			$welcomeMessage .= " ".$wpUser->user_firstname;
-		}
-		else {
-			$welcomeMessage .= " ".$wpUser->user_login;
-		}
-		return $welcomeMessage;
 	}
 	static function adminNotice($type, $input): void {
 		if ($type == "error") {
@@ -110,6 +120,9 @@ class OGSyncTools {
 	}
 
 	// ============ Normal Functions ============
+	static function getAanbodTitle($postType): string {
+		return "Aanbod &raquo ".($postType == 'bog' ? strtoupper($postType) : ucfirst($postType));
+	}
 	static function getJSONFromAPI($url, $args=null) {
 		// ======== Start of Function ========
 		// Get data from API
@@ -186,10 +199,7 @@ class OGSyncTools {
 	static function checkIfAanbodColumnThumbnail($column, $post_id): void {
 		if (strtolower($column) == 'thumbnail') {
 			$imgSource = OGSyncTools::getThumbnailOfPost($post_id);
-			if (!empty($imgSource)) {
-				echo("<img style='width: ".'-webkit-fill-available'.";' src='$imgSource' alt='Thumbnail niet beschikbaar'/>");
-			}
-
+			echo("<img style='width: ".'-webkit-fill-available'.";' src='$imgSource' alt='Thumbnail niet beschikbaar'/>");
 		}
 	}
 }
