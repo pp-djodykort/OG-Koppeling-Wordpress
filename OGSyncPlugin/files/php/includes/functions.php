@@ -54,7 +54,7 @@ class OGSyncTools {
 	<!-- Bootstrap -->
 	<script src='".plugins_url('js/bootstrap.bundle.min.js', dirname(__DIR__))."'></script>
 	<!-- JQuery -->
-	<script src='".plugins_url('js/jquery-3.7.0.min.js', dirname(__DIR__))."'></script>
+	<script src='".plugins_url('js/jquery-3.7.1.min.js', dirname(__DIR__))."'></script>
 	");
 	}
 	static function adminNotice($type, $input): void {
@@ -123,6 +123,38 @@ class OGSyncTools {
 	static function getAanbodTitle($postType): string {
 		return "Aanbod &raquo ".($postType == 'bog' ? strtoupper($postType) : ucfirst($postType));
 	}
+	static function aanbodEditor_showStatusData($postType, $postID, $type): void {
+		// ======== Declaring Variables ========
+		# Post
+		$postmeta = get_post_meta($postID);
+
+		# Strings
+        if (strtolower($postType) == OGSyncSettingsData::$postTypeNieuwbouw) {
+	        $keyRealworksStatus = OGSyncPostTypeData::customPostTypes()["$postType"]['database_tables'][$type]['ObjectStatus_database'];
+	        $keyTiaraID = OGSyncPostTypeData::customPostTypes()["$postType"]['database_tables'][$type]['ID'];
+        }
+        else {
+	        $keyRealworksStatus = OGSyncPostTypeData::customPostTypes()["$postType"]['database_tables']['object']['ObjectStatus_database'];
+	        $keyTiaraID = OGSyncPostTypeData::customPostTypes()["$postType"]['database_tables']['object']['ID'];
+        }
+
+		// ======== Start of Function ========
+		;
+		echo( "
+		<table style='border: 1px solid black; border-collapse: collapse;'>
+			<!-- TiaraID -->
+			<tr>
+				<th style='border: 1px solid black; padding: 5px 0.7vw 5px 5px;'>Tiara id</th>
+				<td style='border: 1px solid black; padding: 5px 1vw 5px 1vw;'>".$postmeta[$keyTiaraID][0]."</td>
+			</tr>
+			<!-- Realworks status -->
+			<tr>
+				<th style='border: 1px solid black; padding: 5px 0.7vw 5px 5px;'>Realworks status</th>
+				<td style='border: 1px solid black; padding: 5px 1vw 5px 1vw;'>".$postmeta[$keyRealworksStatus][0]."</td>
+			</tr>
+		</table>
+		");
+	}
 	static function getJSONFromAPI($url, $args=null) {
 		// ======== Start of Function ========
 		// Get data from API
@@ -182,24 +214,108 @@ class OGSyncTools {
 		return true;
 	}
 	static function getThumbnailOfPost($postID) {
-		$postThumbnail = new WP_Query([
+		// ======== Declaring Variables ========
+		$postMedia = new WP_Query([
 			'post_type' => 'attachment',
-			'posts_per_page' => 1,
+			'posts_per_page' => -1,
 			'post_status' => 'any',
 			'post_parent' => $postID,
-			'post_excerpt' => 'HOOFDFOTO'
+			'orderby' => 'menu_order',
+			'order' => 'ASC'
 		]);
-		if ($postThumbnail->have_posts()) {
-			// ==== Start of Function ====
-			# Making it thumbnail sized
-			return wp_get_attachment_image_src($postThumbnail->post->ID, 'thumbnail')[0] ?? '';
+
+		// ======== Start of Function ========
+		if ($postMedia->have_posts()) {
+			# Getting the hoofdfoto
+			foreach($postMedia->posts as $post) {
+				if (str_contains( $post->post_excerpt, 'HOOFDFOTO')) {
+					# Making it thumbnail sized
+					return wp_get_attachment_image_src($post->ID)[0] ?? '';
+				}
+			}
 		}
 		return '';
+	}
+	static function aanbodEditor_showMedia($postID): void {
+		// ======== Declaring Variables ========
+		# WP Query
+		$postMedia = new WP_Query([
+			'post_type' => 'attachment',
+			'posts_per_page' => -1,
+			'post_status' => 'any',
+			'post_parent' => $postID,
+			'orderby' => 'menu_order',
+			'order' => 'ASC'
+		]);
+		# Strings
+		$carouselWidth = '750px';
+		$maxHeight = '500px';
+		$hoofdFoto = '';
+
+		# Bools
+		$boolHoofdFotoShown = false;
+
+		// ======== Start of Function ========
+		if ($postMedia->have_posts()) {
+			# Getting the hoofdfoto & filtering the other posts
+			foreach($postMedia->posts as $post) {
+				# Hoofdfoto
+				if (str_contains( $post->post_excerpt, 'HOOFDFOTO')) {
+					# Making it thumbnail sized
+					$hoofdFoto = wp_get_attachment_image_src($post->ID, 'thumbnail')[0] ?? '';
+					# Deleting it from the array
+					unset($postMedia->posts[array_search($post, $postMedia->posts)]);
+
+					break;
+				}
+
+				# Deleting the other posts besides the normal pictures and video's
+				if (!str_contains( $post->post_excerpt, 'FOTO') && !str_contains( $post->post_excerpt, 'VIDEO')) {
+					unset($postMedia->posts[array_search($post, $postMedia->posts)]);
+				}
+			}
+
+			# Showing the media ?>
+			<div style='width: <?= $carouselWidth ?>; background-color: #e9ecef; border: 2.75px solid #adb9de; border-radius: 0.25rem;' id='carouselExample' class='carousel slide'>
+				<!-- Items -->
+				<div class='carousel-inner'>
+					<!-- Hoofdfoto -->
+					<?php if(!empty($hoofdFoto)): ?>
+						<div style='height:<?= $maxHeight ?>;' class='carousel-item active'>
+							<img style='height:<?= "-webkit-fill-available"?>;' src='<?= $hoofdFoto ?>' class='mx-auto d-block' alt='Hoofdfoto niet beschikbaar'>
+						</div>
+						<?php $boolHoofdFotoShown = true; ?>
+					<?php endif; ?>
+
+					<!-- Media -->
+					<?php foreach($postMedia->posts as $post): ?>
+						<div style='height:<?= $maxHeight ?>;' class='carousel-item <?php echo($boolHoofdFotoShown ? '' : 'active'); ?>'>
+							<img style='height:<?= "-webkit-fill-available"?>;' src='<?= wp_get_attachment_image_src($post->ID)[0] ?>' class='mx-auto d-block' alt='Media niet beschikbaar'>
+						</div>
+					<?php endforeach; ?>
+				</div>
+
+				<!-- Buttons -->
+				<button class='carousel-control-prev' type='button' data-bs-target='#carouselExample' data-bs-slide='prev'>
+					<span class='carousel-control-prev-icon' aria-hidden='true'></span>
+					<span class='visually-hidden'>Previous</span>
+				</button>
+				<button class='carousel-control-next' type='button' data-bs-target='#carouselExample' data-bs-slide='next'>
+					<span class='carousel-control-next-icon' aria-hidden='true'></span>
+					<span class='visually-hidden'>Next</span>
+				</button>
+			</div> <?php
+		}
 	}
 	static function checkIfAanbodColumnThumbnail($column, $post_id): void {
 		if (strtolower($column) == 'thumbnail') {
 			$imgSource = OGSyncTools::getThumbnailOfPost($post_id);
-			echo("<img style='width: ".'-webkit-fill-available'.";' src='$imgSource' alt='Thumbnail niet beschikbaar'/>");
+			if (!empty($imgSource)) {
+				echo("<img style='width: ".'-webkit-fill-available'.";' src='$imgSource' alt='⠀Thumbnail niet beschikbaar'/>");
+			}
+			else {
+				echo("<p style='color: red'>Geen media aanwezig</p>");
+			}
 		}
 	}
 }

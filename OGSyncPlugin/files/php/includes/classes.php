@@ -68,6 +68,138 @@ class OGSyncActivationAndDeactivation {
 }
 
 // ============ Data Classes ============
+class OGSyncSettingsData {
+	// ============ Declare Variables ============
+	# ==== Strings ====
+	public static string $settingPrefix = 'ppOGSync_'; // This is the prefix for all the settings used within the OG Plugin
+	public static string $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
+	public static string $cronjobTableName = 'cronjobs'; // This is the table name where all the cronjobs are stored within the database
+	public static string $aanbodEditorSlug = 'aanbodEditor';
+    public static string $nieuwbouwBouwtypeOverzichtSlug = 'bouwtypeOverzicht';
+    public static string $nieuwbouwBouwnummerOverzichtSlug = 'bouwnummerOverzicht';
+    # ==== Post types ====
+
+    # Nieuwbouw
+	public static string $postTypeNieuwbouw = 'nieuwbouw';
+    public static string $projectenArrayName = 'projecten';
+    public static string $bouwtypenArrayName = 'bouwTypes';
+    public static string $bouwnummersArrayName = 'bouwNummers';
+    # Defaults
+	public static string $postTypeWonen = 'wonen';
+	public static string $postTypeBedrijf = 'bog';
+
+	# ==== Arrays ====
+	private static array $apiURLs = [
+		'license' => 'https://og-feeds2.pixelplus.nl/api/validate.php',
+		'syncTimes' => 'https://og-feeds2.pixelplus.nl/api/latest.php'
+	];
+	private static array $cacheFiles = [
+		'licenseCache' => 'licenseCache.json', // This is the cache file for the checking the Licence key
+	];
+	private static array $arrOptions = [
+		# ======== OG Admin Settings ========
+		# ==== Licentie ====
+		/* Setting Name */'licenseKey' => /* Default Value */   '',     // License Key
+	];
+	private static array $adminSettings = [
+		// Settings 1
+		/* Option Group= */ 'ppOGSync_adminOptions' => [
+			// General information
+			'settingPageSlug' => 'ppOGSync-plugin-settings',
+			// Sections
+			'sections' => [
+				// Section 1 - Licentie section
+				/* Section Title= */'Licentie' => [
+					'sectionID' => 'ppOGSync_SectionLicence',
+					'sectionCallback' => 'htmlLicenceSection',
+					// Fields
+					'fields' => [
+						// Field 1 - Licentie sleutel
+						/* Setting Field Title= */'Licentie sleutel' => [
+							'fieldID' => 'ppOGSync_licenseKey',
+							'fieldCallback' => 'htmlLicenceKeyField',
+						]
+					]
+				],
+			]
+		],
+	];
+	private static array $pixelplusVariables = [
+		'ObjectStatus' => [
+			'name' => 'Eigen status',
+			'options' => [
+				'Niet van toepassing',
+				'Ingetrokken',
+				'Beschikbaar'
+			]
+		],
+	];
+
+	# Bools
+	public static bool $boolGiveLastCron = False;
+	public static bool $boolForceCreateUpdateMode = False;
+
+	# Ints
+	public static int $intObjectsCreated = 0;
+	public static int $intObjectsUpdated = 0;
+
+	// ============ Getters ============
+	public static function apiURLs(): array {
+		return self::$apiURLs;
+	}
+	public static function cacheFiles(): array {
+		return self::$cacheFiles;
+	}
+	public static function arrOptions(): array {
+		return self::$arrOptions;
+	}
+	public static function adminSettings(): array {
+		return self::$adminSettings;
+	}
+	public static function pixelplusVariables(): array {
+		return self::$pixelplusVariables;
+	}
+
+	// ============ PHP Functions ============
+	// ==== Sanitize Functions ====
+	public function sanitize_checkboxes($input): string {
+		// ======== Declaring Variables ========
+		# Vars
+		$strOutput = '';
+		foreach ($input as $key => $value) {
+			$strOutput .= "$key:$value;";
+		}
+
+		// ======== Start of Function ========
+		# Return with last character removed
+		return substr($strOutput, 0, -1);
+	}
+	public function sanitize_imageField($input) {
+		// ======== Start of Function ========
+		# Putting in 'testing' table to test
+		return $input;
+	}
+
+	// ============ HTML Functions ============
+	// ======== Admin Options ========
+	// Sections
+	static function htmlLicenceSection(): void { ?>
+	<?php }
+	// Fields
+	static function htmlLicenceKeyField(): void {
+		// ===== Declaring Variables =====
+		// Vars
+		$licenseKey = get_option(self::$settingPrefix.'licenseKey');
+
+		// ===== Start of Function =====
+		// Check if licenseKey is empty
+		echo("<input type='text' name='".self::$settingPrefix."licenseKey' value='".esc_attr($licenseKey)."'");
+		if ($licenseKey == '') {
+			// Display a message
+			echo('Het veld is nog niet ingevuld.');
+		}
+	}
+}
 class OGSyncPostTypeData {
     // ==== Getters ====
 	public static function getPostData($intPostID): array|null {
@@ -86,6 +218,21 @@ class OGSyncPostTypeData {
 	    }
         else return null;
 	}
+	static function getChildNieuwbouwPosts($postID): ?array {
+		// ======== Declaring Variables ========
+		$childNieuwbouwPosts = new WP_Query([
+			'post_type' => OGSyncSettingsData::$postTypeNieuwbouw,
+			'posts_per_page' => -1,
+			'post_status' => 'any',
+			'post_parent' => $postID,
+		]);
+
+		// ======== Start of Function ========
+		if ($childNieuwbouwPosts->have_posts()) {
+			return $childNieuwbouwPosts->posts;
+        }
+        else return null;
+	}
 
     public static function customPostTypes(): array {
         // ===== Declaring Variables =====
@@ -93,7 +240,7 @@ class OGSyncPostTypeData {
         $objectAccess = OGSyncLicense::checkPostTypeAccess();
         $customPostTypes = array(
             // Custom Post Type: 'wonen'
-            'wonen' => array(
+            OGSyncSettingsData::$postTypeWonen => array(
                 'post_type_args' => array(
                     // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
@@ -115,7 +262,7 @@ class OGSyncPostTypeData {
 	                    /* array('Name of extra column', True/False (Sortable of niet)) */
                         'Thumbnail' => ['thumbnail', false],
 	                    'Publicatiedatum' => ['publicatiedatum', true],
-                        'TiaraID' => ['ID', true],
+                        'Tiara id' => ['ID', true],
 	                    'Realworks status' => ['ObjectStatus_database', true],
                         'Eigen status' => ['pixelplus_status', true],
 	                    'Koopprijs' => ['koopprijs', true],
@@ -126,7 +273,8 @@ class OGSyncPostTypeData {
                         'categories',
                         'tags',
                         'comments',
-                        'date'
+                        'date',
+                        'cb'
                     ),
                     'edit_columns' => array(
                         'title' => 'Adres'
@@ -239,7 +387,7 @@ class OGSyncPostTypeData {
                 )
             ),
             // Custom Post Type: 'bog'
-            'bog' => array(
+            OGSyncSettingsData::$postTypeBedrijf => array(
                 'post_type_args' => array(
                     // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
@@ -272,7 +420,7 @@ class OGSyncPostTypeData {
                         /* array('Name of extra column', True/False (Sortable of niet)) */
 	                    'Thumbnail' => ['thumbnail', false],
 	                    'Publicatiedatum' => ['publicatiedatum', true],
-	                    'TiaraID' => ['ID', true],
+	                    'Tiara id' => ['ID', true],
 	                    'Realworks status' => ['ObjectStatus_database', true],
 	                    'Eigen status' => ['pixelplus_status', true],
 	                    'Koopprijs' => ['koopprijs', true],
@@ -283,7 +431,8 @@ class OGSyncPostTypeData {
 	                    'categories',
 	                    'tags',
 	                    'comments',
-	                    'date'
+	                    'date',
+	                    'cb'
                     ),
                     'edit_columns' => array(
 	                    'title' => 'Adres'
@@ -366,7 +515,7 @@ class OGSyncPostTypeData {
                 )
             ),
             // Custom Post Type: 'nieuwbouw'
-            'nieuwbouw' => array(
+            OGSyncSettingsData::$postTypeNieuwbouw => array(
                 'post_type_args' => array(
                     // This is just all the data / instructions that WordPress needs to know about the custom post type so that it can work correctly.
                     'labels' => array(
@@ -388,7 +537,7 @@ class OGSyncPostTypeData {
 	                    /* array('Name of extra column', True/False (Sortable of niet)) */
 	                    'Thumbnail' => ['thumbnail', false],
 	                    'Publicatiedatum' => ['publicatiedatum', true],
-	                    'TiaraID' => ['ID', true],
+	                    'Tiara id' => ['ID', true],
                         'Realworks status' => ['ObjectStatus_database', true],
 	                    'Eigen status' => ['pixelplus_status', true],
                     ),
@@ -397,7 +546,8 @@ class OGSyncPostTypeData {
 	                    'categories',
 	                    'tags',
 	                    'comments',
-	                    'date'
+	                    'date',
+	                    'cb'
                     ),
                     'edit_columns' => array(
 	                    'title' => 'Adres'
@@ -425,7 +575,7 @@ class OGSyncPostTypeData {
                     'taxonomies' => array('category', 'post_tag')
                 ),
                 'database_tables' => array(
-                    'projecten' => array(
+	                OGSyncSettingsData::$projectenArrayName => array(
                         # TableName
                         'tableName' => 'tbl_OG_nieuwbouw_projecten',                                // NON Mapped - Name of the table
                         # Normal fields
@@ -482,7 +632,7 @@ class OGSyncPostTypeData {
                         # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array(/* TableName */ 'tableName' => 'og_mappingnieuwbouwprojecten')
                     ),
-                    'bouwTypes' => array(
+	                OGSyncSettingsData::$bouwtypenArrayName => array(
                         # TableName
                         'tableName' => 'tbl_OG_nieuwbouw_bouwTypes',                                // NON Mapped - Name of the table
                         # Normal fields
@@ -511,8 +661,8 @@ class OGSyncPostTypeData {
                         'datum_toegevoegd' => 'datum_toegevoegd',                                   // Mapped value - Default: datum_toegevoegd                 ; Default value is only for objects without a mapping table within the database
                         'objectCode' => 'bouwType_ObjectCode',                                      // Mapped value - Default: bouwType_ObjectCode              ; Default value is only for objects without a mapping table within the database
                         'pixelplus_status' => OGSyncSettingsData::$settingPrefix.'ObjectStatus',    // Mapped value - Default: OGSyncSettingsData::$settingPrefix.'ObjectStatus                         ; Default value is only for objects without a mapping table within the database
-	                    'koopprijs' => 'bouwType_BouwTypeDetails_KoopAanneemsom_Van|bouwType_BouwTypeDetails_KoopAanneemsom_TotEnMet',
-                        'huurprijs' => 'bouwType_BouwTypeDetails_Huurprijs_Van|bouwType_BouwTypeDetails_Huurprijs_TotEnMet',
+	                    'koopprijs' => 'bouwType_BouwTypeDetails_KoopAanneemsom_Van&bouwType_BouwTypeDetails_KoopAanneemsom_TotEnMet',
+                        'huurprijs' => 'bouwType_BouwTypeDetails_Huurprijs_Van&bouwType_BouwTypeDetails_Huurprijs_TotEnMet',
 
                         'type' => 'bouwtype',                                                       // Standard value - Default: bouwtype                       ; DO NOT CHANGE
 
@@ -539,10 +689,22 @@ class OGSyncPostTypeData {
                             # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                             'mapping' => array(/* TableName */ 'tableName' => 'og_mappingmedia')
                         ),
+
+                        # Extra columns (CANNOT BE SORTABLE AT ALL)
+                        'extra_columns' => array(
+                            'Thumbnail' => 'thumbnail',
+                            'Tiara id' => 'ID',
+                            'Realworks status' => 'ObjectStatus_database',
+                            'Eigen status' => 'pixelplus_status',
+                            'Koopprijs' => 'koopprijs',
+                            'Huurprijs' => 'huurprijs',
+                        ),
+                        
+                        
                         # Only if mapping is neccesary uncomment the following lines and fill in the correct table name
                         // 'mapping' => array(/* TableName */ 'tableName' => 'og_mappingnieuwbouwbouwtypes')
                     ),
-                    'bouwNummers' => array(
+	                OGSyncSettingsData::$bouwnummersArrayName => array(
                         # TableName
                         'tableName' => 'tbl_OG_nieuwbouw_bouwNummers',                                          // NON Mapped - Name of the table
                         # Normal fields
@@ -561,6 +723,15 @@ class OGSyncPostTypeData {
                         'huurprijs' => 'Financieel_Huur_Huurprijs',
 
                         'type' => 'bouwnummer',                                                                 // Standard value - Default: bouwnummer             ; DO NOT CHANGE
+
+                        'extra_columns' => array(
+	                        'Thumbnail' => 'thumbnail',
+	                        'Tiara id' => 'ID',
+	                        'Realworks status' => 'ObjectStatus_database',
+	                        'Eigen status' => 'pixelplus_status',
+	                        'Koopprijs' => 'koopprijs',
+	                        'Huurprijs' => 'huurprijs',
+                        ),
 
                         # Post fields
                         'media' => array(
@@ -738,127 +909,6 @@ class OGSyncColorScheme {
         return $_wp_admin_css_colors['fresh']->colors[2];
     }
 }
-class OGSyncSettingsData {
-	// ============ Declare Variables ============
-	# Strings
-	public static string $settingPrefix = 'ppOGSync_'; // This is the prefix for all the settings used within the OG Plugin
-	public static string $cacheFolder = 'caches/'; // This is the folder where all the cache files are stored within the server/ftp
-    public static string $cronjobTableName = 'cronjobs'; // This is the table name where all the cronjobs are stored within the database
-    public static string $aanbodEditorSlug = 'aanbodEditor';
-
-	# Arrays
-	private static array $apiURLs = [
-		'license' => 'https://og-feeds2.pixelplus.nl/api/validate.php',
-		'syncTimes' => 'https://og-feeds2.pixelplus.nl/api/latest.php'
-	];
-	private static array $cacheFiles = [
-		'licenseCache' => 'licenseCache.json', // This is the cache file for the checking the Licence key
-	];
-	private static array $arrOptions = [
-		# ======== OG Admin Settings ========
-		# ==== Licentie ====
-		/* Setting Name */'licenseKey' => /* Default Value */   '',     // License Key
-	];
-	private static array $adminSettings = [
-		// Settings 1
-		/* Option Group= */ 'ppOGSync_adminOptions' => [
-			// General information
-			'settingPageSlug' => 'ppOGSync-plugin-settings',
-			// Sections
-			'sections' => [
-				// Section 1 - Licentie section
-				/* Section Title= */'Licentie' => [
-					'sectionID' => 'ppOGSync_SectionLicence',
-					'sectionCallback' => 'htmlLicenceSection',
-					// Fields
-					'fields' => [
-						// Field 1 - Licentie sleutel
-						/* Setting Field Title= */'Licentie Sleutel' => [
-							'fieldID' => 'ppOGSync_licenseKey',
-							'fieldCallback' => 'htmlLicenceKeyField',
-						]
-					]
-				],
-			]
-		],
-	];
-	private static array $pixelplusVariables = [
-        'ObjectStatus' => [
-            'name' => 'Eigen status',
-	        'options' => [
-		        'Niet van toepassing',
-		        'Ingetrokken',
-		        'Beschikbaar'
-	        ]
-        ],
-    ];
-
-	# Bools
-	public static bool $boolGiveLastCron = False;
-    public static bool $boolForceCreateUpdateMode = False;
-
-	# Ints
-	public static int $intObjectsCreated = 0;
-	public static int $intObjectsUpdated = 0;
-
-	// ============ Getters ============
-	public static function apiURLs(): array {
-		return self::$apiURLs;
-	}
-	public static function cacheFiles(): array {
-		return self::$cacheFiles;
-	}
-	public static function arrOptions(): array {
-		return self::$arrOptions;
-	}
-	public static function adminSettings(): array {
-		return self::$adminSettings;
-	}
-    public static function pixelplusVariables(): array {
-        return self::$pixelplusVariables;
-    }
-
-	// ============ PHP Functions ============
-	// ==== Sanitize Functions ====
-	public function sanitize_checkboxes($input): string {
-		// ======== Declaring Variables ========
-		# Vars
-		$strOutput = '';
-		foreach ($input as $key => $value) {
-			$strOutput .= "$key:$value;";
-		}
-
-		// ======== Start of Function ========
-        # Return with last character removed
-		return substr($strOutput, 0, -1);
-	}
-	public function sanitize_imageField($input) {
-		// ======== Start of Function ========
-		# Putting in 'testing' table to test
-		return $input;
-	}
-
-	// ============ HTML Functions ============
-	// ======== Admin Options ========
-	// Sections
-	static function htmlLicenceSection(): void { ?>
-        <p>De licentiesleutel die de plugin activeert</p>
-	<?php }
-	// Fields
-	static function htmlLicenceKeyField(): void {
-		// ===== Declaring Variables =====
-		// Vars
-		$licenseKey = get_option(self::$settingPrefix.'licenseKey');
-
-		// ===== Start of Function =====
-		// Check if licenseKey is empty
-		echo("<input type='text' name='".self::$settingPrefix."licenseKey' value='".esc_attr($licenseKey)."'");
-		if ($licenseKey == '') {
-			// Display a message
-			echo('Het veld is nog niet ingevuld.');
-		}
-	}
-}
 class OGSyncMapping {
 	// ================ Begin of Class ================
     private static function cleanupObjects($OGTableRecord): mixed {
@@ -871,245 +921,245 @@ class OGSyncMapping {
         # Return the cleaned up OBJECT
         return $OGTableRecord;
     }
-    public static function mapMetaData($OGTableRecord, $databaseKeysMapping, $locationCodes=[], $databaseKeys=[]) {
-        if (!empty($databaseKeysMapping)) {
-            // ======== Declaring Variables ========
-            # Classes
-            global $wpdb;
+	public static function mapMetaData($OGTableRecord, $databaseKeysMapping, $locationCodes=[], $databaseKeys=[]) {
+		if (!empty($databaseKeysMapping)) {
+			// ======== Declaring Variables ========
+			# Classes
+			global $wpdb;
 
-            # Vars
-            $mappingTable = $wpdb->get_results("SELECT * FROM `{$databaseKeysMapping['tableName']}`", ARRAY_A);
-            // ========================= Start of Function =========================
-            // ================ Cleaning the Tables/Records ================
-            # Getting rid of all the useless and empty values in the OBJECT
-            $OGTableRecord = self::cleanupObjects($OGTableRecord);
-            # Getting rid of all the useless and empty values in the MAPPING TABLE
-            foreach ($mappingTable as $mappingKey => $mappingTableValue) {
-                # Check if the value is empty and if so remove the whole key from the OBJECT
-                if (is_null($mappingTableValue['pixelplus']) or empty($mappingTableValue['pixelplus'])) {
-                    unset($mappingTable[$mappingKey]);
-                }
-            }
+			# Vars
+			$mappingTable = $wpdb->get_results("SELECT * FROM `{$databaseKeysMapping['tableName']}`", ARRAY_A);
+			// ========================= Start of Function =========================
+			// ================ Cleaning the Tables/Records ================
+			# Getting rid of all the useless and empty values in the OBJECT
+			$OGTableRecord = self::cleanupObjects($OGTableRecord);
+			# Getting rid of all the useless and empty values in the MAPPING TABLE
+			foreach ($mappingTable as $mappingKey => $mappingTableValue) {
+				# Check if the value is empty and if so remove the whole key from the OBJECT
+				if (is_null($mappingTableValue['pixelplus']) or empty($mappingTableValue['pixelplus'])) {
+					unset($mappingTable[$mappingKey]);
+				}
+			}
 
-            // ================ Mapping the Data ================
-	        # Looping through all the keys in the mapping table
-            foreach ($mappingTable as $mappingKey => $mappingValue) {
-	            /*
-				Placeholders:
+			// ================ Mapping the Data ================
+			# Looping through all the keys in the mapping table
+			foreach ($mappingTable as $mappingKey => $mappingValue) {
+				/*
+                Placeholders:
 
-				() = If-Else Statement: If statement with unlimited statements that can go in it
-					 Separator between values:
-						1. | (Pipe) - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+                () = If-Else Statement: If statement with unlimited statements that can go in it
+                     Separator between values:
+				        1. | (Pipe) - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
 
-					Examples:
-						1. (straat|adres) => If straat is empty, use adres instead
-						2. (straat|adres|plaats) => If straat is empty, use adres instead, if adres is empty, use plaats instead
-
-				----------------------------
-				[] = Array Extraction: Instead of using the array it converts it to a string with an comma as separator.
-					Input:
-					String “[value1, value2, value3, etc.]”
-
-					Example: [1,2,3] => '1, 2, 3'
+				    Examples:
+				        1. (straat|adres) => If straat is empty, use adres instead
+                        2. (straat|adres|plaats) => If straat is empty, use adres instead, if adres is empty, use plaats instead
 
 				----------------------------
-				{} = Concatenation: Join the values together.
-					Separator between values:
-						1. + (Plus) - The plus is used to separate the values from each other with ' '
-						2. - (Dash) - The dash is used to separate the values from each other with '-'
+                [] = Array Extraction: Instead of using the array it converts it to a string with an comma as separator.
+				    Input:
+                    String “[value1, value2, value3, etc.]”
 
-					Placeholders within concatenation:
-					~ (Tilde) - Remove all the spaces from the value
-
-					Examples:
-						1. {straat+huisnummer+huisnummertoevoeging} => 'Vroedelstroefe 48 15 B'
-						2. {straat+huisnummer+~huisnummertoevoeging~} => 'Vroedelstroefe 48 15B'
-						3. {straat-huisnummer-huisnummertoevoeging} => 'Vroedelstroefe-48-15-B'
-						4. {straat-huisnummer-~huisnummertoevoeging~} => 'Vroedelstroefe-48-15B'
+				    Example: [1,2,3] => '1, 2, 3'
 
 				----------------------------
-				$  = Status Handling: Transform values based on specific statuses.
-					Separator between values:
-						1. | (Pipe) - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+                {} = Concatenation: Join the values together.
+                    Separator between values:
+				        1. + (Plus) - The plus is used to separate the values from each other with ' '
+				        2. - (Dash) - The dash is used to separate the values from each other with '-'
 
-					Options:
-						1. $status|sold$ => If status is "sold", set pixelplus to 1, otherwise 0.
-						2. $price|prijs$ => If price is greater than 0, set pixelplus to 1, otherwise 0.
-						3. $rating|onderhoudswaardering$ => Setting everything to lowercase besides the first letter and removing all the spaces.
+				    Placeholders within concatenation:
+				    ~ (Tilde) - Remove all the spaces from the value
 
-				----------------------------
-				<> = Location Codes: Map numeric codes to values. Convert date-like values to datetime.
-					 Options:
-						1. <city_code> = Numeric Office Code (If value is in array city codes, convert to corresponding city name)
-						2. <date_like_value> => Convert date-like value to Unix timestamp
-
-					 Examples:
-						<bouwNummer_NVMVestigingNR> = 551235 => "Amsterdam"
-						<datum_toegevoegd> = '2021-01-01' => 1609459200
+				    Examples:
+				        1. {straat+huisnummer+huisnummertoevoeging} => 'Vroedelstroefe 48 15 B'
+                        2. {straat+huisnummer+~huisnummertoevoeging~} => 'Vroedelstroefe 48 15B'
+				        3. {straat-huisnummer-huisnummertoevoeging} => 'Vroedelstroefe-48-15-B'
+                        4. {straat-huisnummer-~huisnummertoevoeging~} => 'Vroedelstroefe-48-15B'
 
 				----------------------------
-				^  = Counting: Calculate and store counts.
-					 Options:
-						1. ^bouwtypes^ => Calculate based off and store the count of build types for a project.
-						2. ^bouwnummers^ => Calculate and store the count of build numbers for a project.
+                $  = Status Handling: Transform values based on specific statuses.
+				    Separator between values:
+				        1. | (Pipe) - The pipe is used as an if statement, if the first value is empty, then the second value will be used if it exists
+
+				    Options:
+				        1. $status|sold$ => If status is "sold", set pixelplus to 1, otherwise 0.
+				        2. $price|prijs$ => If price is greater than 0, set pixelplus to 1, otherwise 0.
+				        3. $rating|onderhoudswaardering$ => Setting everything to lowercase besides the first letter and removing all the spaces.
 
 				----------------------------
-				*  = Object Types: Conditionally set values based on conditions. !(Only works with 2 values)!
-					Options:
-						1. *property_type|Residential* => If property type exists, set to "Residential".
-						2. *property_type|Commercial* => If property type doesn't exist, set to "Commercial".
+                <> = Location Codes: Map numeric codes to values. Convert date-like values to datetime.
+                     Options:
+				        1. <city_code> = Numeric Office Code (If value is in array city codes, convert to corresponding city name)
+                        2. <date_like_value> => Convert date-like value to Unix timestamp
 
-					Examples:
-						objecttype = *wonen_Appartement_KenmerkAppartement|woonhuis*
-				*/
-                // ==== Checking conditional ====
-                if (str_starts_with($mappingValue['pixelplus'], '(') and str_ends_with($mappingValue['pixelplus'], ')')) {
-                    // ==== Declaring Variables ====
-                    $strTrimmedKey = trim($mappingValue['pixelplus'], '()');
-                    $arrExplodedKey = explode('|', $strTrimmedKey);
-                    $boolResult = false;
+                     Examples:
+                        <bouwNummer_NVMVestigingNR> = 551235 => "Amsterdam"
+				        <datum_toegevoegd> = '2021-01-01' => 1609459200
 
-                    // ==== Start of Function ====
-                    # Step 1: Looping through all the keys
-                    foreach ($arrExplodedKey as $arrExplodedKeyValue) {
-                        # Step 2: Check if the key even isset or empty in OG Record
-                        if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-                            # Step 3: Change the mapping table's value to just one key instead of making the the key an array/conditional
-                            $mappingTable[$mappingKey]['pixelplus'] = $arrExplodedKeyValue;
-                            $boolResult = true;
-                        }
-                    }
-                    # Step 4: Check if the result is false and if so unset the whole key from the mapping table
-                    if (!$boolResult) {
-                        unset($mappingTable[$mappingKey]);
-                    }
-                }
-                // ==== Checking concatenations ====
-	            if (str_starts_with($mappingValue['pixelplus'], '{') and str_ends_with($mappingValue['pixelplus'], '}')) {
-		            // ==== Declaring Variables ====
-		            # Vars
-		            $strTrimmedKey = trim($mappingValue['pixelplus'], '{}');
-		            $arrExplodedKey = explode('+', $strTrimmedKey);
-		            $arrExplodedKeyMinus = explode('-', $strTrimmedKey);
-		            $strResult = '';
+				----------------------------
+                ^  = Counting: Calculate and store counts.
+                     Options:
+                        1. ^bouwtypes^ => Calculate based off and store the count of build types for a project.
+                        2. ^bouwnummers^ => Calculate and store the count of build numbers for a project.
 
-		            // ==== Start of Function ====
-		            # Looping through the plus keys
-		            foreach($arrExplodedKey as $arrExplodedKeyValue) {
-			            // ==== Declaring Variables ====
-			            # Bools
-			            $boolTrimSpaces = False;
+				----------------------------
+                *  = Object Types: Conditionally set values based on conditions. !(Only works with 2 values)!
+                    Options:
+                        1. *property_type|Residential* => If property type exists, set to "Residential".
+                        2. *property_type|Commercial* => If property type doesn't exist, set to "Commercial".
 
-			            // ==== Start of Function ====
-			            # Step 1: Checking if there are any special character at the beginning and or end of the key
-			            if (str_starts_with($arrExplodedKeyValue, '~') and str_ends_with($arrExplodedKeyValue, '~')) {
-				            # Step 2: Remove the ~ from the value and all the spaces. And then adding it to strResult
-				            $boolTrimSpaces = True;
+                    Examples:
+                        objecttype = *wonen_Appartement_KenmerkAppartement|woonhuis*
+                */
+				// ==== Checking conditional ====
+				if (str_starts_with($mappingValue['pixelplus'], '(') and str_ends_with($mappingValue['pixelplus'], ')')) {
+					// ==== Declaring Variables ====
+					$strTrimmedKey = trim($mappingValue['pixelplus'], '()');
+					$arrExplodedKey = explode('|', $strTrimmedKey);
+					$boolResult = false;
 
-				            # Step 3: Removing the ~ from the value
-				            $arrExplodedKeyValue = trim($arrExplodedKeyValue, '~');
-			            }
+					// ==== Start of Function ====
+					# Step 1: Looping through all the keys
+					foreach ($arrExplodedKey as $arrExplodedKeyValue) {
+						# Step 2: Check if the key even isset or empty in OG Record
+						if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+							# Step 3: Change the mapping table's value to just one key instead of making the the key an array/conditional
+							$mappingTable[$mappingKey]['pixelplus'] = $arrExplodedKeyValue;
+							$boolResult = true;
+						}
+					}
+					# Step 4: Check if the result is false and if so unset the whole key from the mapping table
+					if (!$boolResult) {
+						unset($mappingTable[$mappingKey]);
+					}
+				}
+				// ==== Checking concatenations ====
+				if (str_starts_with($mappingValue['pixelplus'], '{') and str_ends_with($mappingValue['pixelplus'], '}')) {
+					// ==== Declaring Variables ====
+					# Vars
+					$strTrimmedKey = trim($mappingValue['pixelplus'], '{}');
+					$arrExplodedKey = explode('+', $strTrimmedKey);
+					$arrExplodedKeyMinus = explode('-', $strTrimmedKey);
+					$strResult = '';
 
-			            # Step 4: Check if the key even isset or empty in OG Record
-			            if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-				            # Step 5: Adding it to strResult
-				            $strResult .= $boolTrimSpaces ? str_replace(' ', '', $OGTableRecord->{$arrExplodedKeyValue}).' ' : $OGTableRecord->{$arrExplodedKeyValue}.' ';
-			            }
-		            }
-		            # Looping through the minus keys
-		            foreach($arrExplodedKeyMinus as $arrExplodedKeyValue) {
-			            # Step 2: Check if the key even isset or empty in OG Record
-			            if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-				            # Step 3: Add the value to the result string
-				            $strResult .= $OGTableRecord->{$arrExplodedKeyValue}.'-';
-			            }
-		            }
+					// ==== Start of Function ====
+					# Looping through the plus keys
+					foreach($arrExplodedKey as $arrExplodedKeyValue) {
+						// ==== Declaring Variables ====
+						# Bools
+						$boolTrimSpaces = False;
 
-		            # Putting it in the mapping table as a default value
-		            $mappingTable[$mappingKey]['pixelplus'] = "'".rtrim($strResult, ' -')."'";
-	            }
-                // ==== Checking the statuses ====
-                if (str_starts_with($mappingValue['pixelplus'], '$') and str_ends_with($mappingValue['pixelplus'], '$')) {
-                    // ==== Declaring Variables ====
-                    # Vars
-                    $strTrimmedKey = trim($mappingValue['pixelplus'], '$');
-                    $arrExplodedKey = explode('|', $strTrimmedKey);
+						// ==== Start of Function ====
+						# Step 1: Checking if there are any special character at the beginning and or end of the key
+						if (str_starts_with($arrExplodedKeyValue, '~') and str_ends_with($arrExplodedKeyValue, '~')) {
+							# Step 2: Remove the ~ from the value and all the spaces. And then adding it to strResult
+							$boolTrimSpaces = True;
 
-                    // ==== Start of Function ====
-                    // if has more than 1 key
-                    if (count($arrExplodedKey) > 1) {
-                        # Step 1: Checking the value
-                        if (isset($OGTableRecord->{$arrExplodedKey[0]}) and !empty($OGTableRecord->{$arrExplodedKey[0]})) {
-                            switch (strtolower(end($arrExplodedKey))) {
-                                case 'sold': {
-                                    // ==== Start of Function ====
-                                    # If the value is verkocht then put it to 1
-                                    $mappingTable[$mappingKey]['pixelplus'] = (strtolower($OGTableRecord->{$arrExplodedKey[0]} == 'verkocht') ? "'1'" : "'0'");
-                                    break;
-                                }
-                                case 'prijs': {
-                                    // ==== Start of Function ====
-                                    $mappingTable[$mappingKey]['pixelplus'] = ($OGTableRecord->{$arrExplodedKey[0]} > 0) ? "'1'" : "'0'";
-                                    break;
-                                }
-                                case 'onderhoudswaardering': {
-                                    # Remove all weird characters, change to space then to lowercase and then UpperCase the first letter
-                                    $mappingTable[$mappingKey]['pixelplus'] = "'".ucfirst(strtolower(preg_replace('/[^A-Za-z0-9\-]/', ' ', $OGTableRecord->{$arrExplodedKey[0]})))."'";
+							# Step 3: Removing the ~ from the value
+							$arrExplodedKeyValue = trim($arrExplodedKeyValue, '~');
+						}
 
-                                    # Removing the old record
-                                    unset($OGTableRecord->{$arrExplodedKey[0]});
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                // ==== Checking arrays ====
-                if (str_starts_with($mappingValue['pixelplus'], '[') and str_ends_with($mappingValue['pixelplus'], ']')) {
-                    // ==== Declaring Variables ====
-                    # Vars
-                    $strTrimmedKey = trim($mappingValue['pixelplus'], '[]');
-                    $arrExplodedKey = explode(',', $strTrimmedKey);
-                    $strResult = '';
+						# Step 4: Check if the key even isset or empty in OG Record
+						if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+							# Step 5: Adding it to strResult
+							$strResult .= $boolTrimSpaces ? str_replace(' ', '', $OGTableRecord->{$arrExplodedKeyValue}).' ' : $OGTableRecord->{$arrExplodedKeyValue}.' ';
+						}
+					}
+					# Looping through the minus keys
+					foreach($arrExplodedKeyMinus as $arrExplodedKeyValue) {
+						# Step 2: Check if the key even isset or empty in OG Record
+						if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+							# Step 3: Add the value to the result string
+							$strResult .= $OGTableRecord->{$arrExplodedKeyValue}.'-';
+						}
+					}
 
-                    // ==== Start of Function ====
-                    if (!empty($arrExplodedKey)) {
-                        # Step 1: Looping through all the keys
-                        foreach($arrExplodedKey as $arrExplodedKeyValue) {
-                            # Step 2: Check if the key even isset or empty in OG Record
-                            if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
-                                # Getting all the value's from that record
-                                $explodedRecord = explode(',', $OGTableRecord->{$arrExplodedKeyValue});
+					# Putting it in the mapping table as a default value
+					$mappingTable[$mappingKey]['pixelplus'] = "'".rtrim($strResult, ' -')."'";
+				}
+				// ==== Checking the statuses ====
+				if (str_starts_with($mappingValue['pixelplus'], '$') and str_ends_with($mappingValue['pixelplus'], '$')) {
+					// ==== Declaring Variables ====
+					# Vars
+					$strTrimmedKey = trim($mappingValue['pixelplus'], '$');
+					$arrExplodedKey = explode('|', $strTrimmedKey);
 
-                                # Step 3: Looping through all the values
-                                foreach ($explodedRecord as $explodedRecordValue) {
-                                    # Step 4: Removing the brackets from the value
-                                    $explodedRecordValue = trim($explodedRecordValue, '[]');
-                                    $strResult .= $explodedRecordValue.', ';
-                                }
-                                # Step 5: Removing the old key
-                                if ($strResult != '') {
-                                    unset($OGTableRecord->{$arrExplodedKeyValue});
-                                }
-                            }
-                        }
-                        # Step 6: Putting it in the mapping table as a default value
-                        $mappingTable[$mappingKey]['pixelplus'] = "'".ucfirst(strtolower(rtrim($strResult, ', ')."'"));
+					// ==== Start of Function ====
+					// if has more than 1 key
+					if (count($arrExplodedKey) > 1) {
+						# Step 1: Checking the value
+						if (isset($OGTableRecord->{$arrExplodedKey[0]}) and !empty($OGTableRecord->{$arrExplodedKey[0]})) {
+							switch (strtolower(end($arrExplodedKey))) {
+								case 'sold': {
+									// ==== Start of Function ====
+									# If the value is verkocht then put it to 1
+									$mappingTable[$mappingKey]['pixelplus'] = (strtolower($OGTableRecord->{$arrExplodedKey[0]} == 'verkocht') ? "'1'" : "'0'");
+									break;
+								}
+								case 'prijs': {
+									// ==== Start of Function ====
+									$mappingTable[$mappingKey]['pixelplus'] = ($OGTableRecord->{$arrExplodedKey[0]} > 0) ? "'1'" : "'0'";
+									break;
+								}
+								case 'onderhoudswaardering': {
+									# Remove all weird characters, change to space then to lowercase and then UpperCase the first letter
+									$mappingTable[$mappingKey]['pixelplus'] = "'".ucfirst(strtolower(preg_replace('/[^A-Za-z0-9\-]/', ' ', $OGTableRecord->{$arrExplodedKey[0]})))."'";
 
-                    }
-                }
-                // ==== Checking location codes ====
-                if (str_starts_with($mappingValue['pixelplus'], '<') and str_ends_with($mappingValue['pixelplus'], '>')) {
-                    // ==== Declaring Variables ====
-                    # Vars
-                    $strTrimmedKey = trim($mappingValue['pixelplus'], '<>');
+									# Removing the old record
+									unset($OGTableRecord->{$arrExplodedKey[0]});
+									break;
+								}
+							}
+						}
+					}
+				}
+				// ==== Checking arrays ====
+				if (str_starts_with($mappingValue['pixelplus'], '[') and str_ends_with($mappingValue['pixelplus'], ']')) {
+					// ==== Declaring Variables ====
+					# Vars
+					$strTrimmedKey = trim($mappingValue['pixelplus'], '[]');
+					$arrExplodedKey = explode(',', $strTrimmedKey);
+					$strResult = '';
+
+					// ==== Start of Function ====
+					if (!empty($arrExplodedKey)) {
+						# Step 1: Looping through all the keys
+						foreach($arrExplodedKey as $arrExplodedKeyValue) {
+							# Step 2: Check if the key even isset or empty in OG Record
+							if (isset($OGTableRecord->{$arrExplodedKeyValue}) and !empty($OGTableRecord->{$arrExplodedKeyValue})) {
+								# Getting all the value's from that record
+								$explodedRecord = explode(',', $OGTableRecord->{$arrExplodedKeyValue});
+
+								# Step 3: Looping through all the values
+								foreach ($explodedRecord as $explodedRecordValue) {
+									# Step 4: Removing the brackets from the value
+									$explodedRecordValue = trim($explodedRecordValue, '[]');
+									$strResult .= $explodedRecordValue.', ';
+								}
+								# Step 5: Removing the old key
+								if ($strResult != '') {
+									unset($OGTableRecord->{$arrExplodedKeyValue});
+								}
+							}
+						}
+						# Step 6: Putting it in the mapping table as a default value
+						$mappingTable[$mappingKey]['pixelplus'] = "'".ucfirst(strtolower(rtrim($strResult, ', ')."'"));
+
+					}
+				}
+				// ==== Checking location codes ====
+				if (str_starts_with($mappingValue['pixelplus'], '<') and str_ends_with($mappingValue['pixelplus'], '>')) {
+					// ==== Declaring Variables ====
+					# Vars
+					$strTrimmedKey = trim($mappingValue['pixelplus'], '<>');
 
 					// ==== Start of Function ====
 					if (!empty($strTrimmedKey)) {
 						# Step 2: Checking if the value is NOT empty
 						if (isset($OGTableRecord->{$strTrimmedKey}) and !empty($OGTableRecord->{$strTrimmedKey})) {
 							# Step 3: If value is a numeric
-                            # Converting numeric value to Location Code
+							# Converting numeric value to Location Code
 							if (is_numeric($OGTableRecord->{$strTrimmedKey})) {
 								# Step 4: Checking if the value is in the locationCodes array
 								$key = array_search($OGTableRecord->{$strTrimmedKey}, $locationCodes[0]);
@@ -1119,7 +1169,7 @@ class OGSyncMapping {
 								}
 							}
 
-                            # Converting the value to Unix Timestamp
+							# Converting the value to Unix Timestamp
 							else {
 								# Step 4: Checking if the value is can be converted to a datetime
 								$datetime = strtotime($OGTableRecord->{$strTrimmedKey});
@@ -1131,99 +1181,99 @@ class OGSyncMapping {
 						}
 					}
 				}
-                // ==== Checking the total buildnumbers/buildtypes ====
-                if (str_starts_with($mappingValue['pixelplus'], '^') and str_ends_with($mappingValue['pixelplus'], '^')) {
-                    // ==== Declaring Variables ====
-                    # Vars
-                    $strTrimmedKey = trim($mappingValue['pixelplus'], '^');
+				// ==== Checking the total buildnumbers/buildtypes ====
+				if (str_starts_with($mappingValue['pixelplus'], '^') and str_ends_with($mappingValue['pixelplus'], '^')) {
+					// ==== Declaring Variables ====
+					# Vars
+					$strTrimmedKey = trim($mappingValue['pixelplus'], '^');
 
-                    // ==== Start of Function ====
-                    if (!empty($strTrimmedKey)) {
-                        // ==== Declaring Variables ====
-                        # Vars
-                        $projectID = $OGTableRecord->{$databaseKeys[0]['media']['search_id']} ?? $OGTableRecord->id ?? '0';
+					// ==== Start of Function ====
+					if (!empty($strTrimmedKey)) {
+						// ==== Declaring Variables ====
+						# Vars
+						$projectID = $OGTableRecord->{$databaseKeys[0]['media']['search_id']} ?? $OGTableRecord->id ?? '0';
 
-                        // ==== Start of Function ====
-                        if ($strTrimmedKey == 'bouwtypes') {
-                            # Step 1: Getting the count of bouwtypes in the database
-                            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[1]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = $projectID");
+						// ==== Start of Function ====
+						if ($strTrimmedKey == 'bouwtypes') {
+							# Step 1: Getting the count of bouwtypes in the database
+							$count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[1]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = $projectID");
 
-                            # Step 2: Adding the count to the OG Record
-                            $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
-                        }
-                        if ($strTrimmedKey == 'bouwnummers') {
-                            # Step 1: Getting the count of bouwnummers in the database
-                            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[2]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = $projectID");
+							# Step 2: Adding the count to the OG Record
+							$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
+						}
+						if ($strTrimmedKey == 'bouwnummers') {
+							# Step 1: Getting the count of bouwnummers in the database
+							$count = $wpdb->get_var("SELECT COUNT(*) FROM {$databaseKeys[2]['tableName']} WHERE {$databaseKeys[0]['media']['search_id']} = $projectID");
 
-                            # Step 2: Adding the count to the OG Record
-                            $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
-                        }
-                    }
-                }
-                // ==== Checking the objecttype (basically a conditional) ====
-                if (str_starts_with($mappingValue['pixelplus'], '*') and str_ends_with($mappingValue['pixelplus'], '*')) {
-                    // ==== Declaring Variables ====
-                    # Vars
-                    $strTrimmedKey = trim($mappingValue['pixelplus'], '*');
-                    $arrExplodedKey = explode('|', $strTrimmedKey);
+							# Step 2: Adding the count to the OG Record
+							$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $count;
+						}
+					}
+				}
+				// ==== Checking the objecttype (basically a conditional) ====
+				if (str_starts_with($mappingValue['pixelplus'], '*') and str_ends_with($mappingValue['pixelplus'], '*')) {
+					// ==== Declaring Variables ====
+					# Vars
+					$strTrimmedKey = trim($mappingValue['pixelplus'], '*');
+					$arrExplodedKey = explode('|', $strTrimmedKey);
 
-                    // ==== Start of Function ====
-                    if (!empty($arrExplodedKey)) {
-                        # Step 1: Checking if the key isset in the OG Record
-                        if (isset($OGTableRecord->{$arrExplodedKey[0]}) and !empty($OGTableRecord->{$arrExplodedKey[0]})) {
-                            # Step 2: Set it as the value
-                            $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $arrExplodedKey[1];
+					// ==== Start of Function ====
+					if (!empty($arrExplodedKey)) {
+						# Step 1: Checking if the key isset in the OG Record
+						if (isset($OGTableRecord->{$arrExplodedKey[0]}) and !empty($OGTableRecord->{$arrExplodedKey[0]})) {
+							# Step 2: Set it as the value
+							$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = $arrExplodedKey[1];
 
-                            # Step 3: Removing the old key
-                            unset($OGTableRecord->{$arrExplodedKey[0]});
-                        }
-                        else {
-                            # Setting the value to the second key
-                            $OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = end($arrExplodedKey);
-                        }
-                    }
-                }
-            }
-            # Looping through the mapping table with the updated values
-            foreach ($mappingTable as $mappingValue) {
-                // ======== Checking default values ========
-                if (str_starts_with($mappingValue['pixelplus'], "'") and str_ends_with($mappingValue['pixelplus'], "'")) {
-                    // ==== Declaring Variables ====
-                    # Vars
-                    $strTrimmedKey = trim($mappingValue['pixelplus'], "'");
+							# Step 3: Removing the old key
+							unset($OGTableRecord->{$arrExplodedKey[0]});
+						}
+						else {
+							# Setting the value to the second key
+							$OGTableRecord->{$mappingTable[$mappingKey]['vanherk']} = end($arrExplodedKey);
+						}
+					}
+				}
+			}
 
-                    // ==== Start of Function ====
-                    # Step 1: Making a new key with the value of the old key
-                    $OGTableRecord->{$mappingValue['vanherk']} = $strTrimmedKey;
-                    # Step 2: Removing the old key
-                    unset($OGTableRecord->{$mappingValue['pixelplus']});
-                }
-            }
+			# Looping through the mapping table with the updated values
+			foreach ($mappingTable as $mappingValue) {
+				// ======== Checking default values ========
+				if (str_starts_with($mappingValue['pixelplus'], "'") and str_ends_with($mappingValue['pixelplus'], "'")) {
+					// ==== Declaring Variables ====
+					# Vars
+					$strTrimmedKey = trim($mappingValue['pixelplus'], "'");
 
+					// ==== Start of Function ====
+					# Step 1: Making a new key with the value of the old key
+					$OGTableRecord->{$mappingValue['vanherk']} = $strTrimmedKey;
+					# Step 2: Removing the old key
+					unset($OGTableRecord->{$mappingValue['pixelplus']});
+				}
+			}
 
-            # Direct matches
-            foreach ($OGTableRecord as $OGTableRecordKey => $OGTableRecordValue) {
-                foreach ($mappingTable as $mappingValue) {
-                    // ==== Checking direct match ====
-                    if ($OGTableRecordKey == $mappingValue['pixelplus']) {
-                        # Making a new key with the value of the old key
-                        $OGTableRecord->{$mappingValue['vanherk']} = $OGTableRecordValue;
-                        # Removing the old key
-                        unset($OGTableRecord->{$OGTableRecordKey});
-                    }
-                }
-            }
-        }
-        else {
-            // ================ Cleaning the Tables/Records ================
-            # Getting rid of all the useless and empty values in the OBJECT
-            $OGTableRecord = self::cleanupObjects($OGTableRecord);
-        }
+			# Direct matches
+			foreach ($OGTableRecord as $OGTableRecordKey => $OGTableRecordValue) {
+				foreach ($mappingTable as $mappingValue) {
+					// ==== Checking direct match ====
+					if ($OGTableRecordKey == $mappingValue['pixelplus']) {
+						# Making a new key with the value of the old key
+						$OGTableRecord->{$mappingValue['vanherk']} = $OGTableRecordValue;
+						# Removing the old key
+						unset($OGTableRecord->{$OGTableRecordKey});
+					}
+				}
+			}
+		}
+		else {
+			// ================ Cleaning the Tables/Records ================
+			# Getting rid of all the useless and empty values in the OBJECT
+			$OGTableRecord = self::cleanupObjects($OGTableRecord);
+		}
 
-        // ================ Returning the Object ================
-        # Return the object
-        return $OGTableRecord;
-    }
+		// ================ Returning the Object ================
+		# Return the object
+		return $OGTableRecord;
+	}
 }
 
 // ========== Unlicensed / Licensed Classes ==========
@@ -1384,7 +1434,7 @@ class OGSyncMenus
         // Making the Global Settings Page
         add_menu_page(
             'Admin Settings',
-            'OG Sync Settings',
+            'OG sync settings',
             'manage_options',
             OGSyncSettingsData::$settingPrefix.'pluginSettings',
             [__CLASS__, 'HTMLOGAdminSettings'],
@@ -1402,43 +1452,6 @@ class OGSyncMenus
 
         // ======= When Plugin is activated =======
         if (OGSyncLicense::checkActivation()) {
-            // ======== Post Types ========
-            // ==== OG Settings ====
-            // Submenu Items based on the OG Post Types for in the OG Settings
-            foreach ($postTypeData as $postType => $postTypeArray) {
-                if (in_array($postType, $objectAccess)) {
-                    $name = $postTypeArray['post_type_args']['labels']['menu_name'];
-                    // Creating submenu for in the OG Settings
-                    add_submenu_page(
-	                    OGSyncSettingsData::$settingPrefix.'pluginSettings',
-                        $name,
-                        $name,
-                        'manage_options',
-	                    OGSyncSettingsData::$settingPrefix.'settings-' . strtolower($name),
-                        [__CLASS__, 'HTMLOGAdminSettings'.$name]
-                    );
-                }
-            }
-
-            // ==== Items OG Admin ====
-            // Menu Item: OG Dashboard
-            add_menu_page(
-                'Admin Dashboard',
-                'OG Admin Dashboard',
-                'manage_options',
-	            OGSyncSettingsData::$settingPrefix.'OGAdminDashboard',
-                [__CLASS__, 'HTMLOGAdminDashboard'],
-                'dashicons-plus-alt',
-                100);
-            // First sub-menu item for name change
-            add_submenu_page(
-	            OGSyncSettingsData::$settingPrefix.'OGAdminDashboard',
-                'Admin Dashboard',
-                'Dashboard',
-                'manage_options',
-	            OGSyncSettingsData::$settingPrefix.'OGAdminDashboard',
-                [__CLASS__, 'HTMLOGAdminDashboard']);
-
             // ==== Items OG Aanbod ====
             // Menu Item: OG Aanbod Dashboard
             add_menu_page(
@@ -1449,13 +1462,13 @@ class OGSyncMenus
                 [__CLASS__, 'HTMLOGAanbodDashboard'],
                 'dashicons-admin-multisite',
                 40);
-            // First sub-menu item for name change
+            # Submenu Item: OG Aanbod Dashboard
             add_submenu_page(
-	            OGSyncSettingsData::$settingPrefix.'aanbod',
-                'Aanbod Dashboard',
+                OGSyncSettingsData::$settingPrefix.'aanbod',
+                'Dashboard',
                 'Dashboard',
                 'manage_options',
-	            OGSyncSettingsData::$settingPrefix.'aanbodDashboard',
+                OGSyncSettingsData::$settingPrefix.'aanbod',
                 [__CLASS__, 'HTMLOGAanbodDashboard'],
                 0
             );
@@ -1469,6 +1482,26 @@ class OGSyncMenus
 		        OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug,
 		        [__CLASS__, 'PHPOGAanbodEditor']
 	        );
+
+            // ==== Nieuwbouw Bouwtype overzicht ====
+	        add_submenu_page(
+		        ' ',
+		        'Bouwtype overzicht',
+		        'Bouwtype overzicht',
+		        'manage_options',
+		        OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$nieuwbouwBouwtypeOverzichtSlug,
+		        [__CLASS__, 'PHPBouwtypeOverzicht']
+	        );
+
+            // ==== Nieuwbouw Bouwnummer overzicht ====
+            add_submenu_page(
+                ' ',
+                'Bouwnummer overzicht',
+                'Bouwnummer overzicht',
+                'manage_options',
+                OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$nieuwbouwBouwnummerOverzichtSlug,
+                [__CLASS__, 'PHPBouwnummerOverzicht']
+            );
         }
     }
 
@@ -1521,6 +1554,8 @@ class OGSyncMenus
 	    // Check if licenseKey is empty
 	    echo("<input type='text' name='$fieldID' value='$value'");
     }
+
+	/** @noinspection JSUnresolvedReference */
 	static function createImageField($fieldArray, $strOption): void {
 		// ========== Declaring Variables =========
 		# Vars
@@ -1687,37 +1722,62 @@ class OGSyncMenus
 		// ======== Start of Function ========
 		OGSyncAanbod::aanbodEditor($GET_postID);
     }
-
-    // ============ HTML ============
-    // OG Sync Admin
-    static function HTMLOGAdminDashboard(): void {
+    static function PHPBouwtypeOverzicht(): void {
         // ======== Declaring Variables ========
-        # Classes
-        $OGSyncColorScheme = new OGSyncColorScheme();
-
-        # Variables
-        $postTypeData = OGSyncPostTypeData::customPostTypes();
-
-        $url = OGSyncSettingsData::apiURLs()['syncTimes'];
-        $qArgs = "?token=".get_option(OGSyncSettingsData::$settingPrefix.'licenseKey');
-        $lastSyncTimes = json_decode(wp_remote_get($url.$qArgs)['body'], true);
-
-        $buttonColor = $OGSyncColorScheme->returnColor();
+        $GET_postID = $_GET['postID'] ?? null;
 
         // ======== Start of Function ========
-        # Checking if the API request is successful
-        if (isset($lastSyncTimes['success']) and $lastSyncTimes['success']) {
-            OGSyncTools::adminNotice('success', 'De laatste syncs zijn succesvol opgehaald.');
-            $lastSyncTimes = $lastSyncTimes['data'];
-        }
-        else {
-            $lastSyncTimes = false;
-        }
+        OGSyncAanbod::bouwtypeOverzicht($GET_postID);
+    }
+    static function PHPBouwnummerOverzicht(): void {
+        // ======== Declaring Variables ========
+        $GET_postID = $_GET['postID'] ?? null;
 
-        # HTML
-        OGSyncTools::htmlAdminHeader('OG Admin Dashboard');
-        echo("<img width=50px src='".plugins_url('img/pixelplus-logo.jpg', dirname(__DIR__))."' />");
-        echo("
+        // ======== Start of Function ========
+        OGSyncAanbod::bouwnummerOverzicht($GET_postID);
+    }
+
+    // ============ HTML ============
+    // OG Site Admin Settings
+    static function HTMLOGAdminSettings(): void {OGSyncTools::htmlAdminHeader('Admin settings - algemeen'); ?>
+        <form method="post" action="options.php">
+            <?php settings_fields(OGSyncSettingsData::$settingPrefix.'adminOptions');
+            do_settings_sections('ppOGSync-plugin-settings');
+            OGSyncTools::hidePasswordByName(OGSyncSettingsData::$settingPrefix.'licenseKey');
+            submit_button('Opslaan', 'primary', 'submit_license');
+            ?>
+        </form>
+    <?php OGSyncTools::htmlAdminFooter('OG admin settings - algemeen');}
+
+    // OG Aanbod
+	static function HTMLOGAanbodDashboard(): void {
+		// ======== Declaring Variables ========
+		# Classes
+		$OGSyncColorScheme = new OGSyncColorScheme();
+
+		# Variables
+		$postTypeData = OGSyncPostTypeData::customPostTypes();
+
+		$url = OGSyncSettingsData::apiURLs()['syncTimes'];
+		$qArgs = "?token=".get_option(OGSyncSettingsData::$settingPrefix.'licenseKey');
+		$lastSyncTimes = json_decode(wp_remote_get($url.$qArgs)['body'], true);
+
+		$buttonColor = $OGSyncColorScheme->returnColor();
+
+		// ======== Start of Function ========
+		# Checking if the API request is successful
+		if (isset($lastSyncTimes['success']) and $lastSyncTimes['success']) {
+			OGSyncTools::adminNotice('success', 'De laatste syncs zijn succesvol opgehaald.');
+			$lastSyncTimes = $lastSyncTimes['data'];
+		}
+		else {
+			$lastSyncTimes = false;
+		}
+
+		# HTML
+		OGSyncTools::htmlAdminHeader('OG aanbod dashboard');
+
+		echo("
             <div class='container-fluid'>
                 <div class='row'>
                     <div class='col' style='border-right: solid 1px black'>
@@ -1734,39 +1794,20 @@ class OGSyncMenus
                                 </tr>
                             </thead>
                             <tbody>");
-                                foreach ($postTypeData as $postType => $postTypeArray) {
-                                    echo(
-                                        "<tr>
+		foreach ($postTypeData as $postType => $postTypeArray) {
+			echo(
+				"<tr>
                                             <td>".$postTypeArray['post_type_args']['labels']['menu_name']."</td>
                                             <td>".($lastSyncTimes[$postType] ?? 'Nog niet gesynchroniseerd')."</td>
                                         </tr>"
-                                    );
-                                }
-                      echo("</tbody>
+			);
+		}
+		echo("</tbody>
                     </div>
                 </div>
             </div>
         ");
-        OGSyncTools::htmlAdminFooter('OG Admin Dashboard');}
-
-
-    // OG Site Admin Settings
-    static function HTMLOGAdminSettings(): void {OGSyncTools::htmlAdminHeader('Admin Settings - Algemeen'); ?>
-        <form method="post" action="options.php">
-            <?php settings_fields(OGSyncSettingsData::$settingPrefix.'adminOptions');
-            do_settings_sections('ppOGSync-plugin-settings');
-            OGSyncTools::hidePasswordByName(OGSyncSettingsData::$settingPrefix.'licenseKey');
-            submit_button('Opslaan', 'primary', 'submit_license');
-            ?>
-        </form>
-    <?php OGSyncTools::htmlAdminFooter('OG Admin Settings - Algemeen');}
-
-
-    // OG Aanbod
-    static function HTMLOGAanbodDashboard(): void { OGSyncTools::htmlAdminHeader('Aanbod Dashboard'); ?>
-        <p>Onder constructie</p>
-        <?php OGSyncTools::htmlAdminFooter('OG Aanbod Dashboard');}
-
+		OGSyncTools::htmlAdminFooter('OG admin dashboard');}
 
     // OG Detailpage
     function HTMLOGDetailPageWonen() { ?>
@@ -1775,7 +1816,6 @@ class OGSyncMenus
 }
 
 // ========== Fully Licensed ==========
-
 class OGSyncPostTypes {
 	// ======== Declaring Variables ========
     static array $postTypeExtraColumns = [];
@@ -1832,18 +1872,18 @@ class OGSyncPostTypes {
 			}, 10, 2);
 
             # If the post_type is nieuwbouw
-            if ($postType == 'nieuwbouw') {
+            if ($postType == OGSyncSettingsData::$postTypeNieuwbouw) {
                 # Adding the content to the extra columns
                 add_action("manage_{$postType}_posts_custom_column", function($column, $post_id) use ($postTypeArray) {
                     // ========= Declaring Variables =========
 	                $columnSearchKey = self::$postTypeExtraColumns[$column] ?? false;
 
 	                OGSyncTools::checkIfAanbodColumnThumbnail($column, $post_id);
-                    $postTypeArrayExists = $postTypeArray['database_tables']['projecten'][$columnSearchKey[0]] ?? false;
+                    $postTypeArrayExists = $postTypeArray['database_tables'][OGSyncSettingsData::$projectenArrayName][$columnSearchKey[0]] ?? false;
 
                     // ========= Start of Function =========
                     # Getting the value of the column
-                    $columnValue = ($columnSearchKey && $postTypeArrayExists) ? get_post_meta($post_id, $postTypeArray['database_tables']['projecten'][$columnSearchKey[0]], true) : '';
+                    $columnValue = ($columnSearchKey && $postTypeArrayExists) ? get_post_meta($post_id, $postTypeArray['database_tables'][OGSyncSettingsData::$projectenArrayName][$columnSearchKey[0]], true) : '';
 
                     # Check if date
                     if (DateTime::createFromFormat('Y-m-d', $columnValue)) {
@@ -1921,13 +1961,13 @@ class OGSyncPostTypes {
                 ];
             }
             # Checking the post types
-			elseif (strtolower($typenow) === 'nieuwbouw') {
+			elseif (strtolower($typenow) === OGSyncSettingsData::$postTypeNieuwbouw) {
 				$query->set('post_parent', 0);
 
 				# Checking the orderby
 				if ($query->get('orderby') != '') {
 					# Getting the meta key
-					$meta_key = OGSyncPostTypeData::customPostTypes()[$typenow]['database_tables']['projecten'][$query->get('orderby')] ?? false;
+					$meta_key = OGSyncPostTypeData::customPostTypes()[$typenow]['database_tables'][OGSyncSettingsData::$projectenArrayName][$query->get('orderby')] ?? false;
 					if ($meta_key) {
 						$meta_query[] = [
 							'key' => $meta_key,
@@ -1961,23 +2001,13 @@ class OGSyncPostTypes {
 					}
 				}
 
+                # Checking the search
 				if ($query->get('s') != '') {
 					// ======== Declaring Variables ========
 					$extraColumns = OGSyncPostTypeData::customPostTypes()[$typenow]['post_type_args']['extra_columns'] ?? [];
 
 					// ======== Start of Function ========
-					# Looping through the extra columns
-					foreach ($extraColumns as $columnName => $columnSearchKey) {
-						$metaSearchKey = OGSyncPostTypeData::customPostTypes()[ $typenow ]['database_tables']['object'][ $columnSearchKey ] ?? false;
-						echo("{$metaSearchKey}<br/>");
 
-						$meta_query[] = [
-							'key' => ['publicatiedatum', 'object_ObjectTiaraID', 'objectDetails_StatusBeschikbaarheid_Status', 'ppOGSync_ObjectStatus', 'objectDetails_Koop_Koopprijs', 'objectDetails_Huur_Huurprijs'],
-							'value' => '4751175',
-							'compare' => 'LIKE'
-						];
-					}
-					echo('<br/>');
                 }
 			}
 
@@ -1998,7 +2028,14 @@ class OGSyncPostTypes {
 			// ======== Start of Function ========
 			if ($boolIsOurEdit) {
 				# Creating a new button
-				$actions[] = '<a href="admin.php?page='.OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug.'&postID='.get_the_ID().'&post_type='.$typenow.'">Beheren</a>';
+
+				if ($typenow == OGSyncSettingsData::$postTypeNieuwbouw) {
+                    $actions[] = '<a href="admin.php?page='.OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$nieuwbouwBouwtypeOverzichtSlug.'&postID='.get_the_ID().'&post_type='.$typenow.'">Beheren</a>';
+					$actions[] = '<a href="admin.php?page='.OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug.'&postID='.get_the_ID().'&post_type='.$typenow.'&type='.OGSyncSettingsData::$projectenArrayName.'">Wijzigen</a>';
+                }
+                else {
+	                $actions[] = '<a href="admin.php?page='.OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug.'&postID='.get_the_ID().'&post_type='.$typenow.'">Wijzigen</a>';
+                }
 			}
 			return $actions;
 		}, 10, 1);
@@ -2395,18 +2432,24 @@ class OGSyncOffers {
 			$objectLastUpdated = $OGobject->{$databaseKey['datum_gewijzigd']} ?? $OGobject->{$databaseKey['datum_toegevoegd']};
 
 			# Vars
-			$mediaTiaraID = $mediaObject->{$mediaTiaraIDName};
+            $objectVestigingsNummer = $OGobject->{$databaseKeysMedia['object_keys']['objectVestiging']};
+            $objectTiaraID = $OGobject->{$databaseKeysMedia['object_keys']['objectTiara']};
+
 			$boolIsConnectedPartner = $mediaObject->{$databaseKeysMedia['media_Groep']} == 'Connected_partner';
+
+			// Handle VIDEO (only in case it's served over zien24.nl)
+			if (strtolower($mediaObject->{$databaseKeysMedia['media_Groep']}) == 'video' && str_contains($mediaObject->media_URL, 'zien24')) $boolIsConnectedPartner = true;
+
 			$post_mime_type = $mime_type_map[$mediaObject->{'bestands_extensie'}] ?? $mime_type_map2[$mediaObject->{$databaseKeysMedia['media_Groep']}] ?? 'unknown';
-			$media_url = "og_media/{$postTypeName}_{$OGobject->{$databaseKeysMedia['object_keys']['objectVestiging']}}_{$databaseKeysMedia['object_keys']['objectTiara']}/{$OGobject->{$databaseKeysMedia['object_keys']['objectTiara']}}_$mediaTiaraID.$mediaObject->bestands_extensie";
+			$media_url = "og_media/{$postTypeName}_{$objectVestigingsNummer}_{$objectTiaraID}/{$mediaObject->bestandsnaam}";
 			$post_data = [
 				'post_content' => '',
-				'post_title' => "$mediaTiaraIDName-$mediaObject->bestandsnaam",
+				'post_title' => "$objectVestigingsNummer-$mediaObject->bestandsnaam",
 				'post_excerpt' => strtoupper($mediaObject->{$databaseKeysMedia['media_Groep']}),
 				'post_status' => 'inherit',
 				'comment_status' => 'open',
 				'ping_status' => 'closed',
-				'post_name' => "$mediaTiaraIDName-$mediaObject->bestandsnaam",
+				'post_name' => "$objectVestigingsNummer-$mediaObject->bestandsnaam",
 				'post_parent' => $postID,
 				'guid' => $boolIsConnectedPartner ? $mediaObject->media_URL : "$guid_url/$media_url",
 				'menu_order' => $mediaObject->{'media_volgorde'},
@@ -2425,6 +2468,7 @@ class OGSyncOffers {
 				'_wp_attachment_image_alt' => '',
 				$mediaTiaraIDName => $mediaObject->{$mediaTiaraIDName},
 			];
+
 			// ======== Start of Function ========
 			# Checking if the media exists
 			if ($mediaExists) {
@@ -2457,30 +2501,6 @@ class OGSyncOffers {
 			}
 		}
 	}
-	public static function checkMedia($mediaDatabaseKeys): void {
-		// ============ Declaring Variables ============
-		# Classes
-		global $wpdb;
-
-		# Variables
-		$mediaObjects = $wpdb->get_results("SELECT * FROM {$mediaDatabaseKeys['tableName']}");
-
-		// ============ Start of Function ============
-		# Looping through the media objects
-		foreach($mediaObjects as $mediaObject) {
-			# Checking if the media exists
-			$mediaQuery = new WP_Query([
-				'post_type' => 'attachment',
-				'posts_per_page' => -1,
-				'post_status' => 'any',
-				'meta_key' => $mediaDatabaseKeys['id'],
-				'meta_value' => $mediaObject->id
-			]);
-
-		}
-
-	}
-
 	# Nieuwbouw
 	private static function checkBouwnummersPosts($postTypeName, $parentPostID, $OGBouwtype, $databaseKeys): array {
 		// ======== Declaring Variables ========
@@ -2824,15 +2844,15 @@ class OGSyncOffers {
 		# ==== Checking all the post types ====
 		foreach (OGSyncPostTypeData::customPostTypes() as $postTypeName => $postTypeArray) {
 			# If statement to filter which ones we want to try out or not. Basically not needed overall
-			// if ($postTypeName == 'wonen' or $postTypeName == 'bedrijven') {continue;}
+            // if ($postTypeName == OGSyncSettingsData::$postTypeWonen or $postTypeName == OGSyncSettingsData::$postTypeBedrijf) {continue;}
 
 			// ======== Declaring Variables ========
 			$boolIsNieuwbouw = !isset($postTypeArray['database_tables']['object']);
 			if ($boolIsNieuwbouw) {
 				# OG objects
-				$databaseKeys[0] = $postTypeArray['database_tables']['projecten'];
-				$databaseKeys[1] = $postTypeArray['database_tables']['bouwTypes'];
-				$databaseKeys[2] = $postTypeArray['database_tables']['bouwNummers'];
+				$databaseKeys[0] = $postTypeArray['database_tables'][OGSyncSettingsData::$projectenArrayName];
+				$databaseKeys[1] = $postTypeArray['database_tables'][OGSyncSettingsData::$bouwtypenArrayName];
+				$databaseKeys[2] = $postTypeArray['database_tables'][OGSyncSettingsData::$bouwnummersArrayName];
 			}
 			else {
 				# OG objects
@@ -2869,84 +2889,370 @@ class OGSyncAanbod {
 	// ============ Declaring Variables ============
     # Arrays
     private static ?array $arrPostData = null;
+    private static ?array $arrChildPosts = null;
+
     # Strings
     private static string $formID = '';
 
 	// =============== Functions ===============
-    public static function aanbodEditor($GET_postID): void {
-        // ======== Declaring Variables ========
-        # ==== GET Variables ====
-	    $postType = $_GET['post_type'];
+	public static function aanbodEditor($GET_postID): void {
+		// ======== Declaring Variables ========
+		# ==== GET Variables ====
+		$postType = $_GET['post_type'] ?? '';
+		$type = $_GET['type'] ?? '';
 
-	    # ==== Vars ====
-        # Static
-	    self::$arrPostData = OGSyncPostTypeData::getPostData($GET_postID);
-	    self::$formID = OGSyncSettingsData::$settingPrefix . 'id-formAanbodEditor';
+		# ==== Vars ====
+		# Static
+		self::$arrPostData = OGSyncPostTypeData::getPostData($GET_postID);
+		self::$formID = OGSyncSettingsData::$settingPrefix . 'id-formAanbodEditor';
 
-        # Strings
-	    $htmlSucceedNotice = '';
-        $htmlTitle = "
-            <h2>".OGSyncTools::getAanbodTitle($postType)."</h2><br/>
-            <h3><b>".self::$arrPostData['postData']->post_title."</b></h3>
+		# Strings
+		$postTitle = self::$arrPostData['postData']->post_title ?? '';
+		$htmlSucceedNotice = '';
+		$htmlTitle = "
+            <h2>".OGSyncTools::getAanbodTitle($postType)." $type</h2><br/>
+            <h3><b>".$postTitle."</b></h3>
         ";
-	    $htmlButtons = "
+		$htmlButtons = "
             <!-- Back button (secondary) -->
-            <a href='edit.php?post_type={}' class='button button-secondary'>Terug</a>
+            <a href='edit.php?post_type={$postType}' class='button button-secondary'>Terug</a>
             <!-- Submit button (primary) -->
             <input type='submit' name='submit' id='submit' form='".self::$formID."' class='button button-primary' value='Opslaan'>";
 
-        # ==== POST Request ====
-	    if (!empty($_POST)) {
-		    foreach (OGSyncSettingsData::pixelplusVariables() as $settingName => $arrSettings) {
-			    // ==== Start of Function ====
-			    if (isset($_POST[OGSyncSettingsData::$settingPrefix . $settingName])) {
-				    # Checking if the value is valid and not brute forced
-				    if (in_array($_POST[OGSyncSettingsData::$settingPrefix . $settingName], $arrSettings['options'])) {
-					    update_post_meta(self::$arrPostData['postData']->ID, OGSyncSettingsData::$settingPrefix . $settingName, $_POST[OGSyncSettingsData::$settingPrefix . $settingName]);
-					    $htmlSucceedNotice = "<div class='notice notice-success is-dismissible'><p>De aanpassingen zijn opgeslagen.</p></div>";
-				    }
-			    }
-		    }
-	    }
+		# ==== POST Request ====
+		if (!empty($_POST)) {
+			foreach (OGSyncSettingsData::pixelplusVariables() as $settingName => $arrSettings) {
+				// ==== Start of Function ====
+				if (isset($_POST[OGSyncSettingsData::$settingPrefix . $settingName])) {
+					# Checking if the value is valid and not brute forced
+					if (in_array($_POST[OGSyncSettingsData::$settingPrefix . $settingName], $arrSettings['options'])) {
+						update_post_meta(self::$arrPostData['postData']->ID, OGSyncSettingsData::$settingPrefix . $settingName, $_POST[OGSyncSettingsData::$settingPrefix . $settingName]);
+						$htmlSucceedNotice = "<div class='notice notice-success is-dismissible'><p>De aanpassingen zijn opgeslagen.</p></div>";
+					}
+				}
+			}
+		}
 
-        // ======== Start of Function ========
-	    OGSyncTools::htmlAanbodEditorHeader($htmlTitle, $htmlButtons, $htmlSucceedNotice);
+		// ======== Start of Function ========
+		OGSyncTools::htmlAanbodEditorHeader($htmlTitle, $htmlButtons, $htmlSucceedNotice);
 
-        if (self::$arrPostData) {
-            // ======== Start of Function ========
-            # Showing the first attatchment based off menu_order of this post type
-            if ($imgSource = OGSyncTools::getThumbnailOfPost(self::$arrPostData['postData']->ID)) {
-	            echo("<img src='$imgSource' width='550' alt='⠀Error: Hoofdfoto niet gevonden.'/>");
-            }
-            ?>
+		if (self::$arrPostData) {
+			// ======== Start of Function ======== ?>
+            <!-- Showing a table with data -->
+			<?php OGSyncTools::aanbodEditor_showStatusData($postType, self::$arrPostData['postData']->ID, $type);?>
+            <br/>
+            <!-- Showing media -->
+			<?php OGSyncTools::aanbodEditor_showMedia(self::$arrPostData['postData']->ID);?>
+
+            <!-- Showing the form -->
             <form method='post' id='<?php echo(self::$formID) ?>'>
-            <table class='mt-3'>
-                <?php foreach (OGSyncSettingsData::pixelplusVariables() as $settingName => $arrSettings): ?>
-                    <?php
-                    // ==== Declaring Variables ====
-                    $settingName = OGSyncSettingsData::$settingPrefix . $settingName;
-                    ?>
-                    <tr>
-                        <th class='pt-2' style='width: 200px; font-weight: 600;'>
-                            <label for='id_<?= $settingName ?>'><?= $arrSettings['name'] ?></label>
+                <table class='mt-3'>
+					<?php foreach (OGSyncSettingsData::pixelplusVariables() as $settingName => $arrSettings): ?>
+						<?php
+						// ==== Declaring Variables ====
+						$settingName = OGSyncSettingsData::$settingPrefix . $settingName;
+						?>
+                        <tr>
+                            <th class='pt-2' style='width: 200px; font-weight: 600;'>
+                                <label for='id_<?= $settingName ?>'><?= $arrSettings['name'] ?></label>
+                            </th>
+                            <td class='pt-2'>
+                                <select name='<?= $settingName ?>' id='id_<?= $settingName ?>'>
+									<?php foreach ($arrSettings['options'] as $option): ?>
+                                        <option value='<?= $option ?>' <?= selected($option, self::$arrPostData['postData']->{$settingName}, false) ?>><?= $option ?></option>
+									<?php endforeach; ?>
+                                </select>
+                            </td>
+                        </tr>
+					<?php endforeach; ?>
+                </table>
+
+            </form> <?php
+		}
+		else {
+			die('Post is niet gevonden');
+		}
+
+		OGSyncTools::htmlAdminFooter('Aanbod Editor');
+	}
+	public static function bouwtypeOverzicht($GET_postID): void {
+		// ======== Declaring Variables ========
+		// ==== GET Variables ====
+		$postType = $_GET['post_type'];
+
+		// ==== Vars ====
+		# Static
+		self::$arrPostData = OGSyncPostTypeData::getPostData($GET_postID);
+		self::$arrChildPosts = OGSyncPostTypeData::getChildNieuwbouwPosts($GET_postID);
+
+		# Arrays
+		$extraColumns = OGSyncPostTypeData::customPostTypes()[self::$arrPostData['postData']->post_type]['database_tables'][OGSyncSettingsData::$bouwtypenArrayName]['extra_columns'];
+
+		# Stings
+		$htmlTitle = "
+            <h2>".OGSyncTools::getAanbodTitle($postType)."</h2><br/>
+            <h3><b>".self::$arrPostData['postData']->post_title."</b></h3>
+        ";
+		$buttonBack = "
+            <!-- Back button (secondary) -->
+            <a href='edit.php?post_type={$postType}' class='button button-secondary'>Terug</a>
+        ";
+
+		// ======== Start of Function ========
+		OGSyncTools::htmlAanbodEditorHeader($htmlTitle, $buttonBack); ?>
+        <h4>Bouwtypes</h4> <br/>
+		<?php if (!empty(self::$arrChildPosts)): ?>
+            <table style="width: 90%" class="wp-list-table widefat fixed striped table-view-list posts">
+                <!-- Header -->
+                <thead>
+                <tr>
+                    <!-- Bouwtype naam -->
+                    <th scope="col" id="title" class="manage-column column-title column-primary" abbr="Titel" style="color: rgb(13, 110, 253);">
+                        <span>Naam</span>
+                    </th>
+
+                    <!-- Extra columns -->
+					<?php foreach($extraColumns as $extraColumnName => $extraColumnValueKey): ?>
+                        <th scope="col" id="title" class="manage-column column-title column-primary" abbr="Titel" style="color: rgb(13, 110, 253);">
+                            <span><?= $extraColumnName ?></span>
                         </th>
-                        <td class='pt-2'>
-                            <select name='<?= $settingName ?>' id='id_<?= $settingName ?>'>
-			                    <?php foreach ($arrSettings['options'] as $option): ?>
-                                    <option value='<?= $option ?>' <?= selected($option, self::$arrPostData['postData']->{$settingName}, false) ?>><?= $option ?></option>
-			                    <?php endforeach; ?>
-                            </select>
+					<?php endforeach; ?>
+                </tr>
+                </thead>
+
+                <!-- Content -->
+                <tbody id="the-list">
+				<?php foreach(self::$arrChildPosts as $bouwtype): ?>
+                    <tr>
+                        <!-- Bouwtype naam -->
+                        <td class="title column-title has-row-actions column-primary page-title">
+                            <strong><span style="color: rgb(13, 110, 253); font-weight: 600;"><?= $bouwtype->post_title ?></span></strong>
+                            <div class="row-actions">
+                                <span><a href="admin.php?page=<?= OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$nieuwbouwBouwnummerOverzichtSlug ?>&postID=<?= $bouwtype->ID ?>&post_type=<?= $postType ?>">Beheren</a> |</span>
+                                <span><a href="admin.php?page=<?= OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug ?>&postID=<?= $bouwtype->ID ?>&post_type=<?= $postType ?>&type=<?= OGSyncSettingsData::$bouwtypenArrayName ?>">Wijzigen</a></span>
+                            </div>
                         </td>
+
+                        <!-- Extra columns -->
+						<?php foreach($extraColumns as $extraColumnName => $extraColumnValueKey): ?>
+                            <!-- Thumbnail -->
+							<?php if ($extraColumnValueKey == 'thumbnail'): ?>
+                                <td class="title column-title has-row-actions column-primary page-title">
+									<?php if (!empty($thumbnail = OGSyncTools::getThumbnailOfPost($bouwtype->ID))): ?>
+                                        <img src="<?= $thumbnail ?>" alt="Thumbnail niet beschikbaar" style="width: <?= "-webkit-fill-available" ?>;">
+									<?php else: ?>
+                                        <p style='color: red'>Geen media aanwezig</p>
+									<?php endif; ?>
+                                </td>
+
+                                <!-- Koopprijs / Huurprijs -->
+							<?php elseif (strtolower($extraColumnValueKey) == 'koopprijs' or strtolower($extraColumnValueKey) == 'huurprijs'): ?>
+                                <td>
+									<?php
+									// ==== Declaring Variables ====
+									$postMetaSearchKey = OGSyncPostTypeData::customPostTypes()[self::$arrPostData['postData']->post_type]['database_tables'][OGSyncSettingsData::$bouwtypenArrayName][$extraColumnValueKey];
+                                    $arrPostMetaKeys = explode('&', $postMetaSearchKey);
+									# Check if there are parentheses in the string, and if so we need to check which one of the 2 we need to use.
+									foreach ($arrPostMetaKeys as $key => $value) {
+										if (str_contains($value, '(' )) {
+											# Removing the parentheses
+											$value = str_replace(['(', ')'],'', $value);
+											$explodedPostMetaKeys = explode('|', $value);
+
+											# Checking which one we need to use
+											foreach ($explodedPostMetaKeys as $explodedPostMetaKey) {
+												if (!empty($bouwtype->{$explodedPostMetaKey})) {
+													$arrPostMetaKeys[$key] = $explodedPostMetaKey;
+													break;
+												}
+											}
+										}
+									}
+
+									$prijsVan = number_format($bouwtype->{$arrPostMetaKeys[0]} ?? 0, 0, ',', '.');
+									$prijsTot = number_format($bouwtype->{$arrPostMetaKeys[1]} ?? 0, 0, ',', '.');
+
+									// ==== Start of Function ====
+									# IF both exist
+									if (!empty($prijsVan) and !empty($prijsTot)) {
+										echo("€ $prijsVan - € $prijsTot");
+									}
+									# IF only prijsVan exists
+                                    elseif (!empty($prijsVan)) {
+										echo("€ $prijsVan");
+									}
+                                    elseif (!empty($prijsTot)) {
+										echo("€ $prijsTot");
+									}
+									else {
+										echo("N.v.t.");
+									}
+									?>
+                                </td>
+
+                                <!-- Rest of columns -->
+							<?php else: ?>
+                                <td class="title column-title has-row-actions column-primary page-title">
+									<?php if (!empty($postMetaSearchKey = OGSyncPostTypeData::customPostTypes()[self::$arrPostData['postData']->post_type]['database_tables'][OGSyncSettingsData::$bouwtypenArrayName][$extraColumnValueKey])): ?>
+										<?php if (!empty($postMetaValue = $bouwtype->$postMetaSearchKey)): ?>
+
+											<?= $postMetaValue ?>
+
+										<?php endif; ?>
+									<?php endif; ?>
+                                </td>
+							<?php endif; ?>
+						<?php endforeach; ?>
                     </tr>
-                <?php endforeach; ?>
+				<?php endforeach; ?>
+                </tbody>
+
+                <!-- Footer -->
+                <tfoot>
+                <tr>
+                    <!-- Bouwtype naam -->
+                    <th scope="col" id="title" class="manage-column column-title column-primary" abbr="Titel" style="color: rgb(13, 110, 253);">
+                        <span>Naam</span>
+                    </th>
+
+                    <!-- Extra columns -->
+					<?php foreach($extraColumns as $extraColumnName => $extraColumnValueKey): ?>
+                        <th scope="col" id="title" class="manage-column column-title column-primary" abbr="Titel" style="color: rgb(13, 110, 253);">
+                            <span><?= $extraColumnName ?></span>
+                        </th>
+					<?php endforeach; ?>
+                </tr>
+                </tfoot>
             </table>
+		<?php endif; ?>
 
-        </form> <?php
-        }
-        else {
-            die('Post is niet gevonden');
-        }
+		<?php OGSyncTools::htmlAdminFooter('Bouwtype Overzicht');
+	}
+	public static function bouwnummerOverzicht($GET_postID): void {
+		// ======== Declaring Variables ========
+		// ==== GET Variables ====
+		$postType = $_GET['post_type'];
 
-	    OGSyncTools::htmlAdminFooter('Aanbod Editor');
-    }
+		// ==== Vars ====
+		# Static
+		self::$arrPostData = OGSyncPostTypeData::getPostData($GET_postID);
+		self::$arrChildPosts = OGSyncPostTypeData::getChildNieuwbouwPosts($GET_postID);
+
+		# Arrays
+		$extraColumns = OGSyncPostTypeData::customPostTypes()[self::$arrPostData['postData']->post_type]['database_tables'][OGSyncSettingsData::$bouwnummersArrayName]['extra_columns'];
+
+		# Stings
+		$htmlTitle = "
+            <h2>".OGSyncTools::getAanbodTitle($postType)."</h2><br/>
+            <h3><b>".self::$arrPostData['postData']->post_title."</b></h3>
+        ";
+		$buttonBack = "
+            <!-- Back button (secondary) -->
+            <a href='javascript:history.back()' class='button button-secondary'>Terug</a>
+        ";
+
+		// ======== Start of Function ========
+		OGSyncTools::htmlAanbodEditorHeader($htmlTitle, $buttonBack); ?>
+        <h4>Bouwnummers</h4> <br/>
+		<?php if (!empty(self::$arrChildPosts)): ?>
+            <table style="width: 90%" class="wp-list-table widefat fixed striped table-view-list posts">
+                <!-- Header -->
+                <thead>
+                <tr>
+                    <!-- Bouwnummer naam -->
+                    <th scope="col" id="title" class="manage-column column-title column-primary" abbr="Titel" style="color: rgb(13, 110, 253);">
+                        <span>Naam</span>
+                    </th>
+
+                    <!-- Extra columns -->
+					<?php foreach($extraColumns as $extraColumnName => $extraColumnValueKey): ?>
+                        <th scope="col" id="title" class="manage-column column-title column-primary" abbr="Titel" style="color: rgb(13, 110, 253);">
+                            <span><?= $extraColumnName ?></span>
+                        </th>
+					<?php endforeach; ?>
+                </tr>
+                </thead>
+
+                <!-- Content -->
+                <tbody id="the-list">
+				<?php foreach(self::$arrChildPosts as $bouwtype): ?>
+                    <tr>
+                        <!-- Bouwnummer naam -->
+                        <td class="title column-title has-row-actions column-primary page-title">
+                            <strong><span style="color: rgb(13, 110, 253); font-weight: 600;"><?= $bouwtype->post_title ?></span></strong>
+                            <div class="row-actions">
+                                <span><a href="admin.php?page=<?= OGSyncSettingsData::$settingPrefix.OGSyncSettingsData::$aanbodEditorSlug ?>&postID=<?= $bouwtype->ID ?>&post_type=<?= $postType ?>&type=<?= OGSyncSettingsData::$bouwnummersArrayName ?>">Wijzigen</a></span>
+                            </div>
+                        </td>
+
+                        <!-- Extra columns -->
+						<?php foreach($extraColumns as $extraColumnName => $extraColumnValueKey): ?>
+                            <!-- Thumbnail -->
+							<?php if ($extraColumnValueKey == 'thumbnail'): ?>
+                                <td class="title column-title has-row-actions column-primary page-title">
+									<?php if (!empty($thumbnail = OGSyncTools::getThumbnailOfPost($bouwtype->ID))): ?>
+                                        <img src="<?= $thumbnail ?>" alt="Thumbnail niet beschikbaar" style="width: <?= "-webkit-fill-available" ?>;">
+									<?php else: ?>
+                                        <p style='color: red'>Geen media aanwezig</p>
+									<?php endif; ?>
+                                </td>
+
+                                <!-- Koopprijs / Huurprijs -->
+							<?php elseif (strtolower($extraColumnValueKey) == 'koopprijs' or strtolower($extraColumnValueKey) == 'huurprijs'): ?>
+                                <td>
+									<?php
+									// ==== Declaring Variables ====
+									$postMetaSearchKey = OGSyncPostTypeData::customPostTypes()[self::$arrPostData['postData']->post_type]['database_tables'][OGSyncSettingsData::$bouwnummersArrayName][$extraColumnValueKey];
+									$arrPostMetaKeys = explode('|', $postMetaSearchKey);
+									$prijs = number_format($bouwtype->{$arrPostMetaKeys[0]} ?? 0, 0, ',', '.');
+
+									// ==== Start of Function ====
+									# IF exist
+									if (!empty($prijs)) {
+										echo("€ $prijs");
+									}
+									else {
+										echo("N.v.t.");
+									}
+									?>
+                                </td>
+
+                                <!-- Rest of columns -->
+							<?php else: ?>
+                                <td class="title column-title has-row-actions column-primary page-title">
+									<?php if (!empty($postMetaSearchKey = OGSyncPostTypeData::customPostTypes()[self::$arrPostData['postData']->post_type]['database_tables'][OGSyncSettingsData::$bouwnummersArrayName][$extraColumnValueKey])): ?>
+										<?php if (!empty($postMetaValue = $bouwtype->$postMetaSearchKey)): ?>
+
+											<?= $postMetaValue ?>
+
+										<?php endif; ?>
+									<?php endif; ?>
+                                </td>
+							<?php endif; ?>
+						<?php endforeach; ?>
+                    </tr>
+				<?php endforeach; ?>
+                </tbody>
+
+                <!-- Footer -->
+                <tfoot>
+                <tr>
+                    <!-- Bouwtype naam -->
+                    <th scope="col" id="title" class="manage-column column-title column-primary" abbr="Titel" style="color: rgb(13, 110, 253);">
+                        <span>Naam</span>
+                    </th>
+
+                    <!-- Extra columns -->
+					<?php foreach($extraColumns as $extraColumnName => $extraColumnValueKey): ?>
+                        <th scope="col" id="title" class="manage-column column-title column-primary" abbr="Titel" style="color: rgb(13, 110, 253);">
+                            <span><?= $extraColumnName ?></span>
+                        </th>
+					<?php endforeach; ?>
+                </tr>
+                </tfoot>
+            </table>
+		<?php endif; ?>
+
+		<?php OGSyncTools::htmlAdminFooter('Bouwnummer Overzicht');
+	}
 }

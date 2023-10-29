@@ -22,7 +22,7 @@ $imagesExist = $queryImages->have_posts();
 
 // ============ Start of Program ============
 # ======== Header ========
-htmlDetailHeader();
+OGSyncTools::htmlDetailHeader();
 
 # ======== Content ========
 echo("
@@ -62,4 +62,4 @@ echo("
 ");
 
 # ======== Footer ========
-htmlDetailFooter();
+OGSyncTools::htmlDetailFooter();

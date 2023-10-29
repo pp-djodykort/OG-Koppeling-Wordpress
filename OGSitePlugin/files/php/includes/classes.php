@@ -99,7 +99,7 @@ class OGSiteSettingsData {
     0f = Unchecked and Forced
     */
     private static array $arrOptions = [
-        # ======== OG Admin Settings ========
+        # ======== Admin settings ========
         # ==== Licentie ====
         /* Setting Name */'licenseKey' => /* Default Value */   '', // License Key
 
@@ -116,14 +116,14 @@ class OGSiteSettingsData {
         /* Setting Name */'siteFavicon' => /* Default Value */     '',
 
         # ======== Wonen Settings ========
-        /* Setting Name */'wonenDetailpaginaBasiskenmerken' => /* Default Value */      'Status:1f;Bouwjaar:1;Prijs:1f;PrijsPerM2:0;Woonoppervlakte:1;OverigeInpandigeOppervlakte:1;Inhoud:0;AantalSlaapkamers:1;AantalKamers:0',
+        /* Setting Name */'wonenDetailpaginaBasiskenmerken' => /* Default Value */      'Status:1f;Prijs:1f;Bouwjaar:1;PrijsPerM2:0;Woonoppervlakte:1;OverigeInpandigeOppervlakte:1;Inhoud:0;AantalSlaapkamers:1;AantalKamers:0',
         /* Setting Name */'wonenDetailpaginaOverdracht' => /* Default Value */          'Aanvaarding:1f',
-        /* Setting Name */'wonenDetailpaginaBouwOnderhoud' => /* Default Value */       'Bouwjaar:1f;Ligging:1f;SoortBouw:1f;Bouwvorm:1;DakType:1f;DakMateriaal:1f;BouwgrondOppervlakte:1',
+        /* Setting Name */'wonenDetailpaginaBouwOnderhoud' => /* Default Value */       'Bouwjaar:1f;Ligging:1f;SoortBouw:1f;Daktype:1f;DakMateriaal:1f;Bouwvorm:1;BouwgrondOppervlakte:1',
         /* Setting Name */'wonenDetailpaginaParkeergelegenheid' => /* Default Value */  'Parkeerfaciliteiten:1f;GarageSoorten:1f',
         /* Setting Name */'wonenDetailpaginaOppervlakteInhoud' => /* Default Value */   'Perceeloppervlakte:1f;Woonoppervlakte:1f;Gebruiksoppervlakte:1f;Inhoud:1f;OverigeInpandigeOppervlakte:1f;GebouwgebondenBuitenruimte:1f',
         /* Setting Name */'wonenDetailpaginaBergruimte' => /* Default Value */          'Bergruimte:1f;SchuurBergingSoort:1f;SchuurBergingVoorzieningen:1f;SchuurBergingIsolatie:1f;SchuurBergingTotaalAantal:1f',
         /* Setting Name */'wonenDetailpaginaIndeling' => /* Default Value */            'AantalWoonlagen:1f;AantalKamers:1f;AantalSlaapkamers:1f;AantalBadkamers:1',
-        /* Setting Name */'wonenDetailpaginaEnergieInstallatie' => /* Default Value */  'EnergieLabel:1f;Isolatie:1f;Verwarming:1f;WarmWater:1f;CvKetelType:1f;CvKetelBouwjaar:1f;CvKetelEigendom:1;CvKetelBrandstof:0;EnergieEinddatum:1f',
+        /* Setting Name */'wonenDetailpaginaEnergieInstallatie' => /* Default Value */  'EnergieLabel:1f;Isolatie:1f;Verwarming:1f;WarmWater:1f;CvKetelType:1f;CvKetelBouwjaar:1f;EnergieEinddatum:1f;CvKetelEigendom:1;CvKetelBrandstof:0',
     ];
     /*
     Documentation for 'adminSettings' Array Configuration:
@@ -137,7 +137,7 @@ class OGSiteSettingsData {
 
     Example:
     'ppOGSite_adminOptions' => [
-        'settingPageSlug' => 'ppOGSite-plugin-settings',
+        'settingPageSlug' => OGSiteSettingsData::$settingPrefix.'plugin-settings',
         'sections' => [
             'General' => [
                 'sectionID' => 'ppOGSite_SectionGeneral',
@@ -166,7 +166,7 @@ class OGSiteSettingsData {
         // Settings 1
         /* Option Group= */ 'ppOGSite_adminOptions' => [
             // General information
-            'settingPageSlug' => 'ppOGSite-plugin-settings',
+            'settingPageSlug' => 'ppOGSite_plugin-settings',
             // Sections
             'sections' => [
                 // Section 1 - Algemeen section
@@ -177,7 +177,7 @@ class OGSiteSettingsData {
                     // Fields
                     'fields' => [
                         // Field 1 - Site Naam
-                        /* Setting Field Title= */'Site Naam' => [
+                        /* Setting Field Title= */'Site naam' => [
                             'fieldID' => 'ppOGSite_siteName',
                             'fieldCallback' => '',
                         ],
@@ -190,7 +190,7 @@ class OGSiteSettingsData {
                     // Fields
                     'fields' => [
                         // Field 1 - Licentie sleutel
-                        /* Setting Field Title= */'Licentie Sleutel' => [
+                        /* Setting Field Title= */'Licentie sleutel' => [
                             'fieldID' => 'ppOGSite_licenseKey',
                             'fieldCallback' => 'htmlLicenceKeyField',
                         ]
@@ -201,7 +201,7 @@ class OGSiteSettingsData {
         // Settings 2
         /* Option Group= */ 'ppOGSite_WonenOptions' => [
             // General information
-            'settingPageSlug' => 'ppOGSite-plugin-settings-wonen',
+            'settingPageSlug' => 'ppOGSite_plugin-settings-wonen',
             // Sections
             'sections' => [
                 // Section 1 - Detailpagina section
@@ -265,7 +265,7 @@ class OGSiteSettingsData {
         // Settings 3
         /* Option Group= */ 'ppOGSite_uiterlijkOptions' => [
             // General information
-            'settingPageSlug' => 'ppOGSite-plugin-settings-uiterlijk',
+            'settingPageSlug' => 'ppOGSite_plugin-settings-uiterlijk',
             // Sections
             'sections' => [
                 // Section 1 - Logo's section
@@ -281,12 +281,12 @@ class OGSiteSettingsData {
                             'sanitizeCallback' => 'sanitize_imageField'
                         ],
                         // Field 2 - Site logo width
-                        /* Setting Field Title= */'Site logo width' => [
+                        /* Setting Field Title= */'Site logo breedte' => [
                             'fieldID' => 'ppOGSite_siteLogoWidth',
                             'fieldCallback' => '',
                         ],
                         // Field 3 - Site logo height
-                        /* Setting Field Title= */'Site logo height' => [
+                        /* Setting Field Title= */'Site logo hoogte' => [
                             'fieldID' => 'ppOGSite_siteLogoHeight',
                             'fieldCallback' => '',
                         ],
@@ -486,7 +486,6 @@ class OGSiteSettingsData {
     // ======== Admin Options ========
     // Sections
     static function htmlLicenceSection(): void { ?>
-        <p>De licentiesleutel die de plugin activeert</p>
     <?php }
     // Fields
     static function htmlLicenceKeyField(): void {
@@ -509,7 +508,7 @@ class OGSiteLicense {
     // ============ Declaring Variables ============
     # Nulls
     private static $licenseDataCache = null;
-    
+
     # Strings
     private static string $PluginError_Ophaalfout = '#OGSite-Ophaalfout: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.';
     private static string $PluginError_Ongeldig = '#OGSite-Ongeldig: De licentie is ongeldig. Neem contact op met PixelPlus.';
@@ -668,52 +667,62 @@ class OGSiteMenus {
         # Making the Global Settings Page
         add_menu_page(
             'Admin Settings',
-            'OG Site Settings',
+            'OG site settings',
             'manage_options',
-            'ppOGSite-plugin-settings',
+            OGSiteSettingsData::$settingPrefix.'plugin-settings',
             [__CLASS__, 'HTMLOGAdminSettings'],
             'dashicons-admin-generic',
             103
         );
         add_submenu_page(
-            'ppOGSite-plugin-settings',
+            OGSiteSettingsData::$settingPrefix.'plugin-settings',
             'Algemeen',
             'Algemeen',
             'manage_options',
-            'ppOGSite-plugin-settings',
+            OGSiteSettingsData::$settingPrefix.'plugin-settings',
             [__CLASS__, 'HTMLOGAdminSettings']
         );
 
         if ($boolPluginActivated) {
             # ==== Uiterlijk ====
             add_submenu_page(
-                'ppOGSite-plugin-settings',
+                OGSiteSettingsData::$settingPrefix.'plugin-settings',
                 'Uiterlijk',
                 'Uiterlijk',
                 'manage_options',
-                'ppOGSite-plugin-settings-uiterlijk',
+                OGSiteSettingsData::$settingPrefix.'plugin-settings-uiterlijk',
                 [__CLASS__, 'HTMLOGUiterlijkSettings']
             );
 
             # ==== Wonen ====
             add_submenu_page(
-                'ppOGSite-plugin-settings',
+                OGSiteSettingsData::$settingPrefix.'plugin-settings',
                 'Wonen',
                 'Wonen',
                 'manage_options',
-                'ppOGSite-plugin-settings-wonen',
+                OGSiteSettingsData::$settingPrefix.'plugin-settings-wonen',
                 [__CLASS__, 'HTMLOGAdminSettingsWonen']
             );
 
             # ==== BOG ====
-            add_submenu_page(
-                'ppOGSite-plugin-settings',
-                'BOG',
-                'BOG',
-                'manage_options',
-                'ppOGSite-plugin-settings-bog',
-                [__CLASS__, 'HTMLOGAdminSettingsBOG']
-            );
+            # add_submenu_page(
+            #     OGSiteSettingsData::$settingPrefix.'plugin-settings',
+            #     'BOG',
+            #     'BOG',
+            #     'manage_options',
+            #     OGSiteSettingsData::$settingPrefix.'plugin-settings-bog',
+            #     [__CLASS__, 'HTMLOGAdminSettingsBOG']
+            # );
+
+            # ==== Nieuwbouw ====
+            # add_submenu_page(
+            #     OGSiteSettingsData::$settingPrefix.'plugin-settings',
+            #     'Nieuwbouw',
+            #     'Nieuwbouw',
+            #     'manage_options',
+            #     OGSiteSettingsData::$settingPrefix.'plugin-settings-nieuwbouw',
+            #     [__CLASS__, 'HTMLOGAdminSettingsNieuwbouw']
+            # );
         }
     }
 
@@ -816,6 +825,8 @@ class OGSiteMenus {
                 # Checkboxes
                 $checkBoxName = "{$fieldArray['fieldID']}[$explodedValue[0]]"; // Append index to the checkbox name
                 $label = preg_replace('/(?<!\ )[A-Z]/', ' $0', $explodedValue[0]);
+                $label = $label[0] == ' ' ? substr($label, 1) : $label;
+                $label = ucfirst(strtolower($label));
 
                 // ==== Start of Loop ====
                 self::createCheckboxes($explodedValue, $checkBoxName, $label);
@@ -930,45 +941,45 @@ class OGSiteMenus {
             });
         </script>" );
     }
-    
+
     // ======== HTML ========
     // OG Site Admin Settings
-    static function HTMLOGAdminSettings(): void {OGSiteTools::htmlAdminHeader('OG Admin Settings - Algemeen');
+    static function HTMLOGAdminSettings(): void {OGSiteTools::htmlAdminHeader('Admin settings - algemeen');
         $settingsData = new OGSiteSettingsData(); ?>
         <form method="post" action="options.php">
             <?php settings_fields(OGSiteSettingsData::$settingPrefix.'adminOptions');
-            do_settings_sections('ppOGSite-plugin-settings');
+            do_settings_sections(OGSiteSettingsData::$settingPrefix.'plugin-settings');
             OGSiteTools::hidePasswordByName(OGSiteSettingsData::$settingPrefix.'licenseKey');
             submit_button('Opslaan', 'primary', 'submit_license');
             ?>
         </form>
-    <?php OGSiteTools::htmlAdminFooter('OG Admin Settings - Algemeen');}
-    static function HTMLOGUiterlijkSettings(): void { OGSiteTools::htmlAdminHeader('OG Admin Settings - Uiterlijk');
+    <?php OGSiteTools::htmlAdminFooter('Admin settings - algemeen');}
+    static function HTMLOGUiterlijkSettings(): void { OGSiteTools::htmlAdminHeader('Admin settings - uiterlijk');
         // ======== Declaring Variables ========
         $settingsData = new OGSiteSettingsData(); ?>
         <form method="post" action="options.php">
             <?php settings_fields(OGSiteSettingsData::$settingPrefix.'uiterlijkOptions');
-            do_settings_sections('ppOGSite-plugin-settings-uiterlijk');
+            do_settings_sections(OGSiteSettingsData::$settingPrefix.'plugin-settings-uiterlijk');
             submit_button('Opslaan', 'primary', 'submit_uiterlijk');
             ?>
         </form>
-        <?php OGSiteTools::htmlAdminFooter('OG Admin Settings - Uiterlijk');}
-    static function HTMLOGAdminSettingsWonen(): void { OGSiteTools::htmlAdminHeader('OG Admin Settings - Wonen');
+        <?php OGSiteTools::htmlAdminFooter('Admin settings - uiterlijk');}
+    static function HTMLOGAdminSettingsWonen(): void { OGSiteTools::htmlAdminHeader('OG site settings - wonen');
         // ======== Start of Function ======== ?>
         <form method="post" action="options.php">
             <?php settings_fields(OGSiteSettingsData::$settingPrefix.'WonenOptions');
-            do_settings_sections('ppOGSite-plugin-settings-wonen');
+            do_settings_sections(OGSiteSettingsData::$settingPrefix.'plugin-settings-wonen');
             submit_button('Opslaan', 'primary', 'submit_wonen');
             ?>
         </form>
-        <?php OGSiteTools::htmlAdminFooter('OG Admin Settings - Wonen');}
-    static function HTMLOGAdminSettingsBOG(): void { OGSiteTools::htmlAdminHeader('OG Admin Settings - BOG'); ?>
+        <?php OGSiteTools::htmlAdminFooter('OG site settings - wonen');}
+    static function HTMLOGAdminSettingsBOG(): void { OGSiteTools::htmlAdminHeader('OG site settings - BOG'); ?>
 
-        <?php OGSiteTools::htmlAdminFooter('OG Admin Settings - BOG');}
-    static function HTMLOGAdminSettingsNieuwbouw(): void { OGSiteTools::htmlAdminHeader('OG Admin Settings - Nieuwbouw'); ?>
+        <?php OGSiteTools::htmlAdminFooter('OG site settings - BOG');}
+    static function HTMLOGAdminSettingsNieuwbouw(): void { OGSiteTools::htmlAdminHeader('OG site settings - nieuwbouw'); ?>
 
-        <?php OGSiteTools::htmlAdminFooter('OG Admin Settings - Nieuwbouw');}
-    static function HTMLOGAdminSettingsALV(): void { OGSiteTools::htmlAdminHeader('OG Admin Settings - A&LV'); ?>
+        <?php OGSiteTools::htmlAdminFooter('OG site settings - nieuwbouw');}
+    static function HTMLOGAdminSettingsALV(): void { OGSiteTools::htmlAdminHeader('OG site settings - A&LV'); ?>
 
-        <?php OGSiteTools::htmlAdminFooter('OG Admin Settings - A&LV');}
+        <?php OGSiteTools::htmlAdminFooter('OG site settings - A&LV');}
 }
