@@ -6,8 +6,8 @@ include_once 'functions.php';
 class OGSiteActivationAndDeactivation {
     // ==== Activation ====
     public static function activate() {
-        self::registerSettings();
-        self::createCacheFiles();
+        self::registerWPSettings();
+        self::createPluginCacheFiles();
     }
     // ==== Deactivation ====
     public static function deactivate() {
@@ -33,7 +33,7 @@ class OGSiteActivationAndDeactivation {
 
     // ==== Functions ====
     // A function for registering base settings of the unactivated plugin as activation hook.
-    static function registerSettings(): void {
+    private static function registerWPSettings(): void {
         // ==== Start of Function ====
         // Registering settings
         foreach (OGSiteSettingsData::arrOptions() as $settingName => $settingValue) {
@@ -41,7 +41,7 @@ class OGSiteActivationAndDeactivation {
         }
     }
     // A function for creating the cache files as activation hook.
-    static function createCacheFiles(): void {
+    private static function createPluginCacheFiles(): void {
         // ==== Declaring Variables ====
         # Classes
         $settingsData = new OGSiteSettingsData();
@@ -255,6 +255,28 @@ class OGSiteSettingsData {
                         // Field 8 - Energie en installatie
                         /* Setting Field Title= */'Energie en installatie' => [
                             'fieldID' => 'ppOGSite_wonenDetailpaginaEnergieInstallatie',
+                            'fieldCallback' => '',
+                            'sanitizeCallback' => 'sanitize_checkboxes'
+                        ],
+                    ]
+                ],
+            ]
+        ],
+        // Settings 3
+        /* Option Group= */ 'ppOGSite_BOGOptions' => [
+            // General information
+            'settingPageSlug' => 'ppOGSite_plugin-settings-bog',
+            // Sections
+            'sections' => [
+                // Section 1 - Detailpagina section
+                /* Section Title= */'Detailpagina' => [
+                    'sectionID' => 'ppOGSite_bogDetailpagina',
+                    'sectionCallback' => '',
+                    // Fields
+                    'fields' => [
+                        // Field 1 - Basiskenmerken
+                        /* Setting Field Title= */'Basiskenmerken' => [
+                            'fieldID' => 'ppOGSite_bogDetailpaginaBasiskenmerken',
                             'fieldCallback' => '',
                             'sanitizeCallback' => 'sanitize_checkboxes'
                         ],
@@ -510,14 +532,14 @@ class OGSiteLicense {
     private static $licenseDataCache = null;
 
     # Strings
-    private static string $PluginError_Ophaalfout = '#OGSite-Ophaalfout: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.';
-    private static string $PluginError_Ongeldig = '#OGSite-Ongeldig: De licentie is ongeldig. Neem contact op met PixelPlus.';
-    private static string $PluginError_Unknown = '#OGSite-Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.';
-    private static string $PluginError_NotActivated = '#OGSite-NotActivated: De licentie is niet geactiveerd. Voer de licentie in en activeer de plugin.';
+    private static string $pluginError_Ophaalfout = '#OGSite-Ophaalfout: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.';
+    private static string $pluginError_Ongeldig = '#OGSite-Ongeldig: De licentie is ongeldig. Neem contact op met PixelPlus.';
+    private static string $pluginError_Unknown = '#OGSite-Unknown: Er is iets fout gegaan bij het ophalen van de licentie gegevens. Neem contact op met PixelPlus.';
+    private static string $pluginError_NotActivated = '#OGSite-NotActivated: De licentie is niet geactiveerd. Voer de licentie in en activeer de plugin.';
 
     // ============ Functions ============
     # Function to fetch the Licence data from the API
-    private static function fetchLicenseData($url): mixed {
+    private static function fetchLicenseData($url): array|WP_Error|null {
         // ==== Getting the JSON from the API ====
         $jsonData = OGSiteTools::getJSONFromAPI($url);
 
@@ -534,7 +556,7 @@ class OGSiteLicense {
     }
 
     # Function to check the license and adminNotice the things that don't work
-    private static function checkLicense(): mixed {
+    private static function checkLicense(): array|WP_Error|null {
         // If the license data is already fetched, return it
         if (self::$licenseDataCache !== null) {
             return self::$licenseDataCache;
@@ -557,19 +579,19 @@ class OGSiteLicense {
 
             // ==== Start of IF ====
             if (is_wp_error($cacheData)) {
-                OGSiteTools::adminNotice('error', self::$PluginError_Ophaalfout);
+                OGSiteTools::adminNotice('error', self::$pluginError_Ophaalfout);
             }
             elseif (isset($cacheData['success']) and $cacheData['success']) {
                 file_put_contents($cacheFile, json_encode($cacheData));
             }
             elseif (isset($cacheData['message']) and $cacheData['message'] == 'Invalid authentication token!') {
-                OGSiteTools::adminNotice('error', self::$PluginError_Ongeldig);
+                OGSiteTools::adminNotice('error', self::$pluginError_Ongeldig);
             }
             elseif (isset($cacheData['message']) and $cacheData['message'] == 'Authentication token is not set!') {
-                OGSiteTools::adminNotice('error', self::$PluginError_NotActivated);
+                OGSiteTools::adminNotice('error', self::$pluginError_NotActivated);
             }
             else {
-                OGSiteTools::adminNotice('error', self::$PluginError_Unknown);
+                OGSiteTools::adminNotice('error', self::$pluginError_Unknown);
             }
         }
         else {
@@ -590,13 +612,13 @@ class OGSiteLicense {
                     file_put_contents($cacheFile, json_encode($cacheData));
                 }
                 elseif (isset($cacheData['message']) and $cacheData['message'] == 'Invalid authentication token!') {
-                    OGSiteTools::adminNotice('error', self::$PluginError_Ongeldig);
+                    OGSiteTools::adminNotice('error', self::$pluginError_Ongeldig);
                 }
                 elseif (isset($cacheData['message']) and $cacheData['message'] == 'Authentication token is not set!') {
-                    OGSiteTools::adminNotice('error', self::$PluginError_NotActivated);
+                    OGSiteTools::adminNotice('error', self::$pluginError_NotActivated);
                 }
                 else {
-                    OGSiteTools::adminNotice('error', self::$PluginError_Unknown);
+                    OGSiteTools::adminNotice('error', self::$pluginError_Unknown);
                 }
             }
         }
@@ -642,7 +664,7 @@ class OGSiteMenus {
         // Creating the Menu's
         add_action('admin_menu', [__CLASS__, 'createMenus']);
         // Registering all the needed settings for the plugin
-        add_action('admin_init', [__CLASS__, 'registerSettings']);
+        add_action('admin_init', [__CLASS__, 'registerActivatedSettings']);
         // Updating the favicon
         add_action('init', function() {
             // ==== Declaring Variables ====
@@ -727,7 +749,7 @@ class OGSiteMenus {
     }
 
     // ==== Registering the settings ====
-    public static function registerSettings(): void {
+    public static function registerActivatedSettings(): void {
         // ==== Declaring Variables ====
         # Vars
         $boolPluginActivated = OGSiteLicense::checkActivation();
@@ -791,7 +813,7 @@ class OGSiteMenus {
     }
 
     // ==== Option functions ====
-    static function createCheckboxes($input, $checkBoxName, $label): void {
+    private static function createCheckboxes($input, $checkBoxName, $label): void {
         if ($input[1] == '0') {
             echo("<input type='hidden' name='{$checkBoxName}' value='0' checked>");
             echo("<input type='checkbox' name='{$checkBoxName}' value='1'>{$label}<br>");
@@ -809,7 +831,7 @@ class OGSiteMenus {
             echo("<input type='checkbox' name='{$checkBoxName}' value='1' checked>{$label}<br>");
         }
     }
-    static function createCheckboxField($fieldArray, $strOption): void {
+    private static function createCheckboxField($fieldArray, $strOption): void {
         // ===== Declaring Variables ====
         $arrExplodedOption = explode(';', $strOption);
 
@@ -833,7 +855,7 @@ class OGSiteMenus {
             }
         }
     }
-    static function createTextField($fieldID, $strOption): void {
+    private static function createTextField($fieldID, $strOption): void {
         // ===== Declaring Variables ====
         $value = esc_attr($strOption);
 
@@ -841,7 +863,7 @@ class OGSiteMenus {
         // Check if licenseKey is empty
         echo("<input type='text' name='$fieldID' value='$value'");
     }
-    static function createImageField($fieldArray, $strOption): void {
+    private static function createImageField($fieldArray, $strOption): void {
         // ========== Declaring Variables =========
         # Vars
         $strTrimmedOption = basename($strOption) ?? '';

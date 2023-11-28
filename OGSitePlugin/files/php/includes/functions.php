@@ -5,7 +5,7 @@ include_once 'classes.php';
 // ============ Functions ============
 class OGSiteTools {
     // ============ HTML Functions ============
-    static function htmlAdminHeader($title): void {
+    static function htmlAdminHeader(string $title): void {
         echo("
 		<head>
 			<link rel='stylesheet' href='".plugins_url('css/bootstrap.min.css', dirname(__DIR__))."'>
@@ -22,7 +22,7 @@ class OGSiteTools {
 		<hr/>
 		");
     }
-    static function htmlAdminFooter($title=''): void {
+    static function htmlAdminFooter(string $title=''): void {
         echo("
 	<!-- Bootstrap -->
 	<script src='".plugins_url('js/bootstrap.bundle.min.js', dirname(__DIR__))."'></script>
